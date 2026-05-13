@@ -1,3 +1,7 @@
+# Weak-Cryptography
+Weak cryptographic implementations to test tools 
+
+
 # Run the CBOM kit website 
 
 Create a .env file that contains the following. Below are example values: 
@@ -10,6 +14,7 @@ CBOMKIT_VIEWER=false
 VITE_CBOMKIT_HTTP_API_BASE=http://localhost:8081
 VITE_POLICY_API_BASE=/opa
 VITE_OPA_DECISION_PATH=/v1/data/cbom/eccg
+VITE_SEMGREP_API_BASE=http://localhost:9091
 ```
 
 

@@ -3,6 +3,9 @@ import React, { useRef, useState } from "react";
 const HTTP_API_BASE =
   import.meta.env.VITE_CBOMKIT_HTTP_API_BASE || "http://localhost:8081";
 
+const SEMGREP_API_BASE =
+  import.meta.env.VITE_SEMGREP_API_BASE || "http://localhost:9091";
+
 const POLICY_API_BASE = import.meta.env.VITE_POLICY_API_BASE || "/opa";
 
 const OPA_DECISION_PATH =
@@ -26,8 +29,52 @@ function normalizeScanUrl(value) {
   return scanUrl;
 }
 
-function buildScanRequest({ url, scanPath, pat }) {
+function normalizeGitUrlForSemgrep(value) {
+  let gitUrl = value.trim();
+
+  if (gitUrl.startsWith("pkg:")) {
+    throw new Error(
+      "Semgrep needs a cloneable Git URL, for example https://github.com/org/repo."
+    );
+  }
+
+  gitUrl = gitUrl.replace(/^scm:git:git:\/\//, "");
+
+  if (!gitUrl.includes("://")) {
+    gitUrl = `https://${gitUrl}`;
+  }
+
+  return gitUrl;
+}
+
+function buildCbomScanRequest({ url, scanPath, pat }) {
   const request = { scanUrl: normalizeScanUrl(url) };
+
+  if (scanPath.trim()) {
+    request.subfolder = scanPath.trim();
+  }
+
+  if (pat.trim()) {
+    request.credentials = {
+      pat: pat.trim(),
+    };
+  }
+
+  return request;
+}
+
+function buildSemgrepScanRequest({ url, branch, commit, scanPath, pat }) {
+  const request = {
+    gitUrl: normalizeGitUrlForSemgrep(url),
+  };
+
+  if (branch.trim()) {
+    request.branch = branch.trim();
+  }
+
+  if (commit.trim()) {
+    request.commit = commit.trim();
+  }
 
   if (scanPath.trim()) {
     request.subfolder = scanPath.trim();
@@ -44,10 +91,12 @@ function buildScanRequest({ url, scanPath, pat }) {
 
 function isBusyStatus(status) {
   return (
+    status.startsWith("Generating") ||
     status.startsWith("Submitting") ||
     status.startsWith("Scan accepted") ||
     status.startsWith("Waiting") ||
-    status.startsWith("Evaluating")
+    status.startsWith("Evaluating") ||
+    status.startsWith("Running")
   );
 }
 
@@ -66,6 +115,10 @@ function getOpaEndpoint() {
     : `/${OPA_DECISION_PATH}`;
 
   return `${base}${path}`;
+}
+
+function getSemgrepEndpoint() {
+  return `${SEMGREP_API_BASE.replace(/\/$/, "")}/scan`;
 }
 
 function extractOpaResult(policyResult) {
@@ -170,6 +223,87 @@ function extractImportantFindings(policyResult) {
   });
 }
 
+function getSemgrepFindings(semgrepResult) {
+  return semgrepResult?.result?.findings || [];
+}
+
+function groupSemgrepFindingsByRuleId(findings) {
+  const groups = new Map();
+
+  for (const finding of findings) {
+    const ruleId = finding.ruleId || "unknown-rule";
+
+    if (!groups.has(ruleId)) {
+      groups.set(ruleId, {
+        ruleId,
+        algorithm: finding.algorithm || "Unknown algorithm",
+        message: finding.message || "No Semgrep message provided.",
+        severity: finding.severity || "unknown",
+        metadata: finding.metadata || {},
+        findings: [],
+      });
+    }
+
+    groups.get(ruleId).findings.push(finding);
+  }
+
+  return Array.from(groups.values()).sort((a, b) => {
+    const severityOrder = {
+      critical: 0,
+      error: 1,
+      high: 2,
+      warning: 3,
+      medium: 4,
+      info: 5,
+      low: 6,
+      unknown: 7,
+    };
+
+    const aSeverity = severityOrder[normalizeSeverity(a.severity)] ?? 99;
+    const bSeverity = severityOrder[normalizeSeverity(b.severity)] ?? 99;
+
+    if (aSeverity !== bSeverity) {
+      return aSeverity - bSeverity;
+    }
+
+    return a.ruleId.localeCompare(b.ruleId);
+  });
+}
+
+function getSeverityTheme(severity, theme) {
+  const normalized = normalizeSeverity(severity);
+
+  if (normalized === "critical" || normalized === "error") {
+    return {
+      background: theme.criticalBg,
+      color: theme.criticalText,
+      borderColor: theme.criticalBorder,
+    };
+  }
+
+  if (normalized === "high" || normalized === "warning") {
+    return {
+      background: theme.highBg,
+      color: theme.highText,
+      borderColor: theme.highBorder,
+    };
+  }
+
+  return {
+    background: theme.infoBg,
+    color: theme.infoText,
+    borderColor: theme.infoBorder,
+  };
+}
+
+function formatLocation(finding) {
+  const path = finding.path || "Unknown file";
+  const line = finding.line ? `:${finding.line}` : "";
+  const column = finding.column ? `:${finding.column}` : "";
+
+  return `${path}${line}${column}`;
+}
+
 function sleep(ms, signal) {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(resolve, ms);
@@ -210,12 +344,16 @@ function Field({ label, value, onChange, placeholder, type = "text", theme }) {
 export default function CbomkitSimpleScanner() {
   const [url, setUrl] = useState("");
   const [scanPath, setScanPath] = useState("");
+  const [branch, setBranch] = useState("");
+  const [commit, setCommit] = useState("");
   const [pat, setPat] = useState("");
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState("");
   const [cbom, setCbom] = useState(null);
   const [policyResult, setPolicyResult] = useState(null);
   const [policyError, setPolicyError] = useState("");
+  const [semgrepResult, setSemgrepResult] = useState(null);
+  const [semgrepError, setSemgrepError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
   const abortControllerRef = useRef(null);
@@ -223,9 +361,12 @@ export default function CbomkitSimpleScanner() {
   const theme = darkMode ? darkTheme : lightTheme;
   const busy = isBusyStatus(status);
   const opaEndpoint = getOpaEndpoint();
+  const semgrepEndpoint = getSemgrepEndpoint();
   const importantFindings = extractImportantFindings(policyResult);
+  const semgrepFindings = getSemgrepFindings(semgrepResult);
+  const groupedSemgrepFindings = groupSemgrepFindingsByRuleId(semgrepFindings);
 
-  async function startScan() {
+  function startControlledRun() {
     abortControllerRef.current?.abort();
 
     const controller = new AbortController();
@@ -233,64 +374,186 @@ export default function CbomkitSimpleScanner() {
 
     setError("");
     setPolicyError("");
-    setCbom(null);
-    setPolicyResult(null);
+    setSemgrepError("");
 
+    return controller;
+  }
+
+  function finishControlledRun(controller) {
+    if (abortControllerRef.current === controller) {
+      abortControllerRef.current = null;
+    }
+  }
+
+  function requireUrl() {
     if (!url.trim()) {
       setError("Enter a URL first.");
-      abortControllerRef.current = null;
+      return false;
+    }
+
+    return true;
+  }
+
+  async function generateCbom(signal) {
+    setCbom(null);
+
+    setStatus("Submitting CBOM scan...");
+
+    const scanStartedAt = Date.now();
+    const scanRequest = buildCbomScanRequest({ url, scanPath, pat });
+
+    const response = await fetch(`${HTTP_API_BASE}/api/v1/scan`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(scanRequest),
+      signal,
+    });
+
+    if (response.status !== 202 && !response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new Error(
+        body || `CBOM scan request failed with HTTP ${response.status}.`
+      );
+    }
+
+    setStatus("Scan accepted. Waiting for new CBOM...");
+
+    const generatedCbom = await pollForCbom({
+      scanUrl: scanRequest.scanUrl,
+      scanStartedAt,
+      signal,
+    });
+
+    setCbom(generatedCbom);
+    return generatedCbom;
+  }
+
+  async function handleGenerateCbom() {
+    const controller = startControlledRun();
+
+    setPolicyResult(null);
+    setSemgrepResult(null);
+
+    if (!requireUrl()) {
+      finishControlledRun(controller);
       return;
     }
 
     try {
-      setStatus("Submitting scan...");
-
-      const scanStartedAt = Date.now();
-      const scanRequest = buildScanRequest({ url, scanPath, pat });
-
-      const response = await fetch(`${HTTP_API_BASE}/api/v1/scan`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(scanRequest),
-        signal: controller.signal,
-      });
-
-      if (response.status !== 202 && !response.ok) {
-        const body = await response.text().catch(() => "");
-        throw new Error(
-          body || `Scan request failed with HTTP ${response.status}.`
-        );
-      }
-
-      setStatus("Scan accepted. Waiting for new CBOM...");
-
-      const generatedCbom = await pollForCbom({
-        scanUrl: scanRequest.scanUrl,
-        scanStartedAt,
-        signal: controller.signal,
-      });
-
-      setCbom(generatedCbom);
-      setStatus("Evaluating policy...");
-
-      await evaluatePolicy(generatedCbom, controller.signal);
-
-      setStatus("Finished");
+      setStatus("Generating CBOM...");
+      await generateCbom(controller.signal);
+      setStatus("CBOM generated");
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         setStatus("Cancelled");
         return;
       }
 
-      setStatus("Error");
-      setError(err instanceof Error ? err.message : "Scan failed.");
+      setStatus("CBOM generation failed");
+      setError(err instanceof Error ? err.message : "CBOM generation failed.");
     } finally {
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null;
-      }
+      finishControlledRun(controller);
     }
+  }
+
+  async function handleRegoEvaluation() {
+    const controller = startControlledRun();
+
+    setPolicyResult(null);
+    setSemgrepResult(null);
+
+    if (!requireUrl()) {
+      finishControlledRun(controller);
+      return;
+    }
+
+    try {
+      setStatus("Generating CBOM for REGO evaluation...");
+      const generatedCbom = await generateCbom(controller.signal);
+
+      setStatus("Evaluating REGO policy...");
+      await evaluatePolicy(generatedCbom, controller.signal);
+
+      setStatus("REGO evaluation finished");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setStatus("Cancelled");
+        return;
+      }
+
+      setStatus("REGO evaluation failed");
+      setPolicyError(
+        err instanceof Error ? err.message : "REGO evaluation failed."
+      );
+    } finally {
+      finishControlledRun(controller);
+    }
+  }
+
+  async function handleSemgrepEvaluation() {
+    const controller = startControlledRun();
+
+    setSemgrepResult(null);
+
+    if (!requireUrl()) {
+      finishControlledRun(controller);
+      return;
+    }
+
+    try {
+      setStatus("Running Semgrep evaluation...");
+      await runSemgrepScan(controller.signal);
+      setStatus("Semgrep evaluation finished");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setStatus("Cancelled");
+        return;
+      }
+
+      setStatus("Semgrep evaluation failed");
+      setSemgrepError(
+        err instanceof Error ? err.message : "Semgrep evaluation failed."
+      );
+    } finally {
+      finishControlledRun(controller);
+    }
+  }
+
+  async function runSemgrepScan(signal) {
+    setSemgrepError("");
+    setSemgrepResult(null);
+
+    const semgrepScanRequest = buildSemgrepScanRequest({
+      url,
+      branch,
+      commit,
+      scanPath,
+      pat,
+    });
+
+    const response = await fetch(semgrepEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(semgrepScanRequest),
+      signal,
+    });
+
+    const body = await response.json().catch(() => null);
+
+    console.log("Semgrep response from server:", body);
+
+    if (!response.ok || body?.ok === false) {
+      throw new Error(
+        body?.error || `Semgrep scan failed with HTTP ${response.status}.`
+      );
+    }
+
+    setSemgrepResult(body);
+    return body;
   }
 
   async function pollForCbom({ scanUrl, scanStartedAt, signal }) {
@@ -345,43 +608,29 @@ export default function CbomkitSimpleScanner() {
       return;
     }
 
-    try {
-      setStatus("Evaluating policy...");
+    const response = await fetch(opaEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        input: cbomToEvaluate,
+      }),
+      signal,
+    });
 
-      const response = await fetch(opaEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          input: cbomToEvaluate,
-        }),
-        signal,
-      });
+    const body = await response.json().catch(() => null);
 
-      const body = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(
-          body?.message ||
-            body?.error ||
-            `OPA policy evaluation failed with HTTP ${response.status}.`
-        );
-      }
-
-      setPolicyResult(body);
-      setStatus("Finished");
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        setStatus("Cancelled");
-        return;
-      }
-
-      setPolicyError(
-        err instanceof Error ? err.message : "Policy evaluation failed."
+    if (!response.ok) {
+      throw new Error(
+        body?.message ||
+          body?.error ||
+          `OPA policy evaluation failed with HTTP ${response.status}.`
       );
-      setStatus("Policy evaluation failed");
     }
+
+    setPolicyResult(body);
+    return body;
   }
 
   function cancelProcess() {
@@ -413,12 +662,16 @@ export default function CbomkitSimpleScanner() {
 
     setUrl("");
     setScanPath("");
+    setBranch("");
+    setCommit("");
     setPat("");
     setStatus("Ready");
     setError("");
     setPolicyError("");
+    setSemgrepError("");
     setCbom(null);
     setPolicyResult(null);
+    setSemgrepResult(null);
   }
 
   return (
@@ -438,10 +691,12 @@ export default function CbomkitSimpleScanner() {
       >
         <div style={styles.headerRow}>
           <div style={styles.headerText}>
-            <h1 style={{ ...styles.title, color: theme.title }}>CBOM scan</h1>
+            <h1 style={{ ...styles.title, color: theme.title }}>
+              CBOM, REGO, and Semgrep
+            </h1>
 
             <p style={{ ...styles.subtitle, color: theme.muted }}>
-              REST scan using CBOMkit backend at
+              CBOMkit backend
             </p>
 
             <div
@@ -457,7 +712,23 @@ export default function CbomkitSimpleScanner() {
             </div>
 
             <p style={{ ...styles.subtitle, color: theme.muted }}>
-              OPA policy endpoint
+              Semgrep runner
+            </p>
+
+            <div
+              style={{
+                ...styles.apiBadge,
+                background: theme.badgeBg,
+                color: theme.badgeText,
+                borderColor: theme.badgeBorder,
+              }}
+              title={semgrepEndpoint}
+            >
+              {semgrepEndpoint}
+            </div>
+
+            <p style={{ ...styles.subtitle, color: theme.muted }}>
+              OPA / REGO endpoint
             </p>
 
             <div
@@ -484,7 +755,7 @@ export default function CbomkitSimpleScanner() {
         </div>
 
         <Field
-          label="URL"
+          label="Git URL"
           placeholder="https://github.com/org/repo"
           value={url}
           onChange={setUrl}
@@ -493,9 +764,25 @@ export default function CbomkitSimpleScanner() {
 
         <Field
           label="Scan path"
-          placeholder="Optional, e.g. frontend"
+          placeholder="Optional, e.g. src"
           value={scanPath}
           onChange={setScanPath}
+          theme={theme}
+        />
+
+        <Field
+          label="Branch"
+          placeholder="Optional, e.g. main"
+          value={branch}
+          onChange={setBranch}
+          theme={theme}
+        />
+
+        <Field
+          label="Commit"
+          placeholder="Optional exact commit SHA"
+          value={commit}
+          onChange={setCommit}
           theme={theme}
         />
 
@@ -510,10 +797,11 @@ export default function CbomkitSimpleScanner() {
 
         {error && <p style={styles.error}>{error}</p>}
         {policyError && <p style={styles.error}>{policyError}</p>}
+        {semgrepError && <p style={styles.error}>{semgrepError}</p>}
 
         <div style={styles.buttonRow}>
           <button
-            onClick={startScan}
+            onClick={handleGenerateCbom}
             disabled={busy}
             style={{
               ...styles.primaryButton,
@@ -523,7 +811,35 @@ export default function CbomkitSimpleScanner() {
               cursor: busy ? "not-allowed" : "pointer",
             }}
           >
-            {busy ? "Working..." : "Scan + Evaluate"}
+            Generate CBOM
+          </button>
+
+          <button
+            onClick={handleRegoEvaluation}
+            disabled={busy}
+            style={{
+              ...styles.secondaryButton,
+              borderColor: theme.border,
+              color: theme.text,
+              opacity: busy ? 0.7 : 1,
+              cursor: busy ? "not-allowed" : "pointer",
+            }}
+          >
+            REGO Evaluation
+          </button>
+
+          <button
+            onClick={handleSemgrepEvaluation}
+            disabled={busy}
+            style={{
+              ...styles.secondaryButton,
+              borderColor: theme.border,
+              color: theme.text,
+              opacity: busy ? 0.7 : 1,
+              cursor: busy ? "not-allowed" : "pointer",
+            }}
+          >
+            Semgrep Evaluation
           </button>
 
           {busy && (
@@ -568,22 +884,6 @@ export default function CbomkitSimpleScanner() {
             </button>
           )}
 
-          {cbom && (
-            <button
-              onClick={() => evaluatePolicy(cbom)}
-              disabled={busy}
-              style={{
-                ...styles.secondaryButton,
-                borderColor: theme.border,
-                color: theme.text,
-                opacity: busy ? 0.7 : 1,
-                cursor: busy ? "not-allowed" : "pointer",
-              }}
-            >
-              Evaluate Policy
-            </button>
-          )}
-
           {policyResult && (
             <button
               onClick={() =>
@@ -596,12 +896,153 @@ export default function CbomkitSimpleScanner() {
                 cursor: "pointer",
               }}
             >
-              Download Policy Result
+              Download REGO Result
+            </button>
+          )}
+
+          {semgrepResult && (
+            <button
+              onClick={() => downloadJson("semgrep-result.json", semgrepResult)}
+              style={{
+                ...styles.secondaryButton,
+                borderColor: theme.border,
+                color: theme.text,
+                cursor: "pointer",
+              }}
+            >
+              Download Semgrep Result
             </button>
           )}
         </div>
 
         <p style={{ ...styles.status, color: theme.muted }}>Status: {status}</p>
+
+        {semgrepResult && (
+          <section
+            style={{
+              ...styles.resultBox,
+              background: theme.resultBg,
+              borderColor: theme.border,
+            }}
+          >
+            <h2 style={{ ...styles.resultTitle, color: theme.title }}>
+              Semgrep findings grouped by rule
+            </h2>
+
+            <p style={{ ...styles.resultSummary, color: theme.muted }}>
+              {semgrepFindings.length === 0
+                ? "No Semgrep findings were returned."
+                : `${semgrepFindings.length} finding${
+                    semgrepFindings.length === 1 ? "" : "s"
+                  } across ${groupedSemgrepFindings.length} rule${
+                    groupedSemgrepFindings.length === 1 ? "" : "s"
+                  }.`}
+            </p>
+
+            {groupedSemgrepFindings.length > 0 && (
+              <div style={styles.findingsList}>
+                {groupedSemgrepFindings.map((group) => {
+                  const severityStyle = getSeverityTheme(
+                    group.severity,
+                    theme
+                  );
+
+                  return (
+                    <article
+                      key={group.ruleId}
+                      style={{
+                        ...styles.findingCard,
+                        background: theme.findingBg,
+                        borderColor: theme.border,
+                      }}
+                    >
+                      <div style={styles.findingHeader}>
+                        <div style={styles.groupTitleArea}>
+                          <strong
+                            style={{
+                              ...styles.findingAlgorithm,
+                              color: theme.title,
+                            }}
+                          >
+                            {group.algorithm}
+                          </strong>
+
+                          <p
+                            style={{
+                              ...styles.findingMeta,
+                              color: theme.muted,
+                              marginTop: 4,
+                            }}
+                          >
+                            Rule: {group.ruleId}
+                          </p>
+                        </div>
+
+                        <div style={styles.badgeStack}>
+                          <span
+                            style={{
+                              ...styles.severityBadge,
+                              ...severityStyle,
+                            }}
+                          >
+                            {group.severity}
+                          </span>
+
+                          <span
+                            style={{
+                              ...styles.countBadge,
+                              background: theme.badgeBg,
+                              color: theme.badgeText,
+                              borderColor: theme.badgeBorder,
+                            }}
+                          >
+                            {group.findings.length} finding
+                            {group.findings.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p style={{ ...styles.findingInfo, color: theme.text }}>
+                        {group.message}
+                      </p>
+
+                      <div
+                        style={{
+                          ...styles.locationsBox,
+                          borderColor: theme.border,
+                          background: theme.locationBg,
+                        }}
+                      >
+                        <p
+                          style={{
+                            ...styles.locationsTitle,
+                            color: theme.title,
+                          }}
+                        >
+                          Matching locations
+                        </p>
+
+                        <ol style={styles.locationList}>
+                          {group.findings.map((finding, index) => (
+                            <li
+                              key={`${group.ruleId}-${finding.path}-${finding.line}-${finding.column}-${index}`}
+                              style={{
+                                ...styles.locationItem,
+                                color: theme.muted,
+                              }}
+                            >
+                              {formatLocation(finding)}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
 
         {policyResult && (
           <section
@@ -612,12 +1053,12 @@ export default function CbomkitSimpleScanner() {
             }}
           >
             <h2 style={{ ...styles.resultTitle, color: theme.title }}>
-              High and critical findings
+              REGO high and critical findings
             </h2>
 
             <p style={{ ...styles.resultSummary, color: theme.muted }}>
               {importantFindings.length === 0
-                ? "No high or critical policy findings were returned."
+                ? "No high or critical REGO findings were returned."
                 : `${importantFindings.length} high/critical finding${
                     importantFindings.length === 1 ? "" : "s"
                   } returned.`}
@@ -695,6 +1136,7 @@ const lightTheme = {
   badgeBorder: "#bfd0e3",
   resultBg: "#ffffff",
   findingBg: "#ffffff",
+  locationBg: "#f8fafc",
   dangerBg: "#fef2f2",
   dangerText: "#991b1b",
   dangerBorder: "#fecaca",
@@ -704,6 +1146,9 @@ const lightTheme = {
   criticalBg: "#fef2f2",
   criticalText: "#991b1b",
   criticalBorder: "#fecaca",
+  infoBg: "#eff6ff",
+  infoText: "#1d4ed8",
+  infoBorder: "#bfdbfe",
 };
 
 const darkTheme = {
@@ -722,6 +1167,7 @@ const darkTheme = {
   badgeBorder: "#334155",
   resultBg: "#06142f",
   findingBg: "#071a3d",
+  locationBg: "#06142f",
   dangerBg: "#450a0a",
   dangerText: "#fecaca",
   dangerBorder: "#7f1d1d",
@@ -731,6 +1177,9 @@ const darkTheme = {
   criticalBg: "#450a0a",
   criticalText: "#fecaca",
   criticalBorder: "#991b1b",
+  infoBg: "#172554",
+  infoText: "#bfdbfe",
+  infoBorder: "#1d4ed8",
 };
 
 const styles = {
@@ -746,7 +1195,7 @@ const styles = {
   },
   card: {
     width: "100%",
-    maxWidth: 760,
+    maxWidth: 860,
     border: "1px solid",
     borderRadius: 20,
     padding: 28,
@@ -887,10 +1336,20 @@ const styles = {
   },
   findingHeader: {
     display: "flex",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
     marginBottom: 8,
+  },
+  groupTitleArea: {
+    minWidth: 0,
+    flex: 1,
+  },
+  badgeStack: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 6,
+    flexDirection: "column",
   },
   findingAlgorithm: {
     fontSize: 15,
@@ -906,10 +1365,49 @@ const styles = {
     textTransform: "uppercase",
     whiteSpace: "nowrap",
   },
+  countBadge: {
+    border: "1px solid",
+    borderRadius: 999,
+    padding: "3px 8px",
+    fontSize: 12,
+    fontWeight: 800,
+    whiteSpace: "nowrap",
+  },
   findingInfo: {
     margin: 0,
     fontSize: 14,
     lineHeight: 1.5,
     overflowWrap: "anywhere",
+  },
+  findingMeta: {
+    margin: "8px 0 0",
+    fontSize: 12,
+    lineHeight: 1.4,
+    overflowWrap: "anywhere",
+    fontFamily:
+      "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  },
+  locationsBox: {
+    marginTop: 12,
+    border: "1px solid",
+    borderRadius: 10,
+    padding: 12,
+  },
+  locationsTitle: {
+    margin: "0 0 8px",
+    fontSize: 13,
+    fontWeight: 800,
+  },
+  locationList: {
+    margin: 0,
+    paddingLeft: 20,
+  },
+  locationItem: {
+    marginBottom: 6,
+    fontSize: 12,
+    lineHeight: 1.4,
+    overflowWrap: "anywhere",
+    fontFamily:
+      "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   },
 };
