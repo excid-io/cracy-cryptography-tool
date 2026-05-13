@@ -1,0 +1,120 @@
+name: Generate and Evaluate ECCG CBOMs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  cbom:
+    runs-on: ubuntu-latest
+    name: CBOM + ECCG policy - ${{ matrix.section }}
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - section: asymmetric-atomic-primitives
+          - section: symmetric-atomic-primitives
+          - section: symmetric-constructions
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Prepare temporary Python project
+        run: |
+          bash .github/scripts/eccg/prepare_scan_workspace.sh "${{ matrix.section }}"
+
+      - name: Save repo metadata outside scan workspace
+        run: |
+          rm -rf /tmp/eccg-backup
+          mkdir -p /tmp/eccg-backup
+          cp -r policies /tmp/eccg-backup/policies
+          cp -r .github /tmp/eccg-backup/.github
+
+      - name: Move temporary project to workspace root
+        run: |
+          find . -mindepth 1 -maxdepth 1 ! -name cbom-scan -exec rm -rf {} +
+
+          shopt -s dotglob
+          mv cbom-scan/* .
+          rmdir cbom-scan
+
+          echo "Final CBOMkit workspace:"
+          find . -maxdepth 3 -type f | sort
+
+      - name: Generate CBOM for ${{ matrix.section }}
+        uses: cbomkit/cbomkit-action@v2.2.0
+        id: cbom
+        env:
+          CBOMKIT_LANGUAGES: python
+          CBOMKIT_EXCLUDE: ""
+          CBOMKIT_OUTPUT_DIR: cbom-output
+          CBOMKIT_WRITE_EMTPY_CBOMS: "true"
+
+      - name: Restore policies and scripts
+        run: |
+          cp -r /tmp/eccg-backup/policies .
+          cp -r /tmp/eccg-backup/.github .
+
+          echo "Restored policies:"
+          find policies -maxdepth 4 -type f | sort
+
+          echo "Restored scripts:"
+          find .github/scripts -maxdepth 4 -type f | sort
+
+      - name: Install OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: Rename CBOM
+        run: |
+          mkdir -p cboms
+          cp cbom-output/cbom.json "cboms/${{ matrix.section }}.json"
+
+          echo "Named CBOM:"
+          ls -lh cboms/
+          head -n 80 "cboms/${{ matrix.section }}.json"
+
+      - name: Inspect generated CBOM
+        run: |
+          python3 .github/scripts/eccg/inspect_cbom.py "cboms/${{ matrix.section }}.json"
+
+      - name: List Rego packages
+        run: |
+          echo "Rego packages:"
+          grep -R "^package " policies/eccg
+
+      - name: Validate Rego policies
+        run: |
+          opa check policies/eccg
+
+      - name: Evaluate ECCG findings
+        run: |
+          bash .github/scripts/eccg/evaluate_findings.sh "${{ matrix.section }}"
+
+      - name: Evaluate ECCG compliance
+        run: |
+          python3 .github/scripts/eccg/evaluate_compliance.py "${{ matrix.section }}"
+
+      - name: Fail on blocking ECCG findings
+        run: |
+          python3 .github/scripts/eccg/fail_on_blocking_findings.py "${{ matrix.section }}"
+
+      - name: Upload CBOM and ECCG results
+        uses: actions/upload-artifact@v4
+        if: ${{ always() && env.ACT != 'true' }}
+        with:
+          name: eccg-${{ matrix.section }}
+          path: |
+            cboms/${{ matrix.section }}.json
+            results/${{ matrix.section }}-findings.json
+            results/${{ matrix.section }}-compliant.txt
+          if-no-files-found: warn

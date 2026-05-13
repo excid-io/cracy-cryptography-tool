@@ -1,0 +1,815 @@
+package cbom.eccg.helpers
+
+
+#
+# Helper: retrieve a note by its ID from the shared notes dataset.
+#
+# Loaded from:
+# policies/eccg/eccg_notes.json
+#
+# Actual OPA path:
+# data.eccg.eccg_notes.notes["Symmetric-Constructions"]["6-AddIntegrity"]
+#
+get_note(section, subsection, note_string_id) := note if {
+    #note := data.eccg.notes[section][subsection][note_string_id]
+    note := data.notes[section][subsection][note_string_id]
+
+} else := {
+    "title": "unknown",
+    "text": "Note not found"
+}
+
+allowed_severities := {"warning", "info", "low", "medium", "high", "critical"}
+
+is_valid_severity(sev) if {
+    allowed_severities[sev]
+}
+
+#
+# Find a component by bom-ref.
+#
+get_component_by_bomref(bom_ref) := component if {
+    some i
+    component := input.components[i]
+    component["bom-ref"] == bom_ref
+}
+
+#
+# True if src component depends on dst component according to CycloneDX dependencies.
+#
+depends_on_component(src_component, dst_component) if {
+    some i
+    dep := input.dependencies[i]
+    dep.ref == src_component["bom-ref"]
+    some j
+    dep.dependsOn[j] == dst_component["bom-ref"]
+}
+
+#
+# ---------------------------------------------------------
+# Helper: get_evidence_occurrences
+#
+# Return the evidence occurrences array for a component.
+# If evidence or occurrences is missing, return an empty array.
+# ---------------------------------------------------------
+#
+get_evidence_occurrences(component) := occurrences if {
+    occurrences := object.get(object.get(component, "evidence", {}), "occurrences", [])
+}
+
+#
+# ---------------------------------------------------------
+# Helper: get_occurrence_location_or_empty
+#
+# Return the source file path for one occurrence.
+# If missing, return the empty string.
+# ---------------------------------------------------------
+#
+get_occurrence_location_or_empty(occurrence) := location if {
+    location := object.get(occurrence, "location", "")
+}
+
+#
+# ---------------------------------------------------------
+# Helper: get_occurrence_line_or_unknown
+#
+# Return the source line for one occurrence.
+# If missing, return -1.
+# ---------------------------------------------------------
+#
+get_occurrence_line_or_unknown(occurrence) := line if {
+    line := object.get(occurrence, "line", -1)
+}
+
+#
+# ---------------------------------------------------------
+# Helper: same_source_file
+#
+# True if two components have at least one evidence occurrence
+# in the same source file.
+# ---------------------------------------------------------
+#
+same_source_file(component_a, component_b) if {
+    some occurrence_a in get_evidence_occurrences(component_a)
+    some occurrence_b in get_evidence_occurrences(component_b)
+
+    location_a := get_occurrence_location_or_empty(occurrence_a)
+    location_b := get_occurrence_location_or_empty(occurrence_b)
+
+    location_a != ""
+    location_a == location_b
+}
+
+#
+# ---------------------------------------------------------
+# Helper: shares_evidence_location_and_line
+#
+# True if two components share at least one evidence occurrence
+# with the same source file and line number.
+# ---------------------------------------------------------
+#
+shares_evidence_location_and_line(component_a, component_b) if {
+    some occurrence_a in get_evidence_occurrences(component_a)
+    some occurrence_b in get_evidence_occurrences(component_b)
+
+    location_a := get_occurrence_location_or_empty(occurrence_a)
+    line_a := get_occurrence_line_or_unknown(occurrence_a)
+
+    location_b := get_occurrence_location_or_empty(occurrence_b)
+    line_b := get_occurrence_line_or_unknown(occurrence_b)
+
+    location_a != ""
+    line_a != -1
+    location_a == location_b
+    line_a == line_b
+}
+
+#
+# ---------------------------------------------------------
+# Helper: get_shared_source_file_or_unknown
+#
+# Return one shared source file between two components, if any.
+# Otherwise return "unknown".
+# ---------------------------------------------------------
+#
+get_shared_source_file_or_unknown(component_a, component_b) := location if {
+    some occurrence_a in get_evidence_occurrences(component_a)
+    some occurrence_b in get_evidence_occurrences(component_b)
+
+    location_a := get_occurrence_location_or_empty(occurrence_a)
+    location_b := get_occurrence_location_or_empty(occurrence_b)
+
+    location_a != ""
+    location_a == location_b
+    location := location_a
+} else := "unknown"
+
+#
+# ---------------------------------------------------------
+# Helper: get_shared_source_location_and_line_or_unknown
+#
+# Return one shared file+line match between two components, if any.
+# Otherwise return a default object.
+# ---------------------------------------------------------
+#
+get_shared_source_location_and_line_or_unknown(component_a, component_b) := match if {
+    some occurrence_a in get_evidence_occurrences(component_a)
+    some occurrence_b in get_evidence_occurrences(component_b)
+
+    location_a := get_occurrence_location_or_empty(occurrence_a)
+    line_a := get_occurrence_line_or_unknown(occurrence_a)
+
+    location_b := get_occurrence_location_or_empty(occurrence_b)
+    line_b := get_occurrence_line_or_unknown(occurrence_b)
+
+    location_a != ""
+    line_a != -1
+    location_a == location_b
+    line_a == line_b
+
+    match := {
+        "location": location_a,
+        "line": line_a
+    }
+} else := {
+    "location": "unknown",
+    "line": -1
+}
+
+#
+# Explain whether two components matched by same-line or same-file.
+#
+get_composition_match_basis(component_a, component_b) := "same-line" if {
+    shares_evidence_location_and_line(component_a, component_b)
+} else := "same-file" if {
+    same_source_file(component_a, component_b)
+} else := "unknown"
+
+#
+# Helper: build a standardized finding object.
+#
+build_finding(rule_id, severity_level, message_text, component, extra_fields) := finding_object if {
+
+    is_valid_severity(severity_level)
+
+    base_finding := {
+        "ruleId": rule_id,
+        "severity": severity_level,
+        "message": message_text,
+        "component": component.name,
+        "bomRef": component["bom-ref"],
+        "references": get_source_references(component)
+    }
+
+    finding_object := object.union(base_finding, extra_fields)
+}
+
+#
+# Helper: return all source-code references for a component.
+# Each entry keeps the file path and line number together.
+#
+get_source_references(component) := source_references if {
+    occurrences := object.get(object.get(component, "evidence", {}), "occurrences", [])
+
+    source_references := [
+        {
+            "location": object.get(occurrence, "location", "unknown"),
+            "line": object.get(occurrence, "line", -1)
+        }
+        | some i
+          occurrence := occurrences[i]
+    ]
+} else := []
+
+#
+# Return the actual key size (in bits) if explicitly present.
+# Otherwise return "unknown".
+#
+get_key_size_or_unknown(component) := key_size if {
+    key_size_raw := object.get(component.cryptoProperties.algorithmProperties, "keySize", "")
+    key_size_raw != ""
+    key_size := to_number(key_size_raw)
+} 
+
+is_mac_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    object.get(component.cryptoProperties.algorithmProperties, "primitive", "") == "mac"
+}
+
+is_hash_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    object.get(component.cryptoProperties.algorithmProperties, "primitive", "") == "hash"
+}
+
+is_block_cipher_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    object.get(component.cryptoProperties.algorithmProperties, "primitive", "") == "block-cipher"
+}
+
+is_ae_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    object.get(component.cryptoProperties.algorithmProperties, "primitive", "") == "ae"
+}
+
+is_kdf_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "kdf"
+}
+
+#
+# ---------------------------------------------------------
+# Helper: is_password_hashing_component
+#
+# Purpose:
+# Identify components used for password hashing.
+#
+# Current behavior:
+# - Treats all KDF primitives as potential password-hashing components.
+#
+# Rationale:
+# - ECCG models PBKDF2 under password hashing, but CBOM currently
+#   only exposes it as a KDF primitive.
+# - This helper provides an abstraction layer so rules can target
+#   password hashing without being tightly coupled to PBKDF2 or
+#   specific naming patterns.
+#
+# Future improvements:
+# - Restrict to PBKDF2 (and possibly Argon2, scrypt if added)
+# - Add context-based detection (e.g., file paths, usage hints)
+# - Use CBOM extensions like "usage": "password-hashing"
+#
+# Notes:
+# - This is intentionally broad and may over-approximate.
+# - Downstream rules should refine behavior if needed.
+# ---------------------------------------------------------
+#
+is_password_hashing_primitive(component) if {
+    is_kdf_primitive(component)
+}
+
+is_gcm_primitive(component) if {
+    is_ae_primitive(component)
+    get_mode_or_unknown(component) == "gcm"
+}
+
+is_ccm_primitive(component) if {
+    is_ae_primitive(component)
+    get_mode_or_unknown(component) == "ccm"
+}
+
+is_gcm_or_ccm(component) if {
+    is_gcm_primitive(component)
+} else if {
+    is_ccm_primitive(component)
+}
+
+#
+# ---------------------------------------------------------
+# Helper: is_combiner_primitive
+#
+# Purpose:
+# Detect components explicitly modeled by the CBOM specification
+# as primitive = "combiner".
+#
+# CBOM specification:
+# - "combiner": A combiner aggregates many candidates for a
+#   cryptographic primitive and generates a new candidate for
+#   the same primitive.
+# ---------------------------------------------------------
+#
+is_combiner_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "combiner"
+
+}
+
+is_explicit_combiner(component) if {
+    is_combiner_primitive(component)
+} else := false
+
+
+#
+# Helper: identify symmetric encryption components from the CBOM.
+#
+# We treat block-cipher modes and AE modes as relevant scheme components.
+#
+is_symmetric_encryption_scheme(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    is_block_cipher_primitive(component)
+} else if {
+    component.cryptoProperties.assetType == "algorithm"
+    is_ae_primitive(component)
+}
+
+get_primitive_or_unknown(component) := primitive if {
+    primitive := object.get(component.cryptoProperties.algorithmProperties, "primitive", "")
+    primitive != ""
+} else := "unknown"
+
+get_mode_or_unknown(component) := mode if {
+    mode := object.get(component.cryptoProperties.algorithmProperties, "mode", "")
+    mode != ""
+} else := "unknown"
+
+get_name_or_unknown(component) := name if {
+    name := object.get(component, "name", "")
+    name != ""
+} else := "unknown"
+
+get_parameter_set_identifier_or_unknown(component) := p if {
+    p := object.get(component.cryptoProperties.algorithmProperties, "parameterSetIdentifier", "")
+    p != ""
+} else := "unknown"
+
+get_parameter_set_identifier_to_number_or_unknown(component) := n if {
+    raw := get_parameter_set_identifier_or_unknown(component)
+    raw != "unknown"
+    n := to_number(raw)
+} else := "unknown"
+
+#
+# ---------------------------------------------------------
+# Helper: component_matches_primitive
+#
+# True if a component matches the requested abstract kind.
+# Extend this helper as new component kinds are needed.
+# ---------------------------------------------------------
+#
+component_matches_primitive(component, kind) if {
+    kind == "hash"
+    is_hash_primitive(component)
+} else if {
+    kind == "block-cipher"
+    is_block_cipher_primitive(component)
+} else if {
+    kind == "mac"
+    is_mac_primitive(component)
+} else if {
+    kind == "ae"
+    is_ae_primitive(component)
+} else if {
+    kind == "kdf"
+    is_kdf_primitive(component)
+}
+
+#
+# ---------------------------------------------------------
+# Helper: get_related_component_by_primitive
+#
+# Purpose:
+# Resolve a component related to a parent component, constrained
+# by the expected primitive type of the candidate component.
+#
+# Strategy (ordered by confidence):
+# 1. Prefer explicit CBOM dependency relationships.
+# 2. Fall back to same file+line evidence co-location.
+#
+# Important:
+# - This helper performs only structural matching.
+# - It does NOT validate whether the relationship is semantically correct.
+# - The caller must enforce all preconditions (primitive, scheme, etc.).
+#
+# ---------------------------------------------------------
+# Usage examples:
+#
+# Example 1: HMAC → underlying hash
+#
+# hash_component := get_related_component_by_primitive(mac_component, "hash")
+#
+# Precondition:
+# - mac_component is a MAC primitive
+# - mac_component implements an HMAC-like scheme
+#
+#
+# Example 2: CMAC → underlying block cipher
+#
+# cipher_component := get_related_component_by_primitive(mac_component, "block-cipher")
+#
+# Precondition:
+# - mac_component is a MAC primitive
+# - mac_component implements a CMAC-like scheme
+#
+#
+# Example 3: HKDF → underlying hash
+#
+# hash_component := get_related_component_by_primitive(kdf_component, "hash")
+#
+# Precondition:
+# - kdf_component is a KDF primitive
+# - kdf_component implements HKDF
+#
+#
+# Notes:
+# - This helper relies on CBOM extraction quality.
+# - Fallback matching (co-location) is heuristic and may produce
+#   false positives or miss relationships.
+# - Always guard calls with appropriate scheme/primitive checks.
+# ---------------------------------------------------------
+#
+get_related_component_by_primitive(parent_component, candidate_primitive) := candidate_component if {
+    some i
+    candidate_component := input.components[i]
+    component_matches_primitive(candidate_component, candidate_primitive)
+
+    depends_on_component(parent_component, candidate_component)
+} else := candidate_component if {
+    some i
+    candidate_component := input.components[i]
+    component_matches_primitive(candidate_component, candidate_primitive)
+
+    shares_evidence_location_and_line(parent_component, candidate_component)
+}
+
+
+#
+# ---------------------------------------------------------
+# Helper: is_possible_encryption_mac_composition
+#
+# Heuristic detection of a possible composed authenticated-
+# encryption construction.
+#
+# Returns true when:
+# - one component is a symmetric encryption scheme, and
+# - another component is a MAC scheme, and
+# - both share the same source location and line or more weakly the same source location.
+#
+# This represents a strong heuristic that both operations may
+# belong to the same logical construction (e.g., Encrypt-then-MAC,
+# MAC-then-Encrypt, or Encrypt-and-MAC).
+#
+# Limitations:
+# - This helper does NOT determine the order of operations.
+# - It does NOT distinguish between different composition patterns.
+# - It relies on CBOM evidence granularity; if extraction does not
+#   align components to the same line, this may produce false negatives.
+#
+# Intended use:
+# - trigger higher-level findings indicating possible composed AE
+#   constructions where exact classification is not possible.
+# ---------------------------------------------------------
+#
+is_possible_encryption_mac_composition(enc_component, mac_component) if {
+    is_symmetric_encryption_scheme(enc_component)
+    is_mac_primitive(mac_component)
+    shares_evidence_location_and_line(enc_component, mac_component)
+} else if {
+    is_symmetric_encryption_scheme(enc_component)
+    is_mac_primitive(mac_component)
+    same_source_file(enc_component, mac_component)
+}
+
+#
+# ---------------------------------------------------------
+# Helper: component_has_evidence_path_containing
+#
+# Purpose:
+# Check whether a component has at least one evidence occurrence
+# whose source file path contains a given substring.
+#
+# Strategy:
+# - Iterate over all evidence occurrences attached to the component.
+# - Extract the "location" field (file path).
+# - Perform a case-insensitive substring match.
+#
+# Notes:
+# - Matching is case-insensitive.
+# - Only the file path is considered (line numbers are ignored).
+# - Returns true on the first matching occurrence.
+# - Returns false if no occurrences exist or no match is found.
+#
+# Example:
+# component_has_evidence_path_containing(component, "test")
+# → true if any occurrence path contains "test"
+#
+# Use cases:
+# - Heuristic classification (e.g., test code vs production code)
+# - Filtering findings based on file location
+# - Context-aware policy rules
+# ---------------------------------------------------------
+#
+component_has_evidence_path_containing(component, needle) if {
+    some i
+    occ := object.get(object.get(component, "evidence", {}), "occurrences", [])[i]
+    loc := lower(object.get(occ, "location", ""))
+    loc != ""
+    contains(loc, lower(needle))
+}
+
+#
+# ---------------------------------------------------------
+# Helper: normalize_crypto_name
+#
+# Purpose:
+# Normalize a cryptographic component name to improve
+# robustness of pattern matching across CBOM outputs.
+#
+# Transformations applied:
+# - Convert to lowercase
+# - Remove whitespace
+# - Remove hyphens "-"
+# - Remove parentheses "(" and ")"
+#
+# Example transformations:
+# - "KMAC-256"      → "kmac256"
+# - "KMAC (256)"    → "kmac256"
+# - "KMACXOF(128)"  → "kmacxof128"
+#
+# Rationale:
+# CBOM tools emit inconsistent naming formats. Normalization
+# ensures detection logic is stable across:
+#     • different toolchains
+#     • formatting variations
+#     • specification styles
+#
+# Notes:
+# - This helper is intentionally lossy (formatting removed).
+# - Designed for substring matching, not exact equality.
+# ---------------------------------------------------------
+#
+normalize_crypto_name(name) := normalized if {
+    lower_name := lower(name)
+    no_spaces := replace(lower_name, " ", "")
+    no_hyphens := replace(no_spaces, "-", "")
+    no_open_parens := replace(no_hyphens, "(", "")
+    normalized := replace(no_open_parens, ")", "")
+}
+
+
+is_public_key_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "pke"
+}
+
+#
+# ---------------------------------------------------------
+# Helper: is_asymmetric_algorithm
+#
+# Purpose:
+# Identify asymmetric cryptographic algorithm components in a CBOM.
+#
+# Detection strategy:
+# This helper treats a component as asymmetric if it is modeled as
+# an algorithm and satisfies at least one of the following conditions:
+#
+# 1. The algorithm primitive is public-key encryption:
+#      primitive == "pke"
+#
+# 2. The algorithm exposes a key-agreement function:
+#      cryptoFunctions contains "key-agree"
+#
+# 3. The algorithm exposes a signature function:
+#      cryptoFunctions contains "signature"
+#
+# Rationale:
+# CycloneDX / CBOM representations may not encode all asymmetric
+# algorithms using the same primitive value.
+#
+# For example:
+# - RSA encryption may appear as primitive = "pke"
+# - ECDH / FFDHE / X25519 may appear through cryptoFunctions = "key-agree"
+# - ECDSA / EdDSA / RSA signatures may appear through cryptoFunctions = "signature"
+#
+# Therefore, checking only primitive == "pke" would miss many
+# asymmetric algorithms, especially key-agreement and signature schemes.
+#
+# Intended use:
+# - Shared precondition for asymmetric primitive rules.
+# - Useful before applying RSA, FF-DLOG, EC-DLOG, signature, or
+#   key-agreement specific classification logic.
+#
+# Notes:
+# - This helper does not classify the exact asymmetric family.
+# - It only determines that the component belongs to the broader
+#   asymmetric/public-key cryptography space.
+# - Family-specific helpers such as is_rsa_primitive(),
+#   is_ffdlog_primitive(), and is_ecdlog_primitive() should perform
+#   more precise matching.
+# ---------------------------------------------------------
+#
+is_asymmetric_algorithm(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+
+    primitive := lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", ""))
+
+    primitive == "pke"
+} else if {
+    component.cryptoProperties.assetType == "algorithm"
+
+    some fn in object.get(component.cryptoProperties.algorithmProperties, "cryptoFunctions", [])
+
+    lower(fn) == "key-agree"
+} else if {
+    component.cryptoProperties.assetType == "algorithm"
+
+    some fn in object.get(component.cryptoProperties.algorithmProperties, "cryptoFunctions", [])
+
+    lower(fn) == "signature"
+}
+
+#
+# ---------------------------------------------------------
+# Helper: normalize_ec_curve_name
+#
+# Purpose:
+# Normalize elliptic curve names so that ECCG curve aliases can
+# be matched reliably across CycloneDX registry names, library
+# names, and common standard aliases.
+#
+# Transformations:
+# - Use normalize_crypto_name()
+# - Remove slash "/"
+# - Remove underscore "_"
+#
+# Example transformations:
+# - "nist/P-256"                 -> "nistp256"
+# - "secg/secp256r1"             -> "secgsecp256r1"
+# - "x962/prime256v1"            -> "x962prime256v1"
+# - "brainpool/brainpoolP384r1"  -> "brainpoolbrainpoolp384r1"
+# - "anssi/FRP256v1"             -> "anssifrp256v1"
+# ---------------------------------------------------------
+#
+normalize_ec_curve_name(curve) := normalized if {
+    base := normalize_crypto_name(curve)
+    no_slash := replace(base, "/", "")
+    normalized := replace(no_slash, "_", "")
+}
+
+#
+# ---------------------------------------------------------
+# Helper: get_ec_curve_or_unknown
+#
+# Purpose:
+# Extract the elliptic curve identifier from a CBOM component.
+#
+# Detection order:
+# 1. cryptoProperties.algorithmProperties.ellipticCurve
+# 2. component.name fallback
+#
+# Rationale:
+# CycloneDX 1.7 provides algorithmProperties.ellipticCurve,
+# but CBOM tools may serialize curve information inconsistently.
+# This helper therefore checks multiple possible locations.
+# ---------------------------------------------------------
+#
+get_ec_curve_or_unknown(component) := curve if {
+    props := component.cryptoProperties.algorithmProperties
+    curve := object.get(component.cryptoProperties.algorithmProperties, "ellipticCurve", "")
+    curve != ""
+} else := name if {
+    name := get_name_or_unknown(component)
+    name != "unknown"
+} else := "unknown"
+
+
+#
+# Return the policy evaluation timestamp in nanoseconds.
+#
+# Preferred deterministic input:
+# {
+#   "policyEvaluationDate": "2026-05-05T00:00:00Z"
+# }
+#
+# Fallback:
+# - wall-clock time from OPA.
+#
+evaluation_time_ns := ns if {
+    date := input.policyEvaluationDate
+    ns := time.parse_rfc3339_ns(date)
+} else := ns if {
+    ns := time.now_ns()
+}
+
+#
+# Extract the year from the evaluation date.
+#
+evaluation_year := year if {
+    parts := time.date(evaluation_time_ns)
+    year := parts[0]
+}
+
+#
+# Returns true when the current/evaluation year is less than or equal to
+# the final accepted legacy year.
+#
+# Example:
+#   is_legacy_until_year(2030)
+#
+# Means:
+#   valid as legacy through calendar year 2030.
+#
+is_legacy_until_year(final_legacy_year) if {
+    evaluation_year <= final_legacy_year
+}
+
+#
+# Returns true once a legacy mechanism has expired.
+#
+# Example:
+#   is_legacy_expired_after_year(2030)
+#
+# Means:
+#   expired starting in 2031.
+#
+is_legacy_expired_after_year(final_legacy_year) if {
+    evaluation_year > final_legacy_year
+}
+
+#
+# Convert an ECCG legacy marker like L[2030] into a year.
+#
+legacy_marker_year(marker) := year if {
+    startswith(marker, "L[")
+    endswith(marker, "]")
+
+    year_text := trim_suffix(trim_prefix(marker, "L["), "]")
+    year := to_number(year_text)
+}
+
+#
+# True if the legacy marker is still active.
+#
+# Example:
+#   is_legacy_marker_active("L[2030]")
+#
+is_legacy_marker_active(marker) if {
+    year := legacy_marker_year(marker)
+    is_legacy_until_year(year)
+}
+
+#
+# True if the legacy marker has expired.
+#
+# Example:
+#   is_legacy_marker_expired("L[2030]")
+#
+is_legacy_marker_expired(marker) if {
+    year := legacy_marker_year(marker)
+    is_legacy_expired_after_year(year)
+}
+
+#
+# Produce a status string for a legacy marker.
+#
+# Returns:
+# - "legacy" if still inside the legacy period
+# - "expired-legacy" if the legacy period has passed
+#
+legacy_marker_status(marker) := "legacy" if {
+    is_legacy_marker_active(marker)
+} else := "expired-legacy" if {
+    is_legacy_marker_expired(marker)
+}
+
+legacy_status_severity(status) := "medium" if {
+    status == "legacy"
+} else := "critical" if {
+    status == "expired-legacy"
+}
+
+legacy_status_message(name, marker, status) := message if {
+    status == "legacy"
+    message := sprintf("%s is considered acceptable only as a legacy mechanism %s and should be phased out.", [name, marker])
+} else := message if {
+    status == "expired-legacy"
+    message := sprintf("%s was acceptable only as a legacy mechanism %s, but that legacy period has expired.", [name, marker])
+}

@@ -1,0 +1,366 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:9f072c05-07f9-4b53-a12e-d434557d5c20",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-04-28T20:18:18Z",
+    "tools": {
+      "services": [
+        {
+          "provider": {
+            "name": "PQCA"
+          },
+          "name": "CBOMkit"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "gitUrl",
+        "value": "https://github.com/FotiosBistas/Weak-Cryptography"
+      },
+      {
+        "name": "revision",
+        "value": "main"
+      },
+      {
+        "name": "commit",
+        "value": "9f28a03"
+      },
+      {
+        "name": "subfolder",
+        "value": "configs/assymetric-atomic-primitives/tests"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "bee7f7f1-d51a-480a-b640-af4d1e132c7b",
+      "name": "private-key@bee7f7f1-d51a-480a-b640-af4d1e132c7b",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/rsa_integer_factorization.py",
+            "line": 15,
+            "offset": 18,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key",
+          "size": 3072
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "638f140c-b6bc-4d11-96ff-29fab2af3410",
+      "name": "DH",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 27,
+            "offset": 30,
+            "additionalContext": "generate_private_key"
+          },
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 30,
+            "offset": 35,
+            "additionalContext": "generate_private_key"
+          },
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 45,
+            "offset": 35,
+            "additionalContext": "generate_private_key"
+          },
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 48,
+            "offset": 40,
+            "additionalContext": "generate_private_key"
+          },
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 63,
+            "offset": 35,
+            "additionalContext": "generate_private_key"
+          },
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 66,
+            "offset": 40,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "keygen"
+          ]
+        },
+        "oid": "1.2.840.113549.1.3.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "132828aa-8bb3-4463-b5c1-f1ee268fe773",
+      "name": "private-key@132828aa-8bb3-4463-b5c1-f1ee268fe773",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 66,
+            "offset": 40,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "9a01166a-a9ca-450a-a0af-832e5f4d89d3",
+      "name": "RSA-3072",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/rsa_integer_factorization.py",
+            "line": 15,
+            "offset": 18,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pke",
+          "parameterSetIdentifier": "3072",
+          "cryptoFunctions": [
+            "keygen"
+          ]
+        },
+        "oid": "1.2.840.113549.1.1.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "095a268b-42f0-4977-a9f1-e829c3db8ea7",
+      "name": "private-key@095a268b-42f0-4977-a9f1-e829c3db8ea7",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/rsa_integer_factorization.py",
+            "line": 41,
+            "offset": 18,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key",
+          "size": 2048
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "0687a657-227a-47c8-9563-facbbb18a5bf",
+      "name": "private-key@0687a657-227a-47c8-9563-facbbb18a5bf",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 45,
+            "offset": 35,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "ca70e8c4-a98c-4534-8f85-fae528c97bb9",
+      "name": "RSA-2048",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/rsa_integer_factorization.py",
+            "line": 41,
+            "offset": 18,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pke",
+          "parameterSetIdentifier": "2048",
+          "cryptoFunctions": [
+            "keygen"
+          ]
+        },
+        "oid": "1.2.840.113549.1.1.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "04d027c5-c530-4027-adae-e47284ae3f5e",
+      "name": "private-key@04d027c5-c530-4027-adae-e47284ae3f5e",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 27,
+            "offset": 30,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "7f632b9d-78cf-43b5-a2da-ef8a35bc4b45",
+      "name": "private-key@7f632b9d-78cf-43b5-a2da-ef8a35bc4b45",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 30,
+            "offset": 35,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "9470b83c-4adb-418c-88d9-17a76f0a89df",
+      "name": "private-key@9470b83c-4adb-418c-88d9-17a76f0a89df",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 48,
+            "offset": 40,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "c906102a-089b-4886-bd41-9c9e75ef6507",
+      "name": "private-key@c906102a-089b-4886-bd41-9c9e75ef6507",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/assymetric-atomic-primitives/tests/ff_dlog.py",
+            "line": 63,
+            "offset": 35,
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "private-key"
+        }
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "0687a657-227a-47c8-9563-facbbb18a5bf",
+      "dependsOn": [
+        "638f140c-b6bc-4d11-96ff-29fab2af3410"
+      ]
+    },
+    {
+      "ref": "132828aa-8bb3-4463-b5c1-f1ee268fe773",
+      "dependsOn": [
+        "638f140c-b6bc-4d11-96ff-29fab2af3410"
+      ]
+    },
+    {
+      "ref": "095a268b-42f0-4977-a9f1-e829c3db8ea7",
+      "dependsOn": [
+        "ca70e8c4-a98c-4534-8f85-fae528c97bb9"
+      ]
+    },
+    {
+      "ref": "bee7f7f1-d51a-480a-b640-af4d1e132c7b",
+      "dependsOn": [
+        "9a01166a-a9ca-450a-a0af-832e5f4d89d3"
+      ]
+    },
+    {
+      "ref": "9470b83c-4adb-418c-88d9-17a76f0a89df",
+      "dependsOn": [
+        "638f140c-b6bc-4d11-96ff-29fab2af3410"
+      ]
+    },
+    {
+      "ref": "c906102a-089b-4886-bd41-9c9e75ef6507",
+      "dependsOn": [
+        "638f140c-b6bc-4d11-96ff-29fab2af3410"
+      ]
+    },
+    {
+      "ref": "04d027c5-c530-4027-adae-e47284ae3f5e",
+      "dependsOn": [
+        "638f140c-b6bc-4d11-96ff-29fab2af3410"
+      ]
+    },
+    {
+      "ref": "7f632b9d-78cf-43b5-a2da-ef8a35bc4b45",
+      "dependsOn": [
+        "638f140c-b6bc-4d11-96ff-29fab2af3410"
+      ]
+    }
+  ]
+}

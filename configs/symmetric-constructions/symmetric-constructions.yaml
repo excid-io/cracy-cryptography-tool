@@ -1,0 +1,324 @@
+rules:
+  # ==========================================================
+  # ECCG Symmetric Encryption Schemes (Python)
+  #
+  # Allowed if integrity is enforced:
+  #   - CTR / OFB / CBC / CFB   (confidentiality-only; must have integrity)
+  #
+  # Allowed (integrity built-in AEAD):
+  #   - GCM / CCM
+  #
+  # Flag:
+  #   - Any other mode as NOT RECOMMENDED by ECCG
+  #
+  # Also enforce:
+  #   - No fixed/predictable IV/nonce for CTR/OFB/CBC/CFB and for AEAD nonces where matched
+  # ==========================================================
+
+  # ----------------------------------------------------------
+  # (A) ERROR: CTR/OFB/CBC/CFB used without detected integrity
+  # Integrity detection includes:
+  #   - stdlib hmac.new(...)
+  #   - cryptography.hazmat.primitives.hmac.HMAC(...)
+  #   - PyCryptodome AEAD helpers encrypt_and_digest/decrypt_and_verify
+  #   - cryptography AEAD objects AESGCM / AESCCM / ChaCha20Poly1305
+  #
+  # This is a heuristic "presence" check in the same function.
+  # ----------------------------------------------------------
+  - id: python.crypto.symm.rstar_missing_integrity
+    languages: [python]
+    severity: ERROR
+    message: >
+      ECCG policy: CTR/OFB/CBC/CFB require integrity (AEAD or Encrypt-then-MAC).
+      No integrity mechanism detected in the same function.
+    metadata:
+      category: security
+      tags: [crypto, symmetric, eccg, integrity, policy]
+      confidence: MEDIUM
+    patterns:
+      - pattern-inside: |
+          def $F(...):
+            ...
+      - pattern-either:
+          # cryptography confidentiality-only modes
+          - pattern: modes.CTR(...)
+          - pattern: modes.OFB(...)
+          - pattern: modes.CBC(...)
+          - pattern: modes.CFB(...)
+          - pattern: cryptography.hazmat.primitives.ciphers.modes.CTR(...)
+          - pattern: cryptography.hazmat.primitives.ciphers.modes.OFB(...)
+          - pattern: cryptography.hazmat.primitives.ciphers.modes.CBC(...)
+          - pattern: cryptography.hazmat.primitives.ciphers.modes.CFB(...)
+
+          # PyCryptodome/PyCrypto confidentiality-only modes
+          - pattern: AES.new(..., AES.MODE_CTR, ...)
+          - pattern: AES.new(..., AES.MODE_OFB, ...)
+          - pattern: AES.new(..., AES.MODE_CBC, ...)
+          - pattern: AES.new(..., AES.MODE_CFB, ...)
+          - pattern: DES3.new(..., DES3.MODE_CTR, ...)
+          - pattern: DES3.new(..., DES3.MODE_OFB, ...)
+          - pattern: DES3.new(..., DES3.MODE_CBC, ...)
+          - pattern: DES3.new(..., DES3.MODE_CFB, ...)
+
+      # ECCG-approved integrity signals
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            hmac.new(...)
+
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            HMAC(...)
+
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            CMAC(...)
+
+      # KMAC (cryptography)
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            KMAC128(...)
+
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            KMAC256(...)
+
+      # AEAD tag APIs count as integrity (GCM/CCM)
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            AESGCM(...)
+
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            AESCCM(...)
+
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            modes.GCM(...)
+
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            modes.CCM(...)
+
+      # PyCryptodome AEAD helpers
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            encrypt_and_digest(...)
+
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            decrypt_and_verify(...)
+
+  # ----------------------------------------------------------
+  # (C) ERROR: fixed/predictable IV/nonce (CTR/OFB/CBC/CFB)
+  # + fixed nonce patterns for GCM/CCM where we can match them
+  # ----------------------------------------------------------
+  - id: python.crypto.symm.iv_or_nonce.fixed_or_predictable
+    languages: [python]
+    severity: ERROR
+    message: >
+      Fixed/predictable IV/nonce detected. ECCG policy requires random IV/nonce or a nonce never reused with the same key.
+    metadata:
+      category: security
+      tags: [crypto, symmetric, iv, nonce, predictable, eccg]
+      confidence: HIGH
+    pattern-either:
+      # cryptography: fixed bytes/constant buffers
+      - pattern-either:
+          - pattern: modes.CBC(b"...")
+          - pattern: modes.CFB(b"...")
+          - pattern: modes.OFB(b"...")
+          - pattern: modes.CTR(b"...")
+          - pattern: modes.CBC(bytes($N))
+          - pattern: modes.CFB(bytes($N))
+          - pattern: modes.OFB(bytes($N))
+          - pattern: modes.CTR(bytes($N))
+          - pattern: modes.CBC(bytearray($N))
+          - pattern: modes.CFB(bytearray($N))
+          - pattern: modes.OFB(bytearray($N))
+          - pattern: modes.CTR(bytearray($N))
+
+      # PyCryptodome: literal iv/nonce or initial_value=0
+      - pattern-either:
+          - pattern: AES.new(..., AES.MODE_CBC, iv=b"...", ...)
+          - pattern: AES.new(..., AES.MODE_CFB, iv=b"...", ...)
+          - pattern: AES.new(..., AES.MODE_OFB, iv=b"...", ...)
+          - pattern: AES.new(..., AES.MODE_CTR, nonce=b"...", ...)
+          - pattern: AES.new(..., AES.MODE_CTR, initial_value=0, ...)
+          - pattern: DES3.new(..., DES3.MODE_CBC, iv=b"...", ...)
+          - pattern: DES3.new(..., DES3.MODE_CFB, iv=b"...", ...)
+          - pattern: DES3.new(..., DES3.MODE_OFB, iv=b"...", ...)
+          - pattern: DES3.new(..., DES3.MODE_CTR, nonce=b"...", ...)
+          - pattern: DES3.new(..., DES3.MODE_CTR, initial_value=0, ...)
+
+      # PyCryptodome AEAD (GCM/CCM) fixed nonce
+      - pattern-either:
+          - pattern: AES.new(..., AES.MODE_GCM, nonce=b"...", ...)
+          - pattern: AES.new(..., AES.MODE_CCM, nonce=b"...", ...)
+
+      # cryptography AEAD fixed nonce: AESGCM/AESCCM/ChaCha20Poly1305
+      - pattern-either:
+          - pattern: AESGCM(...).encrypt(b"...", ..., ...)
+          - pattern: AESGCM(...).decrypt(b"...", ..., ...)
+          - pattern: AESCCM(...).encrypt(b"...", ..., ...)
+          - pattern: AESCCM(...).decrypt(b"...", ..., ...)
+          - pattern: ChaCha20Poly1305(...).encrypt(b"...", ..., ...)
+          - pattern: ChaCha20Poly1305(...).decrypt(b"...", ..., ...)
+
+  # ----------------------------------------------------------
+  # (D) ERROR: non-recommended modes (allowlist)
+  # Allowed:
+  #   - cryptography modes: CTR/OFB/CBC/CFB/GCM/CCM
+  #   - PyCryptodome AES.MODE_: CTR/OFB/CBC/CFB/GCM/CCM
+  # Everything else => NOT RECOMMENDED by ECCG.
+  # ----------------------------------------------------------
+  - id: python.crypto.symm.eccg.non_recommended_mode
+    languages: [python]
+    severity: ERROR
+    message: >
+      Symmetric encryption mode NOT RECOMMENDED by ECCG allowlist.
+      Allowed: CTR/OFB/CBC/CFB (with integrity) and GCM/CCM (AEAD).
+    metadata:
+      category: security
+      tags: [crypto, symmetric, eccg, policy, mode, allowlist]
+      confidence: MEDIUM
+    pattern-either:
+      # cryptography modes.*
+      - patterns:
+          - pattern: modes.$MODE(...)
+          - metavariable-regex:
+              metavariable: $MODE
+              regex: '^(?!(CTR|OFB|CBC|CFB|GCM|CCM)$).+'
+      - patterns:
+          - pattern: cryptography.hazmat.primitives.ciphers.modes.$MODE(...)
+          - metavariable-regex:
+              metavariable: $MODE
+              regex: '^(?!(CTR|OFB|CBC|CFB|GCM|CCM)$).+'
+
+      # PyCryptodome AES.MODE_*
+      - patterns:
+          - pattern: AES.new(..., AES.$MODE, ...)
+          - metavariable-regex:
+              metavariable: $MODE
+              regex: '^MODE_(?!(CTR|OFB|CBC|CFB|GCM|CCM)$).+'
+      - patterns:
+          - pattern: DES3.new(..., DES3.$MODE, ...)
+          - metavariable-regex:
+              metavariable: $MODE
+              regex: '^MODE_(?!(CTR|OFB|CBC|CFB)$).+'
+
+
+  - id: python.crypto.mac.truncation.lt_96bits
+    languages: [python]
+    severity: ERROR
+    message: >
+      ECCG MAC truncation policy: MAC/tag truncation must be at least 96 bits (12 bytes),
+      unless explicitly stated otherwise. Detected truncation below 12 bytes.
+    metadata:
+      category: security
+      tags: [crypto, mac, truncation, eccg, policy]
+      confidence: HIGH
+    pattern-either:
+      # direct slice on common MAC/tag producers
+      - patterns:
+          - pattern: hmac.new(...).digest()[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[01])$'
+      - patterns:
+          - pattern: HMAC(...).finalize()[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[01])$'
+      - patterns:
+          - pattern: CMAC(...).finalize()[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[01])$'
+      # variable-based truncation (most common in real code)
+      - patterns:
+          - pattern: $TAG = $ANY
+          - pattern: $TAG = $TAG[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[01])$'
+      # pycryptodome AEAD helpers return tag separately; catch truncation
+      - patterns:
+          - pattern: $CT, $TAG = $C.encrypt_and_digest(...)
+          - pattern: $TAG = $TAG[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[01])$'
+      - patterns:
+          - pattern: $CT, $TAG = $C.encrypt_and_digest(...)
+          - pattern: $CT = $CT[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[01])$'
+
+  - id: python.crypto.mac.truncation.lt_96bits_hex
+    languages: [python]
+    severity: ERROR
+    message: >
+      ECCG MAC truncation policy: tag must be >= 96 bits. For hex strings this means
+      at least 24 hex characters. Detected hexdigest truncation below 24 chars.
+    metadata:
+      category: security
+      tags: [crypto, mac, truncation, hex, eccg, policy]
+      confidence: HIGH
+    pattern-either:
+      - patterns:
+          - pattern: hmac.new(...).hexdigest()[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[0-9]|2[0-3])$'
+      - patterns:
+          - pattern: $HEX = hmac.new(...).hexdigest()
+          - pattern: $HEX = $HEX[:$N]
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?:[0-9]|1[0-9]|2[0-3])$'
+
+  - id: python.crypto.mac.hmac_sha1.legacy
+    languages: [python]
+    severity: WARNING
+    message: >
+      HMAC-SHA1 detected. ECCG considers it acceptable legacy for now but recommends phasing it out until becoming legacy to 2030.
+      Prefer HMAC-SHA-256/384/512 (and keep tag >= 96 bits).
+    metadata:
+      category: security
+      tags: [crypto, mac, hmac, sha1, legacy, eccg]
+      confidence: HIGH
+    pattern-either:
+      - pattern: hmac.new(..., digestmod=hashlib.sha1)
+      - pattern: hmac.new(..., digestmod=hashlib.sha1, ...)
+      - pattern: HMAC(..., hashes.SHA1(), ...)
+      - pattern: cryptography.hazmat.primitives.hmac.HMAC(..., hashes.SHA1(), ...)
+
+  - id: python.crypto.mac.non_eccg_mac
+    languages: [python]
+    severity: WARNING
+    message: >
+      MAC mechanism not on ECCG approved list (HMAC/KMAC/CMAC/CBC-MAC/GMAC).
+      Review against ECCG policy.
+    metadata:
+      category: security
+      tags: [crypto, mac, eccg, policy]
+      confidence: MEDIUM
+    pattern-either:
+      # common non-ECCG MAC implementations in Python ecosystems
+      - pattern: Crypto.Hash.Poly1305.new(...)
+      - pattern: Poly1305.new(...)
+      - pattern: nacl.bindings.crypto_onetimeauth(...)
+      - pattern: nacl.secret.SecretBox(...)
+      - pattern: SipHash(...)

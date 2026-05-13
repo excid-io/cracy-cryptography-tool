@@ -1,0 +1,241 @@
+{
+  "notes": {
+    "Symmetric-Atomic-Primitives": {
+      "Block-Ciphers": {
+        "2-SmallBlockSize": {
+          "category": "specific",
+          "title": "2-SmallBlockSize",
+          "text": "Block ciphers are used in modes of operation to provide a wide variety of security functionalities. In the majority of the cases, the modes fulfil their security objectives as long as less than 2^{n/2-5} n-bit blocks are processed by the block cipher with a given key. For small block sizes, e.g., 64 bits, and high throughput applications, e.g. securing gigabit network, this may be an issue, e.g., when the key renewal rate is lower than what is required by the data throughput."
+        },
+        "3-QuantumThreat": {
+          "category": "specific",
+          "title": "3-QuantumThreat",
+          "text": "There exist algorithms leveraging quantum computers, like the Grover algorithm, that may speed up attacks against block ciphers. Such attacks may be performed 'retroactively': the ciphertext can be stored now and decrypted later when a quantum computer becomes available. In contexts where resistance against attacks leveraging quantum computers is required, it is recommended not to use block ciphers with key size smaller than 192 bits."
+        }
+      },
+      "Hash-Functions": {
+        "4-QuantumThreat": {
+          "category": "specific",
+          "title": "4-QuantumThreat",
+          "text": "There exist algorithms leveraging quantum computers that may speed up attacks against hash functions. In contexts where resistance against attacks leveraging quantum computers is required, it is recommended to not use hash functions with output length smaller than 384 bits."
+        }
+      }
+    },
+    "Symmetric-Constructions": {
+      "Symmetric-Encryption-Schemes": {
+        "5-IVType": {
+          "category": "general",
+          "title": "IVType",
+          "text": "In order to provide security in a strong sense, the encryption scheme must either be probabilistic and generate a random initialization vector to bootstrap encryption, or require an additional input, whose value can only be used once with a given key, i.e. a nonce. The specifications of modes of operation describe what is expected (nonce or random IV). Implementations shall follow these specifications, e.g., CBC with a constant or more generally a predictable IV does not follow the CBC specification [SP800-38A] and is not accepted."
+        },
+        "6-AddIntegrity": {
+          "category": "general",
+          "title": "6-AddIntegrity",
+          "text": "Authenticated encryption schemes provide superior privacy security guarantees than encryption only mechanisms. As a consequence, while all encryption only modes considered above are recommended for the purpose of mode construction, as in 3.5, their standalone use is considered legacy."
+        },
+        "7-StreamMode": {
+          "category": "specific",
+          "title": "7-StreamMode",
+          "text": "Some symmetric confidentiality schemes operate by masking the plaintext by a keystream generated from the key and IV. When using these so-called stream modes of operation, it is of utmost importance to make sure that no two generated key streams ever overlap. This can be achieved deterministically in some modes, e.g., CTR. It is ensured with overwhelming probability in other modes, e.g., OFB mode, as long as a same IV-key pair is not used (or only with negligible probability) to encrypt two messages under the same key."
+        },
+        "8-Padding": {
+          "category": "specific",
+          "title": "8-Padding",
+          "text": "Some encryption modes cannot handle naturally the encryption of a last incomplete block. For such modes a specific operation must be performed on the last block. A widespread procedure consists in padding the plaintext with some structured data to ensure its size is a multiple of the blocksize. The verification of the format of the padding during decryption may leak information on the decrypted value in a way that could be used to decrypt any ciphertext. More generally, any verification performed on the format of the decrypted ciphertext may leak information. Developers/evaluators should ensure that the implementation of decryption does not provide an attacker with any such padding or format oracle. An alternative to the application of the padding scheme is the use of ciphertext stealing [SP800-38A-Addendum]."
+        }
+      },
+      "Disk-Encryption": {
+        "9-DiskEncStreamMode": {
+          "category": "general",
+          "title": "DiskEncStreamMode",
+          "text": "Disk encryption modes are by nature deterministic encryption modes, where the initialization vector is derived from the location where the encrypted data is stored. This makes the use of stream modes of operation improper since the ciphertexts corresponding to two different plaintexts stored at the same location would leak the difference between the plaintexts."
+        },
+        "10-UniqueTweak": {
+          "category": "specific",
+          "title": "UniqueTweak",
+          "text": "The tweak value used to encrypt each complete or incomplete block position in each disk sector shall be unique, i.e. a (set of) disk(s) encrypted under the same key shall never contain two distinct blocks encrypted under the same key and the same tweak value. In the former sentence, blocks are meant as n-bit elements of the alphabet of the block cipher."
+        },
+        "11-AddressTweak": {
+          "category": "specific",
+          "title": "AddressTweak",
+          "text": "Usually, the tweak is derived from the address where the ciphertext is stored. For storage devices or disk drivers which determine the used tweak from logical addresses rather than physical addresses, tweak uniqueness is not ensured a priori and extra care should be applied to assess conformance to 10-UniqueTweak."
+        },
+        "12-UniqueSectorNumber": {
+          "category": "specific",
+          "title": "UniqueSectorNumber",
+          "text": "Each disk sector shall have a unique sector number, i.e. a (set of) disk(s) encrypted under the same key shall never contain two distinct sectors encrypted under the same key and the same sector number."
+        },
+        "13-AddressSectorNumber": {
+          "category": "specific",
+          "title": "AddressSectorNumber",
+          "text": "Usually, the sector number is derived from the address where the sector is stored. For storage devices or disk drivers which determine the used sector number from logical addresses rather than physical addresses, sector number’s uniqueness is not ensured a priori and extra care should be applied to assess conformance to 12-UniqueSectorNumber."
+        },
+        "14-CBCMalleability": {
+          "category": "specific",
+          "title": "CBCMalleability",
+          "text": "CBC-ESSIV does not offer integrity protection. Due to the malleability of CBC decryption, it may be possible for an adversary to manipulate the encrypted disk so that the decryption is meaningful. If this attack path is a concern, stronger disk encryption mechanisms should be adopted."
+        }
+      },
+      "Message-Authentication-Codes": {
+        "15-MACTruncation96": {
+          "category": "general",
+          "title": "15-MACTruncation96",
+          "text": "Unless stated otherwise explicitly for a given mechanism, the truncation of a MAC generated by an agreed MAC mechanism to at least 96 bits is agreed."
+        },
+        "16-MACTruncation64": {
+          "category": "general",
+          "title": "16-MACTruncation64",
+          "text": "Unless stated otherwise explicitly for a given mechanism, the truncation of a MAC generated by an agreed MAC mechanism to at least 64 bits is considered legacy under the condition that the maximal number of MAC verifications performed for a given key over its lifetime can be bounded by 2^20."
+        }, 
+        "17-FixedInputLength": {
+          "category": "specific",
+          "title": "17-FixedInputLength",
+          "text": "CBC-MAC is agreed only in contexts where the sizes of all the inputs for which CBC-MAC is computed under the same key are identical. Trivial length extension forgeries can be performed when variable length inputs are allowed."
+        },
+        "18-HMAC-SHA-1": {
+          "category": "specific",
+          "title": "18-HMAC-SHA-1",
+          "text": "The HMAC construction does not require the collision resistance of the underlying hash function. For the time being, HMAC-SHA-1 is considered as an acceptable legacy mechanism, even though SHA-1 is not considered as an acceptable general purpose hash function. It is recommended however to phase out HMAC-SHA-1."
+        },
+        "19-QuantumThreat": {
+          "category": "specific",
+          "title": "19-QuantumThreat",
+          "text": "There exist algorithms leveraging quantum computers, like the Grover algorithm, that may speed up attacks against MAC schemes based on hash functions. In contexts where resistance against attacks leveraging quantum computers is required, it is recommended not to use MAC schemes with key size smaller than 192 bits."
+        },
+        "22-GMAC-GCMNonce": {
+          "category": "specific",
+          "title": "22-GMAC-GCMNonce",
+          "text": "The IV must be managed within the security perimeter of the authenticated encryption process. For example, it is crucial to ensure that no adversary can cause the same IV to be reused to protect different plaintext and associated data pairs under the same key."
+        },
+        "23-GMAC-GCMOptions": {
+          "category": "specific",
+          "title": "23-GMAC-GCMOptions",
+          "text": "Only the following GCM options are agreed: the IV length must be equal to 96 bits; the deterministic IV construction method [SP800-38D, Section 8.2.1] must be used; the MAC length t must be 128 bits."
+        },
+        "25-GMAC-GCM-Bounds": {
+          "category": "specific",
+          "title": "25-GMAC-GCM-Bounds",
+          "text": "As the unforgeability bounds of the agreed GMAC and GCM options of 23-GMAC-GCMOptions are not optimal, the MAC length must be at least 128 bits. Thus no truncation to a final MAC length such as 96 bits must be performed."
+        }
+      }, 
+      "Challenge-Sizes":{
+        "20-CollChallenge": {
+          "category": "unspecified",
+          "title": "20-CollChallenge",
+          "text": "The verifier must ensure that a challenge cannot be replayed with non-negligible probability. The challenge could for example be implemented by a random value, whose size is large enough, and that is generated by the verifier."
+        }
+      }, 
+      "Symmetric-Authenticated-Encryption": {
+        "21-DecryptionOrder": {
+          "category": "specific",
+          "title": "21-DecryptionOrder",
+          "text": "If the integrity of the ciphertexts is not properly checked before decryption, the developer/evaluator should ensure that the implementation does not instantiate any padding or other error oracle. This means that the implementation does not give away any information on the padding or the format of the plaintext obtained through the decryption of an arbitrary ciphertext. Otherwise, an adversary may be able to decrypt a target ciphertext by exploiting, e.g., error messages or time side-channel information. Plaintexts should never be sent to consuming applications before their integrity has been checked."
+        },
+        "22-GMAC-GCMNonce": {
+          "category": "specific",
+          "title": "22-GMAC-GCMNonce",
+          "text": "The IV must be managed within the security perimeter of the authenticated encryption process. For example, it is crucial to ensure that no adversary can cause the same IV to be reused to protect different (plaintext, associated data) pairs under the same key."
+        },
+        "23-GMAC-GCMOptions": {
+          "category": "specific",
+          "title": "23-GMAC-GCMOptions",
+          "text": "Only the following GCM options are agreed: the IV length must be equal to 96 bits; the deterministic IV construction method [SP800-38D, Section 8.2.1] must be used; the MAC length t must be 128 bits."
+        },
+        "24-GCMPlaintextLength": {
+          "category": "specific",
+          "title": "24-GCMPlaintextLength",
+          "text": "By specification, at each invocation of GCM, the length of the plaintext must be at most 2^32 − 2 blocks of the underlying block cipher. Checking that this maximal length is not exceeded is required in environments where this might potentially happen."
+        },
+        "25-GMAC-GCM-Bounds": {
+          "category": "specific",
+          "title": "25-GMAC-GCM-Bounds",
+          "text": "As the unforgeability bounds of the agreed GMAC and GCM options of 23-GMAC-GCMOptions are not optimal, the MAC length must be at least 128 bits. Thus no truncation to a final MAC length such as 96 bits must be performed."
+        }
+      },
+      "Key-Protection": {},
+      "Key-Derivation-Functions": {
+        "26-PBKDF2-PRF": {
+          "category": "specific",
+          "title": "26-PBKDF2-PRF",
+          "text": "PBKDF2 is built over a pseudo-random function, that can be instantiated using a MAC generation function. This pseudo-random function shall be an agreed mechanism. In the case where HMAC is used, care has to be taken regarding the key length. Indeed, if the HMAC key is longer than the hash function message block length, the key is hashed. This prehashing in HMAC can lower the effective entropy of the key derived using PBKDF2."
+        }
+      },
+      "Password-Protection": {
+        "27-NumberOfIterations": {
+          "category": "specific",
+          "title": "27-NumberOfIterations",
+          "text": "Password hashing mechanisms offer parameters controlling the complexity of the hashing execution. This allows to increase the work factor of brute-force attacks: a legitimate use of the password hashing requires only one execution, while a brute-force attack requires a large number of executions. Thus the number of iterations of PBKDF2 should be selected as large as possible so that it does not impede the legitimate use."
+        },
+        "28-Salt": {
+          "category": "specific",
+          "title": "28-Salt",
+          "text": "A salt is a random value, generated when the password is registered, and that is stored along the password verification value. Salting a password hashing mechanism counters precomputation attacks. The length of the salt shall be at least 128 bits."
+        }
+      },
+      "Key-Combiners": {}
+    }, 
+    "Asymmetric-Atomic-Primitives": {
+      "RSA-Integer-Factorization": {
+        "29-QuantumThreat": {
+          "category": "general",
+          "title": "Quantum Threat",
+          "text": "RSA is vulnerable to low-complexity attacks, of polynomial complexity, in the quantum computing model, such as Shor's algorithm. Such attacks may be performed 'retroactively': the ciphertext can be stored now and decrypted later when a quantum computer becomes available. In contexts where resistance against attacks leveraging a quantum computer is required, the RSA primitive shall not be used without being combined with a quantum resistant mechanism."
+        },
+        "30-LegacyRSA": {
+          "category": "specific",
+          "title": "Legacy RSA",
+          "text": "The acceptability deadline for the legacy use of modulus of size above 1900 bits, but less than 3000 bits, is set to December 31, 2025. A later acceptability deadline for user/data authentication with this particular algorithm may be set on a national level."
+        }
+      }, 
+      "FF-DLOG": {
+        "31-CorrectSubgroup": {
+          "category": "general",
+          "title": "Correct Subgroup",
+          "text": "It should be ensured that manipulated values have order divisible by q and dividing p−1. In the case of parameters generated with the agreed method, this boils down to checking that manipulated values have exact order q."
+        },
+        "32-QuantumThreat": {
+          "category": "general",
+          "title": "Quantum Threat",
+          "text": "There exist algorithms, like Shor’s algorithm, that break completely the discrete logarithm in multiplicative group over finite fields in the quantum computation model. Such attacks may be performed 'retroactively': the communications can be stored now and the discrete logarithm can be broken later when a quantum computer becomes available. In contexts where resistance against attacks leveraging quantum computers is required, the discrete logarithm in finite fields primitive shall not be used without being combined with a quantum resistant mechanism."
+        },
+        "33-Precomputation": {
+          "category": "specific",
+          "title": "Precomputation",
+          "text": "Discrete logarithm algorithms involve a group related precomputation phase, which is the bottleneck in terms of complexity of the attack. As a consequence, for DL modules shared by a lot of users and applications, it is strongly recommended not to use modules of length close to the lower limit of the legacy range."
+        },
+        "34-LegacyFF-DLOG": {
+          "category": "specific",
+          "title": "Legacy FF-DLOG",
+          "text": "The acceptability deadline for the legacy use of multiplicative groups modulo a prime above 1900 bits, but less than 3000 bits, is set to December 31, 2025."
+        }
+      }, 
+      "EC-DLOG": {
+        "35-PointOnCurve": {
+          "category": "general",
+          "title": "Point On Curve",
+          "text": "Special precautions should be taken to ensure that manipulated points lie on the curve, i.e. they verify the curve equation."
+        },
+        "36-PointInSubgroup": {
+          "category": "general",
+          "title": "Point In Subgroup",
+          "text": "In case a curve with non-prime order is used, it should be ensured that the manipulated points lie in the intended subgroup and have order divisible by r."
+        },
+        "37-PrimeOrder": {
+          "category": "general",
+          "title": "Prime Order",
+          "text": "If the subgroup order is chosen to be prime, i.e. q = r, and such that r^2 does not divide #E(GF(p)), the verifications for PointInSubgroup boil down to checking that the manipulated points have exact order r."
+        },
+        "38-QuantumThreat": {
+          "category": "general",
+          "title": "Quantum Threat",
+          "text": "There exist algorithms, like Shor's algorithm, that break completely the discrete logarithm on elliptic curves in the quantum computation model. Such attacks may be performed 'retroactively': the communications can be stored now and the discrete logarithm can be broken later when a quantum computer becomes available. In contexts where resistance against attacks leveraging quantum computers is required, the discrete logarithm on elliptic curves primitive shall not be used without being combined with a quantum resistant mechanism."
+        },
+        "39-SpecialP": {
+          "category": "specific",
+          "title": "Special P",
+          "text": "The special form of the prime number p used to construct the finite field GF(p) makes side channel attacks more efficient than with a random prime, and not only because the arithmetic of the underlying finite field is faster."
+        }
+      }
+    }
+  }
+}

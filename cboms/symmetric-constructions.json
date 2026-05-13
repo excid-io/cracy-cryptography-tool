@@ -1,0 +1,881 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:863444e3-17da-4c56-a0f5-e27427a05400",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-04-21T17:23:42Z",
+    "tools": {
+      "services": [
+        {
+          "provider": {
+            "name": "PQCA"
+          },
+          "name": "CBOMkit"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "gitUrl",
+        "value": "https://github.com/FotiosBistas/Weak-Cryptography"
+      },
+      {
+        "name": "revision",
+        "value": "main"
+      },
+      {
+        "name": "commit",
+        "value": "a76353c"
+      },
+      {
+        "name": "subfolder",
+        "value": "configs/symmetric-constructions/tests"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "0f8a94b1-8377-4c1a-9848-2912cfabde2f",
+      "name": "AES-CFB-PKCS7",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/symmetric_encryption.py",
+            "line": 28,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "cfb",
+          "padding": "pkcs7",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "e8b34e0b-3c3c-41ef-9543-a2c6214df27e",
+      "name": "AES-ECB-PKCS7",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/symmetric_encryption.py",
+            "line": 54,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "ecb",
+          "padding": "pkcs7",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "70bd0b76-b398-408a-b756-c7dc7cf7190f",
+      "name": "AES-GCM-PKCS7",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/symmetric_encryption.py",
+            "line": 59,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "ae",
+          "parameterSetIdentifier": "128",
+          "mode": "gcm",
+          "padding": "pkcs7",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "295ec3e2-61db-49a4-920a-74a216f389ee",
+      "name": "AES-XTS",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/disk_encryption.py",
+            "line": 77,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "other",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "09733ff1-0ded-42e0-bc5a-7d2f5cb23deb",
+      "name": "SHA1",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 97,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 69,
+            "offset": 27,
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "160",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        },
+        "oid": "1.3.14.3.2.26"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "e14136b1-3a81-49ed-a7c6-3d4bc54667cd",
+      "name": "AES-CBC-PKCS7",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/symmetric_encryption.py",
+            "line": 37,
+            "offset": 32,
+            "additionalContext": "Cipher"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/symmetric_encryption.py",
+            "line": 45,
+            "offset": 27,
+            "additionalContext": "Cipher"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 23,
+            "offset": 16,
+            "additionalContext": "Cipher"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 106,
+            "offset": 16,
+            "additionalContext": "Cipher"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 132,
+            "offset": 16,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "cbc",
+          "padding": "pkcs7",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "d46b65bb-4eb0-4c10-8e3d-baa37a010215",
+      "name": "HMAC-SHA256",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 41,
+            "offset": 29,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 46,
+            "offset": 29,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 83,
+            "offset": 32,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 26,
+            "offset": 10,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 96,
+            "offset": 10,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 135,
+            "offset": 10,
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        },
+        "oid": "1.2.840.113549.2.9"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "20c9573e-af53-4421-bb7b-bf982db1422d",
+      "name": "HKDF-SHA256",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 104,
+            "offset": 10,
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "keyderive"
+          ]
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "93d800ce-52cd-49a3-af43-8217886a7a24",
+      "name": "AES128-GCM",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/mac_universal_hash.py",
+            "line": 36,
+            "offset": 14,
+            "additionalContext": "generate_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "ae",
+          "parameterSetIdentifier": "128",
+          "mode": "gcm",
+          "cryptoFunctions": [
+            "keygen"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1.6"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "5eb9f1e4-ac83-4165-9ac9-7e62ddb7c554",
+      "name": "ConcatenationKDF",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 21,
+            "offset": 10,
+            "additionalContext": "ConcatKDFHash"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "keyderive"
+          ]
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "40e8c3f5-94f4-4965-a714-0e380a9ab7bb",
+      "name": "HMAC-SHA1",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 69,
+            "offset": 27,
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        },
+        "oid": "1.2.840.113549.2.7"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "05a7fe16-ea70-4b8a-8a92-799cf40457ee",
+      "name": "AES",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/mac_block_ciphers.py",
+            "line": 57,
+            "offset": 15,
+            "additionalContext": "CMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128"
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "3dc52176-28cf-4a65-b62f-ac18c4995dc0",
+      "name": "SHA256",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 19,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 45,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 71,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 41,
+            "offset": 29,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 46,
+            "offset": 29,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/mac_hash_functions.py",
+            "line": 83,
+            "offset": 32,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 21,
+            "offset": 10,
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 45,
+            "offset": 10,
+            "additionalContext": "X963KDF"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 75,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 104,
+            "offset": 10,
+            "additionalContext": "HKDF"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 26,
+            "offset": 10,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 96,
+            "offset": 10,
+            "additionalContext": "HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/authenticated_encryption.py",
+            "line": 135,
+            "offset": 10,
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.2.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "e8be4a75-a9c7-4627-af61-b77336789a09",
+      "name": "PBKDF2-SHA1",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 97,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "keyderive"
+          ]
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "468fe8e3-f5a4-4ee9-a3ef-3ac642f4ee86",
+      "name": "AES128",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/key_protection.py",
+            "line": 58,
+            "offset": 14,
+            "additionalContext": "aes_key_wrap"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/key_protection.py",
+            "line": 82,
+            "offset": 14,
+            "additionalContext": "aes_key_wrap_with_padding"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "other",
+          "parameterSetIdentifier": "128",
+          "cryptoFunctions": [
+            "encapsulate"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "51f30f88-c947-40a8-a47c-0f367834f009",
+      "name": "AES-CTR-PKCS7",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/symmetric_encryption.py",
+            "line": 20,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "ctr",
+          "padding": "pkcs7",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "b621ec54-9901-4840-92f0-1034d7eeeec8",
+      "name": "secret-key@b621ec54-9901-4840-92f0-1034d7eeeec8",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/mac_universal_hash.py",
+            "line": 36,
+            "offset": 14,
+            "additionalContext": "generate_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "type": "secret-key"
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "16272466-dac0-4306-8d63-938a0efdd969",
+      "name": "ANSI X9.63",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 45,
+            "offset": 10,
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "keyderive"
+          ]
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "c266f2cd-7c47-47ea-9f64-2331d7f71a3b",
+      "name": "AES-OFB-PKCS7",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/symmetric_encryption.py",
+            "line": 24,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "ofb",
+          "padding": "pkcs7",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "c24bae1a-7ffc-49d0-8d26-9238dbef1502",
+      "name": "AES-CTR",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/disk_encryption.py",
+            "line": 105,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "ctr",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "905aa58a-3a1f-4872-9147-6794907ba47f",
+      "name": "AES-ECB",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/disk_encryption.py",
+            "line": 34,
+            "offset": 16,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "ecb",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "f52f8125-0384-4763-9377-b14f11471ddf",
+      "name": "AES-CBC",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/disk_encryption.py",
+            "line": 91,
+            "offset": 20,
+            "additionalContext": "Cipher"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/mac_block_ciphers.py",
+            "line": 40,
+            "offset": 16,
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "block-cipher",
+          "parameterSetIdentifier": "128",
+          "mode": "cbc",
+          "cryptoFunctions": [
+            "encrypt"
+          ]
+        },
+        "oid": "2.16.840.1.101.3.4.1"
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "f0ba3b46-9b44-4ae3-b693-c974f85c87bf",
+      "name": "PBKDF2-SHA256",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 19,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 45,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/password_hashing.py",
+            "line": 71,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "location": "configs/symmetric-constructions/tests/key_derivation_function.py",
+            "line": 75,
+            "offset": 10,
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "parameterSetIdentifier": "256",
+          "cryptoFunctions": [
+            "keyderive"
+          ]
+        }
+      }
+    },
+    {
+      "type": "cryptographic-asset",
+      "bom-ref": "94dee64d-caac-41f3-86fe-dc842c760e50",
+      "name": "AES-CMAC",
+      "evidence": {
+        "occurrences": [
+          {
+            "location": "configs/symmetric-constructions/tests/mac_block_ciphers.py",
+            "line": 57,
+            "offset": 15,
+            "additionalContext": "CMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "b621ec54-9901-4840-92f0-1034d7eeeec8",
+      "dependsOn": [
+        "93d800ce-52cd-49a3-af43-8217886a7a24"
+      ]
+    },
+    {
+      "ref": "40e8c3f5-94f4-4965-a714-0e380a9ab7bb",
+      "dependsOn": [
+        "09733ff1-0ded-42e0-bc5a-7d2f5cb23deb"
+      ]
+    },
+    {
+      "ref": "d46b65bb-4eb0-4c10-8e3d-baa37a010215",
+      "dependsOn": [
+        "3dc52176-28cf-4a65-b62f-ac18c4995dc0"
+      ]
+    },
+    {
+      "ref": "5eb9f1e4-ac83-4165-9ac9-7e62ddb7c554",
+      "dependsOn": [
+        "3dc52176-28cf-4a65-b62f-ac18c4995dc0"
+      ]
+    },
+    {
+      "ref": "16272466-dac0-4306-8d63-938a0efdd969",
+      "dependsOn": [
+        "3dc52176-28cf-4a65-b62f-ac18c4995dc0"
+      ]
+    },
+    {
+      "ref": "e8be4a75-a9c7-4627-af61-b77336789a09",
+      "dependsOn": [
+        "09733ff1-0ded-42e0-bc5a-7d2f5cb23deb"
+      ]
+    },
+    {
+      "ref": "20c9573e-af53-4421-bb7b-bf982db1422d",
+      "dependsOn": [
+        "3dc52176-28cf-4a65-b62f-ac18c4995dc0"
+      ]
+    },
+    {
+      "ref": "f0ba3b46-9b44-4ae3-b693-c974f85c87bf",
+      "dependsOn": [
+        "3dc52176-28cf-4a65-b62f-ac18c4995dc0"
+      ]
+    },
+    {
+      "ref": "94dee64d-caac-41f3-86fe-dc842c760e50",
+      "dependsOn": [
+        "05a7fe16-ea70-4b8a-8a92-799cf40457ee"
+      ]
+    }
+  ]
+}
