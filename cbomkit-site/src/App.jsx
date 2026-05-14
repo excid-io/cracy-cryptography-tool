@@ -148,6 +148,54 @@ function normalizeSeverity(value) {
   return value.trim().toLowerCase();
 }
 
+function humanizeKey(value) {
+  if (!value) return "";
+
+  return String(value)
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function makePathLabel(path) {
+  return path
+    .filter((part) => part !== "findings" && !/^\d+$/.test(part))
+    .map(humanizeKey)
+    .join(" / ");
+}
+
+function getRegoFindingTitle(finding, path) {
+  return (
+    getStringValue(finding, [
+      "component",
+      "algorithm",
+      "scheme",
+      "primitive",
+      "ruleId",
+      "status",
+      "title",
+      "name",
+      "id",
+    ]) ||
+    makePathLabel(path) ||
+    "Finding"
+  );
+}
+
+function getRegoFindingInfo(finding) {
+  return (
+    getStringValue(finding, [
+      "message",
+      "info",
+      "msg",
+      "description",
+      "details",
+      "reason",
+      "note",
+    ]) || "No info message provided."
+  );
+}
+
 function extractImportantFindings(policyResult) {
   const root = extractOpaResult(policyResult);
   const findings = [];
@@ -171,34 +219,16 @@ function extractImportantFindings(policyResult) {
     );
 
     if (IMPORTANT_SEVERITIES.has(severity)) {
-      const algorithm =
-        getStringValue(value, [
-          "algorithm",
-          "algorithmName",
-          "algorithm_name",
-          "primitive",
-          "primitiveName",
-          "primitive_name",
-          "name",
-          "title",
-          "id",
-        ]) || path.filter(Boolean).slice(-2).join(" / ");
-
-      const info =
-        getStringValue(value, [
-          "info",
-          "message",
-          "msg",
-          "description",
-          "details",
-          "reason",
-          "note",
-        ]) || "No info message provided.";
-
       findings.push({
-        algorithm,
-        info,
+        title: getRegoFindingTitle(value, path),
+        info: getRegoFindingInfo(value),
         severity,
+        ruleId: getStringValue(value, ["ruleId", "rule_id", "id"]),
+        component: getStringValue(value, ["component", "algorithm", "scheme"]),
+        section: makePathLabel(path),
+        path,
+        raw: value,
+        references: Array.isArray(value.references) ? value.references : [],
       });
     }
 
@@ -212,7 +242,7 @@ function extractImportantFindings(policyResult) {
   const seen = new Set();
 
   return findings.filter((finding) => {
-    const key = `${finding.severity}|${finding.algorithm}|${finding.info}`;
+    const key = `${finding.severity}|${finding.ruleId}|${finding.title}|${finding.info}`;
 
     if (seen.has(key)) {
       return false;
@@ -223,8 +253,118 @@ function extractImportantFindings(policyResult) {
   });
 }
 
+function groupRegoFindings(findings) {
+  const groups = new Map();
+
+  for (const finding of findings) {
+    const groupKey = finding.section || "REGO Findings";
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        title: groupKey,
+        findings: [],
+      });
+    }
+
+    groups.get(groupKey).findings.push(finding);
+  }
+
+  return Array.from(groups.values()).sort((a, b) =>
+    a.title.localeCompare(b.title)
+  );
+}
+
 function getSemgrepFindings(semgrepResult) {
   return semgrepResult?.result?.findings || [];
+}
+
+function getRuleDisplayNameFromMetadata(metadata) {
+  return getStringValue(metadata, [
+    "display_name",
+    "displayName",
+    "human_name",
+    "humanName",
+    "human_readable_name",
+    "humanReadableName",
+    "title",
+    "name",
+    "algorithm",
+    "algorithm_name",
+    "algorithmName",
+    "primitive",
+  ]);
+}
+
+function humanizeRuleId(ruleId) {
+  if (!ruleId) return "Unknown Rule";
+
+  let parts = ruleId
+    .replace(/^configs?\./, "")
+    .split(/[._-]+/)
+    .filter(Boolean);
+
+  const cryptoIndex = parts.lastIndexOf("crypto");
+
+  if (cryptoIndex >= 0 && cryptoIndex + 1 < parts.length) {
+    parts = parts.slice(cryptoIndex + 1);
+  }
+
+  const ignoredWords = new Set([
+    "configs",
+    "config",
+    "security",
+    "rule",
+    "rules",
+  ]);
+
+  const acronymMap = {
+    aes: "AES",
+    des: "DES",
+    "3des": "3DES",
+    tripledes: "Triple-DES",
+    rsa: "RSA",
+    dsa: "DSA",
+    ecdsa: "ECDSA",
+    dh: "DH",
+    ecdh: "ECDH",
+    md2: "MD2",
+    md4: "MD4",
+    md5: "MD5",
+    sha1: "SHA-1",
+    sha224: "SHA-224",
+    sha256: "SHA-256",
+    sha384: "SHA-384",
+    sha512: "SHA-512",
+    rc2: "RC2",
+    rc4: "RC4",
+    ssl: "SSL",
+    tls: "TLS",
+    ecb: "ECB",
+    cbc: "CBC",
+    gcm: "GCM",
+    ccm: "CCM",
+    fips: "FIPS",
+  };
+
+  return parts
+    .filter((part) => !ignoredWords.has(part.toLowerCase()))
+    .map((part) => {
+      const lower = part.toLowerCase();
+
+      if (acronymMap[lower]) {
+        return acronymMap[lower];
+      }
+
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+function getRuleDisplayName(group) {
+  return (
+    getRuleDisplayNameFromMetadata(group.metadata) ||
+    humanizeRuleId(group.ruleId)
+  );
 }
 
 function groupSemgrepFindingsByRuleId(findings) {
@@ -266,7 +406,7 @@ function groupSemgrepFindingsByRuleId(findings) {
       return aSeverity - bSeverity;
     }
 
-    return a.ruleId.localeCompare(b.ruleId);
+    return getRuleDisplayName(a).localeCompare(getRuleDisplayName(b));
   });
 }
 
@@ -297,11 +437,19 @@ function getSeverityTheme(severity, theme) {
 }
 
 function formatLocation(finding) {
-  const path = finding.path || "Unknown file";
+  const path = finding.path || finding.location || "Unknown file";
   const line = finding.line ? `:${finding.line}` : "";
   const column = finding.column ? `:${finding.column}` : "";
 
   return `${path}${line}${column}`;
+}
+
+function formatReference(reference) {
+  const location = reference.location || reference.path || "Unknown file";
+  const line = reference.line ? `:${reference.line}` : "";
+  const column = reference.column ? `:${reference.column}` : "";
+
+  return `${location}${line}${column}`;
 }
 
 function sleep(ms, signal) {
@@ -363,6 +511,7 @@ export default function CbomkitSimpleScanner() {
   const opaEndpoint = getOpaEndpoint();
   const semgrepEndpoint = getSemgrepEndpoint();
   const importantFindings = extractImportantFindings(policyResult);
+  const groupedRegoFindings = groupRegoFindings(importantFindings);
   const semgrepFindings = getSemgrepFindings(semgrepResult);
   const groupedSemgrepFindings = groupSemgrepFindingsByRuleId(semgrepFindings);
 
@@ -472,6 +621,8 @@ export default function CbomkitSimpleScanner() {
     try {
       setStatus("Generating CBOM for REGO evaluation...");
       const generatedCbom = await generateCbom(controller.signal);
+
+      console.log("Generated CBOM for REGO evaluation:", generatedCbom);
 
       setStatus("Evaluating REGO policy...");
       await evaluatePolicy(generatedCbom, controller.signal);
@@ -619,12 +770,41 @@ export default function CbomkitSimpleScanner() {
       signal,
     });
 
-    const body = await response.json().catch(() => null);
+    const responseText = await response.text();
+
+    let body = null;
+
+    try {
+      body = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      body = null;
+    }
+
+    console.log("OPA response status:", response.status);
+    console.log("OPA response body:", body || responseText);
 
     if (!response.ok) {
+      const opaErrors = Array.isArray(body?.errors)
+        ? body.errors
+            .map((error) => {
+              const location = error.location
+                ? `${error.location.file || "policy"}:${
+                    error.location.row || "?"
+                  }:${error.location.col || "?"}`
+                : "";
+
+              return [error.message, error.code, location]
+                .filter(Boolean)
+                .join(" | ");
+            })
+            .join("\n")
+        : "";
+
       throw new Error(
-        body?.message ||
+        opaErrors ||
+          body?.message ||
           body?.error ||
+          responseText ||
           `OPA policy evaluation failed with HTTP ${response.status}.`
       );
     }
@@ -946,6 +1126,7 @@ export default function CbomkitSimpleScanner() {
                     group.severity,
                     theme
                   );
+                  const displayName = getRuleDisplayName(group);
 
                   return (
                     <article
@@ -964,7 +1145,7 @@ export default function CbomkitSimpleScanner() {
                               color: theme.title,
                             }}
                           >
-                            {group.algorithm}
+                            {displayName}
                           </strong>
 
                           <p
@@ -1006,21 +1187,22 @@ export default function CbomkitSimpleScanner() {
                         {group.message}
                       </p>
 
-                      <div
+                      <details
                         style={{
-                          ...styles.locationsBox,
+                          ...styles.findingsDropdown,
                           borderColor: theme.border,
                           background: theme.locationBg,
                         }}
                       >
-                        <p
+                        <summary
                           style={{
-                            ...styles.locationsTitle,
+                            ...styles.findingsDropdownSummary,
                             color: theme.title,
                           }}
                         >
-                          Matching locations
-                        </p>
+                          View {group.findings.length} finding
+                          {group.findings.length === 1 ? "" : "s"}
+                        </summary>
 
                         <ol style={styles.locationList}>
                           {group.findings.map((finding, index) => (
@@ -1029,13 +1211,26 @@ export default function CbomkitSimpleScanner() {
                               style={{
                                 ...styles.locationItem,
                                 color: theme.muted,
+                                borderColor: theme.border,
                               }}
                             >
-                              {formatLocation(finding)}
+                              <div>{formatLocation(finding)}</div>
+
+                              {finding.message &&
+                                finding.message !== group.message && (
+                                  <p
+                                    style={{
+                                      ...styles.locationMessage,
+                                      color: theme.text,
+                                    }}
+                                  >
+                                    {finding.message}
+                                  </p>
+                                )}
                             </li>
                           ))}
                         </ol>
-                      </div>
+                      </details>
                     </article>
                   );
                 })}
@@ -1061,55 +1256,143 @@ export default function CbomkitSimpleScanner() {
                 ? "No high or critical REGO findings were returned."
                 : `${importantFindings.length} high/critical finding${
                     importantFindings.length === 1 ? "" : "s"
-                  } returned.`}
+                  } returned across ${groupedRegoFindings.length} group${
+                    groupedRegoFindings.length === 1 ? "" : "s"
+                  }.`}
             </p>
 
-            {importantFindings.length > 0 && (
+            {groupedRegoFindings.length > 0 && (
               <div style={styles.findingsList}>
-                {importantFindings.map((finding, index) => (
-                  <article
-                    key={`${finding.severity}-${finding.algorithm}-${index}`}
+                {groupedRegoFindings.map((group) => (
+                  <details
+                    key={group.title}
                     style={{
-                      ...styles.findingCard,
+                      ...styles.regoGroupDropdown,
                       background: theme.findingBg,
                       borderColor: theme.border,
                     }}
                   >
-                    <div style={styles.findingHeader}>
-                      <strong
-                        style={{
-                          ...styles.findingAlgorithm,
-                          color: theme.title,
-                        }}
-                      >
-                        {finding.algorithm}
-                      </strong>
+                    <summary
+                      style={{
+                        ...styles.regoGroupSummary,
+                        color: theme.title,
+                      }}
+                    >
+                      <span>{group.title}</span>
 
                       <span
                         style={{
-                          ...styles.severityBadge,
-                          background:
-                            finding.severity === "critical"
-                              ? theme.criticalBg
-                              : theme.highBg,
-                          color:
-                            finding.severity === "critical"
-                              ? theme.criticalText
-                              : theme.highText,
-                          borderColor:
-                            finding.severity === "critical"
-                              ? theme.criticalBorder
-                              : theme.highBorder,
+                          ...styles.countBadge,
+                          background: theme.badgeBg,
+                          color: theme.badgeText,
+                          borderColor: theme.badgeBorder,
                         }}
                       >
-                        {finding.severity}
+                        {group.findings.length} finding
+                        {group.findings.length === 1 ? "" : "s"}
                       </span>
-                    </div>
+                    </summary>
 
-                    <p style={{ ...styles.findingInfo, color: theme.text }}>
-                      {finding.info}
-                    </p>
-                  </article>
+                    <div style={styles.regoGroupContent}>
+                      {group.findings.map((finding, index) => {
+                        const severityStyle = getSeverityTheme(
+                          finding.severity,
+                          theme
+                        );
+
+                        return (
+                          <article
+                            key={`${finding.ruleId}-${finding.title}-${index}`}
+                            style={{
+                              ...styles.findingCard,
+                              background: theme.resultBg,
+                              borderColor: theme.border,
+                            }}
+                          >
+                            <div style={styles.findingHeader}>
+                              <div style={styles.groupTitleArea}>
+                                <strong
+                                  style={{
+                                    ...styles.findingAlgorithm,
+                                    color: theme.title,
+                                  }}
+                                >
+                                  {finding.title}
+                                </strong>
+
+                                {finding.ruleId && (
+                                  <p
+                                    style={{
+                                      ...styles.findingMeta,
+                                      color: theme.muted,
+                                      marginTop: 4,
+                                    }}
+                                  >
+                                    Rule: {finding.ruleId}
+                                  </p>
+                                )}
+                              </div>
+
+                              <span
+                                style={{
+                                  ...styles.severityBadge,
+                                  ...severityStyle,
+                                }}
+                              >
+                                {finding.severity}
+                              </span>
+                            </div>
+
+                            <p
+                              style={{
+                                ...styles.findingInfo,
+                                color: theme.text,
+                              }}
+                            >
+                              {finding.info}
+                            </p>
+
+                            {finding.references.length > 0 && (
+                              <details
+                                style={{
+                                  ...styles.findingsDropdown,
+                                  borderColor: theme.border,
+                                  background: theme.locationBg,
+                                }}
+                              >
+                                <summary
+                                  style={{
+                                    ...styles.findingsDropdownSummary,
+                                    color: theme.title,
+                                  }}
+                                >
+                                  View {finding.references.length} reference
+                                  {finding.references.length === 1 ? "" : "s"}
+                                </summary>
+
+                                <ol style={styles.locationList}>
+                                  {finding.references.map(
+                                    (reference, referenceIndex) => (
+                                      <li
+                                        key={`${finding.ruleId}-${reference.location}-${reference.line}-${referenceIndex}`}
+                                        style={{
+                                          ...styles.locationItem,
+                                          color: theme.muted,
+                                          borderColor: theme.border,
+                                        }}
+                                      >
+                                        {formatReference(reference)}
+                                      </li>
+                                    )
+                                  )}
+                                </ol>
+                              </details>
+                            )}
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </details>
                 ))}
               </div>
             )}
@@ -1309,6 +1592,7 @@ const styles = {
     margin: "0 0 16px",
     color: "#dc2626",
     fontSize: 14,
+    textAlign: "center",
   },
   resultBox: {
     marginTop: 24,
@@ -1320,10 +1604,12 @@ const styles = {
     margin: 0,
     fontSize: 20,
     fontWeight: 800,
+    textAlign: "center",
   },
   resultSummary: {
     margin: "8px 0 12px",
     fontSize: 14,
+    textAlign: "center",
   },
   findingsList: {
     display: "grid",
@@ -1352,7 +1638,7 @@ const styles = {
     flexDirection: "column",
   },
   findingAlgorithm: {
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 1.35,
     overflowWrap: "anywhere",
   },
@@ -1378,6 +1664,7 @@ const styles = {
     fontSize: 14,
     lineHeight: 1.5,
     overflowWrap: "anywhere",
+    textAlign: "center",
   },
   findingMeta: {
     margin: "8px 0 0",
@@ -1387,27 +1674,58 @@ const styles = {
     fontFamily:
       "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   },
-  locationsBox: {
+  findingsDropdown: {
     marginTop: 12,
     border: "1px solid",
     borderRadius: 10,
     padding: 12,
   },
-  locationsTitle: {
-    margin: "0 0 8px",
+  findingsDropdownSummary: {
+    cursor: "pointer",
     fontSize: 13,
     fontWeight: 800,
+    userSelect: "none",
+    textAlign: "center",
   },
   locationList: {
-    margin: 0,
+    margin: "12px 0 0",
     paddingLeft: 20,
   },
   locationItem: {
-    marginBottom: 6,
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottom: "1px solid",
     fontSize: 12,
     lineHeight: 1.4,
     overflowWrap: "anywhere",
     fontFamily:
       "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  },
+  locationMessage: {
+    margin: "6px 0 0",
+    fontSize: 12,
+    lineHeight: 1.4,
+    fontFamily:
+      "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+  },
+  regoGroupDropdown: {
+    border: "1px solid",
+    borderRadius: 12,
+    padding: 14,
+  },
+  regoGroupSummary: {
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    fontSize: 16,
+    fontWeight: 800,
+    userSelect: "none",
+  },
+  regoGroupContent: {
+    display: "grid",
+    gap: 12,
+    marginTop: 14,
   },
 };

@@ -11,6 +11,7 @@ rules:
       Replace with AES (128/192/256).
     metadata:
       category: security
+      display_name: Triple-DES (3DES) Legacy Block Cipher
       standard: [FIPS-46-3, ISO-18033-3]
       status: L
     pattern-either:
@@ -39,57 +40,214 @@ rules:
 
   - id: python.crypto.3des.keysize.bad-explicit-length
     languages: [python]
-    message: >
-      3DES-168 (3-key TripleDES) policy: key material must be 24 bytes (192 bits incl. parity),
-      corresponding to nominal 168-bit 3DES. Detected explicit key length not equal to 24.
     severity: ERROR
+    message: >
+      3DES-168 (3-key TripleDES) policy: key material must be 24 bytes
+      (192 bits including parity), corresponding to nominal 168-bit 3DES.
+      Detected explicitly generated key material of a non-24-byte length that is
+      used as a 3DES/TripleDES key.
     metadata:
       category: security
+      display_name: 3DES Key Size (Explicit Length)
       tags: [crypto, 3des, tripledes, key-size, policy]
       confidence: HIGH
+
     pattern-either:
+      # Inline bad key generation directly in 3DES sinks
       - patterns:
-          - pattern: os.urandom($N)
+          - pattern-either:
+              - pattern: DES3.new(os.urandom($N), ...)
+              - pattern: DES3.new(secrets.token_bytes($N), ...)
+              - pattern: DES3.new(get_random_bytes($N), ...)
+              - pattern: DES3.new(Crypto.Random.get_random_bytes($N), ...)
+              - pattern: Crypto.Cipher.DES3.new(os.urandom($N), ...)
+              - pattern: Crypto.Cipher.DES3.new(secrets.token_bytes($N), ...)
+              - pattern: Crypto.Cipher.DES3.new(get_random_bytes($N), ...)
+              - pattern: Crypto.Cipher.DES3.new(Crypto.Random.get_random_bytes($N), ...)
+              - pattern: algorithms.TripleDES(os.urandom($N))
+              - pattern: algorithms.TripleDES(secrets.token_bytes($N))
+              - pattern: algorithms.TripleDES(get_random_bytes($N))
+              - pattern: algorithms.TripleDES(Crypto.Random.get_random_bytes($N))
+              - pattern: TripleDES(os.urandom($N))
+              - pattern: TripleDES(secrets.token_bytes($N))
+              - pattern: TripleDES(get_random_bytes($N))
+              - pattern: TripleDES(Crypto.Random.get_random_bytes($N))
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!24$)\d+$'
+
+      # Assignment then PyCryptodome DES3.new(...) use
       - patterns:
-          - pattern: secrets.token_bytes($N)
+          - pattern: DES3.new($KEY, ...)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = os.urandom($N)
+                ...
+                DES3.new($KEY, ...)
+                ...
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!24$)\d+$'
+
       - patterns:
-          - pattern: Crypto.Random.get_random_bytes($N)
+          - pattern: DES3.new($KEY, ...)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = secrets.token_bytes($N)
+                ...
+                DES3.new($KEY, ...)
+                ...
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!24$)\d+$'
+
       - patterns:
-          - pattern: HKDF(..., length=$N, ...)
+          - pattern: DES3.new($KEY, ...)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = get_random_bytes($N)
+                ...
+                DES3.new($KEY, ...)
+                ...
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!24$)\d+$'
+
       - patterns:
-          - pattern: PBKDF2HMAC(..., length=$N, ...)
+          - pattern: DES3.new($KEY, ...)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = Crypto.Random.get_random_bytes($N)
+                ...
+                DES3.new($KEY, ...)
+                ...
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!24$)\d+$'
-      # NIST SP800-56A Concat KDFs (cryptography)
+
+      # Assignment then keyword-form DES3.new(key=...)
       - patterns:
-          - pattern: ConcatKDFHash(..., length=$N, ...)
+          - pattern: DES3.new(key=$KEY, ...)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = os.urandom($N)
+                ...
+                DES3.new(key=$KEY, ...)
+                ...
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!24$)\d+$'
+
       - patterns:
-          - pattern: ConcatKDFHMAC(..., length=$N, ...)
+          - pattern: DES3.new(key=$KEY, ...)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = secrets.token_bytes($N)
+                ...
+                DES3.new(key=$KEY, ...)
+                ...
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!24$)\d+$'
-      # ANSI X9.63 KDF (cryptography)
+
       - patterns:
-        - pattern: X963KDF(..., length=$N, ...)
-        - metavariable-regex:
-            metavariable: $N
-            regex: '^(?!24$)\d+$'
+          - pattern: DES3.new(key=$KEY, ...)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = get_random_bytes($N)
+                ...
+                DES3.new(key=$KEY, ...)
+                ...
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?!24$)\d+$'
+
+      # Assignment then cryptography TripleDES use
+      - patterns:
+          - pattern: algorithms.TripleDES($KEY)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = os.urandom($N)
+                ...
+                algorithms.TripleDES($KEY)
+                ...
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?!24$)\d+$'
+
+      - patterns:
+          - pattern: algorithms.TripleDES($KEY)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = secrets.token_bytes($N)
+                ...
+                algorithms.TripleDES($KEY)
+                ...
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?!24$)\d+$'
+
+      - patterns:
+          - pattern: algorithms.TripleDES($KEY)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = get_random_bytes($N)
+                ...
+                algorithms.TripleDES($KEY)
+                ...
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?!24$)\d+$'
+
+      - patterns:
+          - pattern: TripleDES($KEY)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = os.urandom($N)
+                ...
+                TripleDES($KEY)
+                ...
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?!24$)\d+$'
+
+      - patterns:
+          - pattern: TripleDES($KEY)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = secrets.token_bytes($N)
+                ...
+                TripleDES($KEY)
+                ...
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?!24$)\d+$'
+
+      - patterns:
+          - pattern: TripleDES($KEY)
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $KEY = get_random_bytes($N)
+                ...
+                TripleDES($KEY)
+                ...
+          - metavariable-regex:
+              metavariable: $N
+              regex: '^(?!24$)\d+$'
+
 
   #
   # Rule A: If code explicitly requests key material of the wrong length, flag it.
@@ -102,6 +260,7 @@ rules:
     severity: ERROR
     metadata:
       category: security
+      display_name: AES Key Size (Explicit Length)
       tags: [crypto, aes, key-size, policy]
       confidence: HIGH
     pattern-either:
@@ -167,6 +326,7 @@ rules:
     severity: HIGH
     metadata:
       category: security
+      display_name: AES Key Size (Unvalidated External Key)
       tags: [crypto, aes, key-size, taint]
       confidence: MEDIUM
 
@@ -356,6 +516,7 @@ rules:
       category: security
       tags: [crypto, 3des, tripledes, key-size, taint]
       confidence: MEDIUM
+      display_name: 3DES Key Size (Unvalidated External Key)
 
     pattern-sources:
       - patterns:
@@ -533,7 +694,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: SHA-224 is LEGACY (L [2025]). Use SHA-256/384/512 or SHA-512/256.
-    metadata: {category: security, tags: [crypto, hash, sha224, legacy]}
+    metadata: 
+      category: security
+      tags: [crypto, hash, sha224, legacy]
+      display_name: hashlib SHA-224 Legacy Hash Function
     pattern-either:
       - pattern: hashlib.sha224(...)
       - pattern: hashlib.new("sha224", ...)
@@ -551,7 +715,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: SHA-512/224 is LEGACY (L [2025). Use SHA-512/256 or SHA-256/384/512.
-    metadata: {category: security, tags: [crypto, hash, sha512-224, legacy]}
+    metadata: 
+      category: security 
+      tags: [crypto, hash, sha512-224, legacy]
+      display_name: hashlib SHA-512/224 Legacy Hash Function
     pattern-either:
       - pattern: hashlib.sha512_224(...)
       - pattern: hashlib.new("sha512_224", ...)
@@ -569,7 +736,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: cryptography SHA224 is LEGACY (L [2025]).
-    metadata: {category: security, tags: [crypto, hash, sha224, legacy]}
+    metadata: 
+      category: security 
+      tags: [crypto, hash, sha224, legacy]
+      display_name: cryptography SHA-224 Legacy Hash Function
     pattern-either:
       - pattern: hashes.SHA224(...)
       - pattern: cryptography.hazmat.primitives.hashes.SHA224(...)
@@ -582,7 +752,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: cryptography SHA512/224 is LEGACY (L [2025]).
-    metadata: {category: security, tags: [crypto, hash, sha512-224, legacy]}
+    metadata: 
+      category: security 
+      tags: [crypto, hash, sha512-224, legacy]
+      display_name: cryptography SHA-512/224 Legacy Hash Function
     pattern-either:
       - pattern: hashes.SHA512_224(...)
       - pattern: cryptography.hazmat.primitives.hashes.SHA512_224(...)
@@ -595,7 +768,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: HMAC uses a LEGACY hash (SHA-224 or SHA-512/224).
-    metadata: {category: security, tags: [crypto, hmac, legacy]}
+    metadata: 
+      category: security 
+      tags: [crypto, hmac, legacy]
+      display_name: HMAC Legacy Hash Function
     pattern-either:
       - pattern: hmac.new(..., digestmod=hashlib.sha224)
       - pattern: hmac.new(..., digestmod=hashlib.sha512_224)
@@ -607,7 +783,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: cryptography HMAC uses a LEGACY hash (SHA-224 or SHA-512/224).
-    metadata: {category: security, tags: [crypto, hmac, legacy]}
+    metadata: 
+      category: security 
+      tags: [crypto, hmac, legacy]
+      display_name: cryptography HMAC Legacy Hash Function
     pattern-either:
       - pattern: HMAC(..., hashes.SHA224(), ...)
       - pattern: HMAC(..., hashes.SHA512_224(), ...)
@@ -619,7 +798,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: KDF uses a LEGACY hash (SHA-224 or SHA-512/224).
-    metadata: {category: security, tags: [crypto, kdf, legacy]}
+    metadata: 
+      category: security 
+      tags: [crypto, kdf, legacy]
+      display_name: KDF Legacy Hash Function
     pattern-either:
       - pattern: HKDF(..., algorithm=hashes.SHA224(), ...)
       - pattern: HKDF(..., algorithm=hashes.SHA512_224(), ...)
@@ -639,7 +821,10 @@ rules:
     languages: [python]
     severity: ERROR
     message: PyCryptodome SHA-224 or SHA-512/224 is LEGACY (L [2025]).
-    metadata: {category: security, tags: [crypto, hash, legacy, pycryptodome]}
+    metadata: 
+      category: security 
+      tags: [crypto, hash, legacy, pycryptodome]
+      display_name: PyCryptodome Legacy Hash Function
     pattern-either:
       - pattern: Crypto.Hash.SHA224.new(...)
       - pattern: SHA224.new(...)
@@ -654,6 +839,10 @@ rules:
     message: >
       Potential secret sharing / secret splitting detected, but not via approved Shamir API.
       Use Shamir secret sharing (e.g., Crypto.Protocol.SecretSharing.Shamir) instead of DIY splitting/chunking.
+    metadata: 
+      category: security
+      tags: [crypto, secret-sharing, secret-splitting, shamir, policy]
+      display_name: Secret Sharing / Splitting Without Shamir
     languages: [python]
     severity: WARNING
 

@@ -128,20 +128,35 @@ shares_evidence_location_and_line(component_a, component_b) if {
 # ---------------------------------------------------------
 # Helper: get_shared_source_file_or_unknown
 #
-# Return one shared source file between two components, if any.
+# Return one deterministic shared source file between two components, if any.
 # Otherwise return "unknown".
+#
+# Why this is written this way:
+# A Rego complete function must return exactly one value for the same inputs.
+# The evidence for two components can contain multiple shared source locations.
+# Returning `location` directly from a `some` loop can therefore produce multiple
+# valid outputs and cause eval_conflict_error.
 # ---------------------------------------------------------
 #
 get_shared_source_file_or_unknown(component_a, component_b) := location if {
-    some occurrence_a in get_evidence_occurrences(component_a)
-    some occurrence_b in get_evidence_occurrences(component_b)
+    shared_locations := {
+        location |
+        some occurrence_a in get_evidence_occurrences(component_a)
+        some occurrence_b in get_evidence_occurrences(component_b)
 
-    location_a := get_occurrence_location_or_empty(occurrence_a)
-    location_b := get_occurrence_location_or_empty(occurrence_b)
+        location_a := get_occurrence_location_or_empty(occurrence_a)
+        location_b := get_occurrence_location_or_empty(occurrence_b)
 
-    location_a != ""
-    location_a == location_b
-    location := location_a
+        location_a != ""
+        location_a == location_b
+
+        location := location_a
+    }
+
+    count(shared_locations) > 0
+
+    sorted_locations := sort(shared_locations)
+    location := sorted_locations[0]
 } else := "unknown"
 
 #
@@ -397,68 +412,58 @@ component_matches_primitive(component, kind) if {
 # Helper: get_related_component_by_primitive
 #
 # Purpose:
-# Resolve a component related to a parent component, constrained
-# by the expected primitive type of the candidate component.
+# Resolve one deterministic component related to a parent component,
+# constrained by the expected primitive type of the candidate component.
 #
-# Strategy (ordered by confidence):
+# Strategy, ordered by confidence:
 # 1. Prefer explicit CBOM dependency relationships.
 # 2. Fall back to same file+line evidence co-location.
 #
 # Important:
-# - This helper performs only structural matching.
-# - It does NOT validate whether the relationship is semantically correct.
-# - The caller must enforce all preconditions (primitive, scheme, etc.).
-#
-# ---------------------------------------------------------
-# Usage examples:
-#
-# Example 1: HMAC → underlying hash
-#
-# hash_component := get_related_component_by_primitive(mac_component, "hash")
-#
-# Precondition:
-# - mac_component is a MAC primitive
-# - mac_component implements an HMAC-like scheme
-#
-#
-# Example 2: CMAC → underlying block cipher
-#
-# cipher_component := get_related_component_by_primitive(mac_component, "block-cipher")
-#
-# Precondition:
-# - mac_component is a MAC primitive
-# - mac_component implements a CMAC-like scheme
-#
-#
-# Example 3: HKDF → underlying hash
-#
-# hash_component := get_related_component_by_primitive(kdf_component, "hash")
-#
-# Precondition:
-# - kdf_component is a KDF primitive
-# - kdf_component implements HKDF
-#
-#
-# Notes:
-# - This helper relies on CBOM extraction quality.
-# - Fallback matching (co-location) is heuristic and may produce
-#   false positives or miss relationships.
-# - Always guard calls with appropriate scheme/primitive checks.
+# A Rego complete function must return exactly one value for the same inputs.
+# There may be multiple dependency matches or multiple co-located matches.
+# Therefore this helper builds candidate sets, sorts them, and returns one
+# deterministic candidate.
 # ---------------------------------------------------------
 #
+
 get_related_component_by_primitive(parent_component, candidate_primitive) := candidate_component if {
-    some i
-    candidate_component := input.components[i]
-    component_matches_primitive(candidate_component, candidate_primitive)
+    dependency_candidates := {
+        candidate |
+        some i
+        candidate := input.components[i]
+        component_matches_primitive(candidate, candidate_primitive)
+        depends_on_component(parent_component, candidate)
+    }
 
-    depends_on_component(parent_component, candidate_component)
+    count(dependency_candidates) > 0
+
+    sorted_candidates := sort(dependency_candidates)
+    candidate_component := sorted_candidates[0]
 } else := candidate_component if {
-    some i
-    candidate_component := input.components[i]
-    component_matches_primitive(candidate_component, candidate_primitive)
+    dependency_candidates := {
+        candidate |
+        some i
+        candidate := input.components[i]
+        component_matches_primitive(candidate, candidate_primitive)
+        depends_on_component(parent_component, candidate)
+    }
 
-    shares_evidence_location_and_line(parent_component, candidate_component)
-}
+    count(dependency_candidates) == 0
+
+    colocated_candidates := {
+        candidate |
+        some i
+        candidate := input.components[i]
+        component_matches_primitive(candidate, candidate_primitive)
+        shares_evidence_location_and_line(parent_component, candidate)
+    }
+
+    count(colocated_candidates) > 0
+
+    sorted_candidates := sort(colocated_candidates)
+    candidate_component := sorted_candidates[0]
+} else := {}
 
 
 #

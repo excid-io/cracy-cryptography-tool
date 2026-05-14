@@ -27,7 +27,7 @@ services:
       CBOMKIT_DB_USERNAME: ${POSTGRESQL_AUTH_USERNAME}
       CBOMKIT_DB_PASSWORD: ${POSTGRESQL_AUTH_PASSWORD}
       #CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8001"
-      CBOMKIT_FRONTEND_URL_CORS: "http://localhost:5173"
+      CBOMKIT_FRONTEND_URL_CORS: "http://localhost:5174"
       CBOMKIT_OPA_API_BASE: "http://opa:8181"
     ports:
       - "8081:8081"

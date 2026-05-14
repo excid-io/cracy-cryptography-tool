@@ -1,0 +1,2733 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "services": [
+        {
+          "name": "CBOMkit",
+          "provider": {
+            "name": "PQCA"
+          }
+        }
+      ]
+    },
+    "timestamp": "2026-05-13T23:51:54Z",
+    "properties": [
+      {
+        "name": "gitUrl",
+        "value": "https://github.com/FotiosBistas/Weak-Cryptography"
+      },
+      {
+        "name": "revision",
+        "value": "main"
+      },
+      {
+        "name": "commit",
+        "value": "a90ce63"
+      },
+      {
+        "name": "subfolder",
+        "value": "configs/symmetric-atomic-primitives/tests"
+      }
+    ]
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "PBKDF2-BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "7c4df7ec-7a7b-4246-a978-a4eafb3aed50",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 142,
+            "offset": 21,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "8a008d54-6b35-4d58-b6b3-33f0aa805376",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 99,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 129,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 142,
+            "offset": 21,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 155,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 168,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 181,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3DES",
+      "type": "cryptographic-asset",
+      "bom-ref": "9725265d-2e12-44a0-917d-04b7e76112c8",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 47,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/3des.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 54,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/3des.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "cbc",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "64"
+        }
+      }
+    },
+    {
+      "name": "AES-GCM",
+      "type": "cryptographic-asset",
+      "bom-ref": "b2a6f70e-2547-42fe-a0ea-2e6936b76e11",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 100,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "gcm",
+          "primitive": "ae",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "ce617db3-5b2c-4ae3-961b-96c385ed440a",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 82,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.9",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HKDF-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "1e02b198-5f41-4037-9672-cfa33576723c",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 126,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 175,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 184,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512/256",
+      "type": "cryptographic-asset",
+      "bom-ref": "1222b86e-390f-42f3-b759-7da92d59a615",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 94,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.9",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SHA384",
+      "type": "cryptographic-asset",
+      "bom-ref": "866a0df2-ba86-4b32-9baa-646109a7a64b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 86,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.2",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "384"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512",
+      "type": "cryptographic-asset",
+      "bom-ref": "f5b61a27-a1ff-47d9-a9a9-65c5adfc4eaa",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 90,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.11",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SHA512/256",
+      "type": "cryptographic-asset",
+      "bom-ref": "a6ee00d8-1d88-4f13-947b-9a93228bb092",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 94,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.6",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@9eb91d9b-28e3-448e-8d56-ca460be4dc5f",
+      "type": "cryptographic-asset",
+      "bom-ref": "9eb91d9b-28e3-448e-8d56-ca460be4dc5f",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 129,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "salt@efb49d63-535f-4552-9b38-c42da7752e3d",
+      "type": "cryptographic-asset",
+      "bom-ref": "efb49d63-535f-4552-9b38-c42da7752e3d",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 168,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "AES-ECB",
+      "type": "cryptographic-asset",
+      "bom-ref": "4cd95a46-5849-4812-b0b4-e9e5c9e5deeb",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 95,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "ecb",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
+      "name": "SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 73,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 120,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 133,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 146,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 159,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 172,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.4",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "224"
+        }
+      }
+    },
+    {
+      "name": "PBKDF2-SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "c2e25170-1c34-42bf-bc2e-63ee61332861",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 133,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@2952a2e4-8014-4c80-832c-0f148df0e231",
+      "type": "cryptographic-asset",
+      "bom-ref": "2952a2e4-8014-4c80-832c-0f148df0e231",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 99,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "d9a2aa4e-9e52-4a00-bb20-328af7cbbee1",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 73,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HKDF-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "2559c997-288b-40ab-9e0d-93e64671b602",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 123,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@1690090f-40d0-4300-82bf-0d49a4ee249c",
+      "type": "cryptographic-asset",
+      "bom-ref": "1690090f-40d0-4300-82bf-0d49a4ee249c",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 142,
+            "offset": 21,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "c7de7490-a4ad-4608-a452-e9666d8bfe63",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 77,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA384",
+      "type": "cryptographic-asset",
+      "bom-ref": "013f8c8d-5586-4f5f-99c0-7273715a05fd",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 86,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.10",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ConcatenationKDF",
+      "type": "cryptographic-asset",
+      "bom-ref": "c4cf771c-1743-4d91-9a54-c651b2ad1b6b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 146,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 149,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 152,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 155,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 159,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 162,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 165,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 168,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 196,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 206,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 219,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 229,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "8a62ceb3-bd75-4454-95d5-a1925cde2513",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 82,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 126,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 139,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 152,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 165,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 178,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 175,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 184,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 196,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 206,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 219,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 229,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 242,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 252,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "PBKDF2-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "a98e9a33-db79-44fd-b477-49c81f612d87",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 136,
+            "offset": 24,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "HKDF-SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "04925ff2-f988-4c34-9552-6c31180ab4db",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 120,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 77,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 123,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 136,
+            "offset": 24,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 149,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 162,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 175,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.5",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "224"
+        }
+      }
+    },
+    {
+      "name": "salt@6c575573-ad84-49fc-b2dd-dcfa4daa7d8b",
+      "type": "cryptographic-asset",
+      "bom-ref": "6c575573-ad84-49fc-b2dd-dcfa4daa7d8b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 181,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "ANSI X9.63",
+      "type": "cryptographic-asset",
+      "bom-ref": "0f835374-3a21-44ee-b83b-3960970aa415",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 172,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 175,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 178,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 181,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 242,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 252,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@3f0b3273-a741-4f9d-8f87-aa2b5600f93c",
+      "type": "cryptographic-asset",
+      "bom-ref": "3f0b3273-a741-4f9d-8f87-aa2b5600f93c",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 155,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "AES-CBC",
+      "type": "cryptographic-asset",
+      "bom-ref": "c371b748-4668-46e7-9dd4-3afc26d0c2b0",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 65,
+            "offset": 14,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 71,
+            "offset": 12,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 77,
+            "offset": 12,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 83,
+            "offset": 12,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 90,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 107,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 107,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 133,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 164,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "cbc",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
+      "name": "PBKDF2-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "c19740c0-1fb7-48f7-9d26-e5b125192d87",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 139,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA512",
+      "type": "cryptographic-asset",
+      "bom-ref": "5b3935f9-2588-4d16-8471-40f39d66d902",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 77,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 90,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 94,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 123,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 136,
+            "offset": 24,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 149,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 162,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 175,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.3",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "512"
+        }
+      }
+    },
+    {
+      "name": "HMAC-BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "edf1e1c8-9bcd-4182-9c3d-f98818391ecb",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 99,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HKDF-BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "9a930e8b-beaf-4475-abcd-e4bef9dda2f9",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 129,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "PBKDF2-BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "7c4df7ec-7a7b-4246-a978-a4eafb3aed50",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 142,
+            "offset": 21,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "8a008d54-6b35-4d58-b6b3-33f0aa805376",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 99,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 129,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 142,
+            "offset": 21,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 155,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 168,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 181,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3DES",
+      "type": "cryptographic-asset",
+      "bom-ref": "9725265d-2e12-44a0-917d-04b7e76112c8",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 47,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/3des.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 54,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/3des.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "cbc",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "64"
+        }
+      }
+    },
+    {
+      "name": "AES-GCM",
+      "type": "cryptographic-asset",
+      "bom-ref": "b2a6f70e-2547-42fe-a0ea-2e6936b76e11",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 100,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "gcm",
+          "primitive": "ae",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "ce617db3-5b2c-4ae3-961b-96c385ed440a",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 82,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.9",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HKDF-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "1e02b198-5f41-4037-9672-cfa33576723c",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 126,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 175,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 184,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512/256",
+      "type": "cryptographic-asset",
+      "bom-ref": "1222b86e-390f-42f3-b759-7da92d59a615",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 94,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.9",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SHA384",
+      "type": "cryptographic-asset",
+      "bom-ref": "866a0df2-ba86-4b32-9baa-646109a7a64b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 86,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.2",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "384"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512",
+      "type": "cryptographic-asset",
+      "bom-ref": "f5b61a27-a1ff-47d9-a9a9-65c5adfc4eaa",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 90,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.11",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SHA512/256",
+      "type": "cryptographic-asset",
+      "bom-ref": "a6ee00d8-1d88-4f13-947b-9a93228bb092",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 94,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.6",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@9eb91d9b-28e3-448e-8d56-ca460be4dc5f",
+      "type": "cryptographic-asset",
+      "bom-ref": "9eb91d9b-28e3-448e-8d56-ca460be4dc5f",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 129,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "salt@efb49d63-535f-4552-9b38-c42da7752e3d",
+      "type": "cryptographic-asset",
+      "bom-ref": "efb49d63-535f-4552-9b38-c42da7752e3d",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 168,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "AES-ECB",
+      "type": "cryptographic-asset",
+      "bom-ref": "4cd95a46-5849-4812-b0b4-e9e5c9e5deeb",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 95,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "ecb",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
+      "name": "SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 73,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 120,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 133,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 146,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 159,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 172,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.4",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "224"
+        }
+      }
+    },
+    {
+      "name": "PBKDF2-SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "c2e25170-1c34-42bf-bc2e-63ee61332861",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 133,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@2952a2e4-8014-4c80-832c-0f148df0e231",
+      "type": "cryptographic-asset",
+      "bom-ref": "2952a2e4-8014-4c80-832c-0f148df0e231",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 99,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "d9a2aa4e-9e52-4a00-bb20-328af7cbbee1",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 73,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HKDF-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "2559c997-288b-40ab-9e0d-93e64671b602",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 123,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@1690090f-40d0-4300-82bf-0d49a4ee249c",
+      "type": "cryptographic-asset",
+      "bom-ref": "1690090f-40d0-4300-82bf-0d49a4ee249c",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 142,
+            "offset": 21,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "c7de7490-a4ad-4608-a452-e9666d8bfe63",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 77,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA384",
+      "type": "cryptographic-asset",
+      "bom-ref": "013f8c8d-5586-4f5f-99c0-7273715a05fd",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 86,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.10",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ConcatenationKDF",
+      "type": "cryptographic-asset",
+      "bom-ref": "c4cf771c-1743-4d91-9a54-c651b2ad1b6b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 146,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 149,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 152,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 155,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 159,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 162,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 165,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 168,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 196,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 206,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 219,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 229,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "8a62ceb3-bd75-4454-95d5-a1925cde2513",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 82,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 126,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 139,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 152,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 165,
+            "offset": 25,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 178,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 175,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 184,
+            "offset": 11,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 196,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 206,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 219,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 229,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 242,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 252,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "PBKDF2-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "a98e9a33-db79-44fd-b477-49c81f612d87",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 136,
+            "offset": 24,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "HKDF-SHA224",
+      "type": "cryptographic-asset",
+      "bom-ref": "04925ff2-f988-4c34-9552-6c31180ab4db",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 120,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 77,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 123,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 136,
+            "offset": 24,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 149,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 162,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 175,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.5",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "224"
+        }
+      }
+    },
+    {
+      "name": "salt@6c575573-ad84-49fc-b2dd-dcfa4daa7d8b",
+      "type": "cryptographic-asset",
+      "bom-ref": "6c575573-ad84-49fc-b2dd-dcfa4daa7d8b",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 181,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "ANSI X9.63",
+      "type": "cryptographic-asset",
+      "bom-ref": "0f835374-3a21-44ee-b83b-3960970aa415",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 172,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 175,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 178,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 181,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 242,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          },
+          {
+            "line": 252,
+            "offset": 10,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "salt@3f0b3273-a741-4f9d-8f87-aa2b5600f93c",
+      "type": "cryptographic-asset",
+      "bom-ref": "3f0b3273-a741-4f9d-8f87-aa2b5600f93c",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 155,
+            "offset": 26,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 128,
+          "type": "salt"
+        }
+      }
+    },
+    {
+      "name": "AES-CBC",
+      "type": "cryptographic-asset",
+      "bom-ref": "c371b748-4668-46e7-9dd4-3afc26d0c2b0",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 65,
+            "offset": 14,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 71,
+            "offset": 12,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 77,
+            "offset": 12,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 83,
+            "offset": 12,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 90,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 107,
+            "offset": 9,
+            "location": "configs/symmetric-atomic-primitives/tests/aes.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 107,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 133,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "Cipher"
+          },
+          {
+            "line": 164,
+            "offset": 8,
+            "location": "configs/symmetric-atomic-primitives/tests/aes_key_length.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "cbc",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
+      "name": "PBKDF2-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "c19740c0-1fb7-48f7-9d26-e5b125192d87",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 139,
+            "offset": 20,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA512",
+      "type": "cryptographic-asset",
+      "bom-ref": "5b3935f9-2588-4d16-8471-40f39d66d902",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 77,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 90,
+            "offset": 18,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 94,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          },
+          {
+            "line": 123,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          },
+          {
+            "line": 136,
+            "offset": 24,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "PBKDF2HMAC"
+          },
+          {
+            "line": 149,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHash"
+          },
+          {
+            "line": 162,
+            "offset": 29,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "ConcatKDFHMAC"
+          },
+          {
+            "line": 175,
+            "offset": 22,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "X963KDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.3",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "512"
+        }
+      }
+    },
+    {
+      "name": "HMAC-BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "edf1e1c8-9bcd-4182-9c3d-f98818391ecb",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 99,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HKDF-BLAKE2b",
+      "type": "cryptographic-asset",
+      "bom-ref": "9a930e8b-beaf-4475-abcd-e4bef9dda2f9",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 129,
+            "offset": 19,
+            "location": "configs/symmetric-atomic-primitives/tests/hash.py",
+            "additionalContext": "HKDF"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "kdf",
+          "cryptoFunctions": [
+            "keyderive"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "1e02b198-5f41-4037-9672-cfa33576723c",
+      "dependsOn": [
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513"
+      ]
+    },
+    {
+      "ref": "ce617db3-5b2c-4ae3-961b-96c385ed440a",
+      "dependsOn": [
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513"
+      ]
+    },
+    {
+      "ref": "d9a2aa4e-9e52-4a00-bb20-328af7cbbee1",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1"
+      ]
+    },
+    {
+      "ref": "c2e25170-1c34-42bf-bc2e-63ee61332861",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1"
+      ]
+    },
+    {
+      "ref": "1222b86e-390f-42f3-b759-7da92d59a615",
+      "dependsOn": [
+        "a6ee00d8-1d88-4f13-947b-9a93228bb092"
+      ]
+    },
+    {
+      "ref": "a6ee00d8-1d88-4f13-947b-9a93228bb092",
+      "dependsOn": [
+        "5b3935f9-2588-4d16-8471-40f39d66d902"
+      ]
+    },
+    {
+      "ref": "c19740c0-1fb7-48f7-9d26-e5b125192d87",
+      "dependsOn": [
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513"
+      ]
+    },
+    {
+      "ref": "013f8c8d-5586-4f5f-99c0-7273715a05fd",
+      "dependsOn": [
+        "866a0df2-ba86-4b32-9baa-646109a7a64b"
+      ]
+    },
+    {
+      "ref": "edf1e1c8-9bcd-4182-9c3d-f98818391ecb",
+      "dependsOn": [
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "c4cf771c-1743-4d91-9a54-c651b2ad1b6b",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1",
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513",
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "a98e9a33-db79-44fd-b477-49c81f612d87",
+      "dependsOn": [
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b"
+      ]
+    },
+    {
+      "ref": "0f835374-3a21-44ee-b83b-3960970aa415",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1",
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513",
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+      "dependsOn": [
+        "5b3935f9-2588-4d16-8471-40f39d66d902"
+      ]
+    },
+    {
+      "ref": "8a008d54-6b35-4d58-b6b3-33f0aa805376",
+      "dependsOn": [
+        "2952a2e4-8014-4c80-832c-0f148df0e231",
+        "9eb91d9b-28e3-448e-8d56-ca460be4dc5f",
+        "1690090f-40d0-4300-82bf-0d49a4ee249c",
+        "3f0b3273-a741-4f9d-8f87-aa2b5600f93c",
+        "efb49d63-535f-4552-9b38-c42da7752e3d",
+        "6c575573-ad84-49fc-b2dd-dcfa4daa7d8b"
+      ]
+    },
+    {
+      "ref": "2559c997-288b-40ab-9e0d-93e64671b602",
+      "dependsOn": [
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b"
+      ]
+    },
+    {
+      "ref": "c7de7490-a4ad-4608-a452-e9666d8bfe63",
+      "dependsOn": [
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b"
+      ]
+    },
+    {
+      "ref": "f5b61a27-a1ff-47d9-a9a9-65c5adfc4eaa",
+      "dependsOn": [
+        "5b3935f9-2588-4d16-8471-40f39d66d902"
+      ]
+    },
+    {
+      "ref": "9a930e8b-beaf-4475-abcd-e4bef9dda2f9",
+      "dependsOn": [
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "04925ff2-f988-4c34-9552-6c31180ab4db",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1"
+      ]
+    },
+    {
+      "ref": "7c4df7ec-7a7b-4246-a978-a4eafb3aed50",
+      "dependsOn": [
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "1e02b198-5f41-4037-9672-cfa33576723c",
+      "dependsOn": [
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513"
+      ]
+    },
+    {
+      "ref": "ce617db3-5b2c-4ae3-961b-96c385ed440a",
+      "dependsOn": [
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513"
+      ]
+    },
+    {
+      "ref": "d9a2aa4e-9e52-4a00-bb20-328af7cbbee1",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1"
+      ]
+    },
+    {
+      "ref": "c2e25170-1c34-42bf-bc2e-63ee61332861",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1"
+      ]
+    },
+    {
+      "ref": "1222b86e-390f-42f3-b759-7da92d59a615",
+      "dependsOn": [
+        "a6ee00d8-1d88-4f13-947b-9a93228bb092"
+      ]
+    },
+    {
+      "ref": "a6ee00d8-1d88-4f13-947b-9a93228bb092",
+      "dependsOn": [
+        "5b3935f9-2588-4d16-8471-40f39d66d902"
+      ]
+    },
+    {
+      "ref": "c19740c0-1fb7-48f7-9d26-e5b125192d87",
+      "dependsOn": [
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513"
+      ]
+    },
+    {
+      "ref": "013f8c8d-5586-4f5f-99c0-7273715a05fd",
+      "dependsOn": [
+        "866a0df2-ba86-4b32-9baa-646109a7a64b"
+      ]
+    },
+    {
+      "ref": "edf1e1c8-9bcd-4182-9c3d-f98818391ecb",
+      "dependsOn": [
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "c4cf771c-1743-4d91-9a54-c651b2ad1b6b",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1",
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513",
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "a98e9a33-db79-44fd-b477-49c81f612d87",
+      "dependsOn": [
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b"
+      ]
+    },
+    {
+      "ref": "0f835374-3a21-44ee-b83b-3960970aa415",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1",
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+        "8a62ceb3-bd75-4454-95d5-a1925cde2513",
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "6bfbf9ea-7831-4bb5-859c-68222cb0d47b",
+      "dependsOn": [
+        "5b3935f9-2588-4d16-8471-40f39d66d902"
+      ]
+    },
+    {
+      "ref": "8a008d54-6b35-4d58-b6b3-33f0aa805376",
+      "dependsOn": [
+        "2952a2e4-8014-4c80-832c-0f148df0e231",
+        "9eb91d9b-28e3-448e-8d56-ca460be4dc5f",
+        "1690090f-40d0-4300-82bf-0d49a4ee249c",
+        "3f0b3273-a741-4f9d-8f87-aa2b5600f93c",
+        "efb49d63-535f-4552-9b38-c42da7752e3d",
+        "6c575573-ad84-49fc-b2dd-dcfa4daa7d8b"
+      ]
+    },
+    {
+      "ref": "2559c997-288b-40ab-9e0d-93e64671b602",
+      "dependsOn": [
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b"
+      ]
+    },
+    {
+      "ref": "c7de7490-a4ad-4608-a452-e9666d8bfe63",
+      "dependsOn": [
+        "6bfbf9ea-7831-4bb5-859c-68222cb0d47b"
+      ]
+    },
+    {
+      "ref": "f5b61a27-a1ff-47d9-a9a9-65c5adfc4eaa",
+      "dependsOn": [
+        "5b3935f9-2588-4d16-8471-40f39d66d902"
+      ]
+    },
+    {
+      "ref": "9a930e8b-beaf-4475-abcd-e4bef9dda2f9",
+      "dependsOn": [
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    },
+    {
+      "ref": "04925ff2-f988-4c34-9552-6c31180ab4db",
+      "dependsOn": [
+        "0c6e54b3-dad3-4e98-9f37-4b63d1e4f5d1"
+      ]
+    },
+    {
+      "ref": "7c4df7ec-7a7b-4246-a978-a4eafb3aed50",
+      "dependsOn": [
+        "8a008d54-6b35-4d58-b6b3-33f0aa805376"
+      ]
+    }
+  ],
+  "serialNumber": "urn:uuid:f60a750f-5ad4-4b45-a6b8-016aebf99eef"
+}
