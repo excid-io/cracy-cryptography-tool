@@ -126,19 +126,13 @@ shares_evidence_location_and_line(component_a, component_b) if {
 
 #
 # ---------------------------------------------------------
-# Helper: get_shared_source_file_or_unknown
+# Helper: get_shared_source_files
 #
-# Return one deterministic shared source file between two components, if any.
-# Otherwise return "unknown".
-#
-# Why this is written this way:
-# A Rego complete function must return exactly one value for the same inputs.
-# The evidence for two components can contain multiple shared source locations.
-# Returning `location` directly from a `some` loop can therefore produce multiple
-# valid outputs and cause eval_conflict_error.
+# Return all shared source files between two components.
+# Returns an empty set if no shared source files exist.
 # ---------------------------------------------------------
 #
-get_shared_source_file_or_unknown(component_a, component_b) := location if {
+get_shared_source_files(component_a, component_b) := shared_locations if {
     shared_locations := {
         location |
         some occurrence_a in get_evidence_occurrences(component_a)
@@ -152,11 +146,23 @@ get_shared_source_file_or_unknown(component_a, component_b) := location if {
 
         location := location_a
     }
+}
 
+#
+# ---------------------------------------------------------
+# Helper: get_shared_source_file_or_unknown
+#
+# Return one deterministic shared source file for display.
+# Otherwise return "unknown".
+# ---------------------------------------------------------
+#
+get_shared_source_file_or_unknown(component_a, component_b) := location if {
+    shared_locations := get_shared_source_files(component_a, component_b)
     count(shared_locations) > 0
 
     sorted_locations := sort(shared_locations)
     location := sorted_locations[0]
+    #location := sorted_locations
 } else := "unknown"
 
 #
@@ -407,64 +413,68 @@ component_matches_primitive(component, kind) if {
     is_kdf_primitive(component)
 }
 
-#
-# ---------------------------------------------------------
-# Helper: get_related_component_by_primitive
-#
-# Purpose:
-# Resolve one deterministic component related to a parent component,
-# constrained by the expected primitive type of the candidate component.
-#
-# Strategy, ordered by confidence:
-# 1. Prefer explicit CBOM dependency relationships.
-# 2. Fall back to same file+line evidence co-location.
-#
-# Important:
-# A Rego complete function must return exactly one value for the same inputs.
-# There may be multiple dependency matches or multiple co-located matches.
-# Therefore this helper builds candidate sets, sorts them, and returns one
-# deterministic candidate.
-# ---------------------------------------------------------
-#
 
-get_related_component_by_primitive(parent_component, candidate_primitive) := candidate_component if {
-    dependency_candidates := {
+#
+# ---------------------------------------------------------
+# Helper: get_related_components_by_primitive
+#
+# Return all components related to a parent component, constrained
+# by the expected primitive type of the candidate component.
+#
+# Strategy:
+# 1. Prefer explicit CBOM dependency relationships.
+# 2. If no dependency candidates exist, fall back to same file+line co-location.
+# ---------------------------------------------------------
+#
+get_related_components_by_primitive(parent_component, candidate_primitive) := candidates if {
+    dependency_candidates := [
         candidate |
         some i
         candidate := input.components[i]
         component_matches_primitive(candidate, candidate_primitive)
         depends_on_component(parent_component, candidate)
-    }
+    ]
 
     count(dependency_candidates) > 0
 
-    sorted_candidates := sort(dependency_candidates)
-    candidate_component := sorted_candidates[0]
-} else := candidate_component if {
-    dependency_candidates := {
+    candidates := dependency_candidates
+} else := candidates if {
+    dependency_candidates := [
         candidate |
         some i
         candidate := input.components[i]
         component_matches_primitive(candidate, candidate_primitive)
         depends_on_component(parent_component, candidate)
-    }
+    ]
 
     count(dependency_candidates) == 0
 
-    colocated_candidates := {
+    candidates := [
         candidate |
         some i
         candidate := input.components[i]
         component_matches_primitive(candidate, candidate_primitive)
         shares_evidence_location_and_line(parent_component, candidate)
-    }
+    ]
+}
 
-    count(colocated_candidates) > 0
+#
+# ---------------------------------------------------------
+# Helper: get_related_component_by_primitive
+#
+# Compatibility wrapper.
+# Return one deterministic related component.
+# Prefer get_related_components_by_primitive(...) for new rules.
+# ---------------------------------------------------------
+#
+get_related_component_by_primitive(parent_component, candidate_primitive) := candidate_component if {
+    candidates := get_related_components_by_primitive(parent_component, candidate_primitive)
+    count(candidates) > 0
 
-    sorted_candidates := sort(colocated_candidates)
+    sorted_candidates := sort(candidates)
     candidate_component := sorted_candidates[0]
-} else := {}
-
+    #candidate_component := sorted_candidates
+}
 
 #
 # ---------------------------------------------------------
