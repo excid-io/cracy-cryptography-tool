@@ -260,7 +260,7 @@ function groupRegoFindings(findings) {
       groups.set(groupKey, {
         title: groupKey,
         ruleId: "",
-        severity: finding.severity || "unknown",
+        severity: "",
         message: "",
         findings: [],
       });
@@ -553,7 +553,15 @@ function Field({ label, value, onChange, placeholder, type = "text", theme }) {
   );
 }
 
-function FindingGroups({ title, emptyText, resultText, groups, theme }) {
+function FindingGroups({
+  title,
+  emptyText,
+  resultText,
+  groups,
+  theme,
+  showGroupSeverity = true,
+  showFindingSeverity = false,
+}) {
   return (
     <section
       style={{
@@ -607,14 +615,16 @@ function FindingGroups({ title, emptyText, resultText, groups, theme }) {
                   </div>
 
                   <div style={styles.badgeStack}>
-                    <span
-                      style={{
-                        ...styles.severityBadge,
-                        ...groupSeverityStyle,
-                      }}
-                    >
-                      {group.severity}
-                    </span>
+                    {showGroupSeverity && (
+                      <span
+                        style={{
+                          ...styles.severityBadge,
+                          ...groupSeverityStyle,
+                        }}
+                      >
+                        {group.severity || "unknown"}
+                      </span>
+                    )}
 
                     <span
                       style={{
@@ -660,6 +670,11 @@ function FindingGroups({ title, emptyText, resultText, groups, theme }) {
                         group
                       );
 
+                      const findingSeverityStyle = getSeverityTheme(
+                        finding.severity,
+                        theme
+                      );
+
                       return (
                         <li
                           key={`${group.title}-${finding.title}-${finding.location}-${findingIndex}`}
@@ -678,6 +693,17 @@ function FindingGroups({ title, emptyText, resultText, groups, theme }) {
                             >
                               {finding.title || "Finding"}
                             </strong>
+
+                            {showFindingSeverity && (
+                              <span
+                                style={{
+                                  ...styles.severityBadge,
+                                  ...findingSeverityStyle,
+                                }}
+                              >
+                                {finding.severity || "unknown"}
+                              </span>
+                            )}
                           </div>
 
                           {finding.ruleId && finding.ruleId !== group.ruleId && (
@@ -1406,6 +1432,8 @@ export default function CbomkitSimpleScanner() {
             }.`}
             groups={groupedSemgrepFindings}
             theme={theme}
+            showGroupSeverity={true}
+            showFindingSeverity={false}
           />
         )}
 
@@ -1420,6 +1448,8 @@ export default function CbomkitSimpleScanner() {
             }.`}
             groups={groupedRegoFindings}
             theme={theme}
+            showGroupSeverity={false}
+            showFindingSeverity={true}
           />
         )}
       </section>
@@ -1762,7 +1792,7 @@ const styles = {
   findingRowHeader: {
     display: "flex",
     alignItems: "flex-start",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: 10,
     marginBottom: 6,
   },
