@@ -323,6 +323,11 @@ function humanizeRuleId(ruleId) {
     "security",
     "rule",
     "rules",
+    "python",
+    "java",
+    "javascript",
+    "typescript",
+    "crypto",
   ]);
 
   const acronymMap = {
@@ -352,6 +357,9 @@ function humanizeRuleId(ruleId) {
     gcm: "GCM",
     ccm: "CCM",
     fips: "FIPS",
+    kdf: "KDF",
+    hkdf: "HKDF",
+    pbkdf2: "PBKDF2",
   };
 
   return parts
@@ -366,13 +374,6 @@ function humanizeRuleId(ruleId) {
       return lower.charAt(0).toUpperCase() + lower.slice(1);
     })
     .join(" ");
-}
-
-function getRuleDisplayName(group) {
-  return (
-    getRuleDisplayNameFromMetadata(group.metadata) ||
-    humanizeRuleId(group.ruleId)
-  );
 }
 
 function formatLocation(finding) {
@@ -391,63 +392,215 @@ function formatReference(reference) {
   return `${location}${line}${column}`;
 }
 
-function groupSemgrepFindingsByRuleId(findings) {
-  const groups = new Map();
+function getSemgrepSectionFromMetadata(metadata) {
+  return getStringValue(metadata, [
+    "section",
+    "policy_section",
+    "policySection",
+    "eccg_section",
+    "eccgSection",
+    "chapter",
+    "family",
+  ]);
+}
+
+function getSemgrepSectionFromRuleId(ruleId) {
+  const normalized = String(ruleId || "").toLowerCase();
+
+  if (
+    normalized.includes("symmetric-atomic-primitives") &&
+    (normalized.includes(".aes.") ||
+      normalized.includes(".des.") ||
+      normalized.includes(".3des.") ||
+      normalized.includes(".tripledes.") ||
+      normalized.includes(".block-cipher") ||
+      normalized.includes(".block_cipher"))
+  ) {
+    return "Symmetric Atomic Primitives / Block Ciphers";
+  }
+
+  if (
+    normalized.includes("symmetric-atomic-primitives") &&
+    (normalized.includes(".sha") ||
+      normalized.includes(".md5") ||
+      normalized.includes(".md4") ||
+      normalized.includes(".md2") ||
+      normalized.includes(".hash"))
+  ) {
+    return "Symmetric Atomic Primitives / Hash Functions";
+  }
+
+  if (
+    normalized.includes("symmetric-atomic-primitives") &&
+    (normalized.includes(".hmac.") ||
+      normalized.includes(".mac.") ||
+      normalized.includes("cmac") ||
+      normalized.includes("gmac"))
+  ) {
+    return "Symmetric Atomic Primitives / MACs";
+  }
+
+  if (
+    normalized.includes("symmetric-atomic-primitives") &&
+    (normalized.includes(".rng.") ||
+      normalized.includes(".random.") ||
+      normalized.includes(".drbg.") ||
+      normalized.includes("secure-random"))
+  ) {
+    return "Symmetric Atomic Primitives / Random Bit Generation";
+  }
+
+  if (
+    normalized.includes("asymmetric") ||
+    normalized.includes(".rsa.") ||
+    normalized.includes(".dsa.") ||
+    normalized.includes(".ecdsa.") ||
+    normalized.includes(".ecdh.") ||
+    normalized.includes(".dh.")
+  ) {
+    return "Asymmetric Atomic Primitives";
+  }
+
+  if (
+    normalized.includes(".tls.") ||
+    normalized.includes(".ssl.") ||
+    normalized.includes("protocol")
+  ) {
+    return "Protocols";
+  }
+
+  if (
+    normalized.includes(".kdf.") ||
+    normalized.includes("pbkdf") ||
+    normalized.includes("hkdf") ||
+    normalized.includes("scrypt") ||
+    normalized.includes("argon")
+  ) {
+    return "Key Derivation Functions";
+  }
+
+  if (
+    normalized.includes("secretsharing") ||
+    normalized.includes("secret-sharing") ||
+    normalized.includes("secret_sharing") ||
+    normalized.includes("shamir")
+  ) {
+    return "Secret Sharing";
+  }
+
+  return "Semgrep Findings";
+}
+
+function getSemgrepSection(finding) {
+  return (
+    getSemgrepSectionFromMetadata(finding.metadata || {}) ||
+    getSemgrepSectionFromRuleId(finding.ruleId)
+  );
+}
+
+function getSeverityRank(severity) {
+  const severityOrder = {
+    critical: 0,
+    error: 1,
+    high: 2,
+    warning: 3,
+    medium: 4,
+    info: 5,
+    low: 6,
+    unknown: 7,
+  };
+
+  return severityOrder[normalizeSeverity(severity)] ?? 99;
+}
+
+function getMoreSevereSeverity(a, b) {
+  return getSeverityRank(a) <= getSeverityRank(b) ? a : b;
+}
+
+function groupSemgrepFindingsBySection(findings) {
+  const sectionGroups = new Map();
 
   for (const finding of findings) {
+    const section = getSemgrepSection(finding);
     const ruleId = finding.ruleId || "unknown-rule";
 
-    if (!groups.has(ruleId)) {
-      groups.set(ruleId, {
-        title: "",
-        ruleId,
-        algorithm: finding.algorithm || "Unknown algorithm",
-        message: finding.message || "",
-        severity: finding.severity || "unknown",
-        metadata: finding.metadata || {},
-        findings: [],
+    if (!sectionGroups.has(section)) {
+      sectionGroups.set(section, {
+        title: section,
+        ruleId: "",
+        severity: "",
+        message: "",
+        findingsByRule: new Map(),
       });
     }
 
-    const group = groups.get(ruleId);
+    const sectionGroup = sectionGroups.get(section);
 
-    group.findings.push({
-      title: finding.algorithm || "Finding",
-      message: finding.message || "",
-      severity: finding.severity || group.severity || "unknown",
-      ruleId: finding.ruleId || ruleId,
-      location: formatLocation(finding),
-      references: [],
+    if (!sectionGroup.findingsByRule.has(ruleId)) {
+      sectionGroup.findingsByRule.set(ruleId, {
+        title:
+          getRuleDisplayNameFromMetadata(finding.metadata || {}) ||
+          finding.algorithm ||
+                    humanizeRuleId(ruleId),
+        message: finding.message || "",
+        severity: finding.severity || "unknown",
+        ruleId,
+        location: "",
+        references: [],
+        raw: finding,
+      });
+    }
+
+    const ruleFinding = sectionGroup.findingsByRule.get(ruleId);
+
+    ruleFinding.severity = getMoreSevereSeverity(
+      ruleFinding.severity,
+      finding.severity || "unknown"
+    );
+
+    if (!ruleFinding.message && finding.message) {
+      ruleFinding.message = finding.message;
+    }
+
+    ruleFinding.references.push({
+      location: finding.path || finding.location || "Unknown file",
+      line: finding.line,
+      column: finding.column,
       raw: finding,
     });
   }
 
-  return Array.from(groups.values())
-    .map((group) => ({
-      ...group,
-      title: getRuleDisplayName(group),
-    }))
-    .sort((a, b) => {
-      const severityOrder = {
-        critical: 0,
-        error: 1,
-        high: 2,
-        warning: 3,
-        medium: 4,
-        info: 5,
-        low: 6,
-        unknown: 7,
+  return Array.from(sectionGroups.values())
+    .map((sectionGroup) => {
+      const findingsForSection = Array.from(
+        sectionGroup.findingsByRule.values()
+      )
+        .map((ruleFinding) => ({
+          ...ruleFinding,
+          references: ruleFinding.references.sort((a, b) =>
+            formatReference(a).localeCompare(formatReference(b))
+          ),
+        }))
+        .sort((a, b) => {
+          const aSeverity = getSeverityRank(a.severity);
+          const bSeverity = getSeverityRank(b.severity);
+
+          if (aSeverity !== bSeverity) {
+            return aSeverity - bSeverity;
+          }
+
+          return a.title.localeCompare(b.title);
+        });
+
+      return {
+        title: sectionGroup.title,
+        ruleId: "",
+        severity: "",
+        message: "",
+        findings: findingsForSection,
       };
-
-      const aSeverity = severityOrder[normalizeSeverity(a.severity)] ?? 99;
-      const bSeverity = severityOrder[normalizeSeverity(b.severity)] ?? 99;
-
-      if (aSeverity !== bSeverity) {
-        return aSeverity - bSeverity;
-      }
-
-      return a.title.localeCompare(b.title);
-    });
+    })
+    .sort((a, b) => a.title.localeCompare(b.title));
 }
 
 function getSeverityTheme(severity, theme) {
@@ -677,7 +830,7 @@ function FindingGroups({
 
                       return (
                         <li
-                          key={`${group.title}-${finding.title}-${finding.location}-${findingIndex}`}
+                          key={`${group.title}-${finding.title}-${finding.ruleId}-${findingIndex}`}
                           style={{
                             ...styles.locationItem,
                             color: theme.muted,
@@ -751,7 +904,7 @@ function FindingGroups({
                                 {finding.references.map(
                                   (reference, referenceIndex) => (
                                     <li
-                                      key={`${finding.title}-${referenceIndex}`}
+                                      key={`${finding.ruleId}-${referenceIndex}`}
                                       style={{
                                         ...styles.referenceItem,
                                         color: theme.muted,
@@ -805,7 +958,7 @@ export default function CbomkitSimpleScanner() {
   const groupedRegoFindings = groupRegoFindings(importantFindings);
 
   const semgrepFindings = getSemgrepFindings(semgrepResult);
-  const groupedSemgrepFindings = groupSemgrepFindingsByRuleId(semgrepFindings);
+  const groupedSemgrepFindings = groupSemgrepFindingsBySection(semgrepFindings);
 
   function startControlledRun() {
     abortControllerRef.current?.abort();
@@ -814,11 +967,24 @@ export default function CbomkitSimpleScanner() {
     abortControllerRef.current = controller;
 
     setError("");
-    setPolicyError("");
-    setPolicyErrorDetails("");
-    setSemgrepError("");
 
     return controller;
+  }
+
+  function clearRegoState() {
+    setPolicyResult(null);
+    setPolicyError("");
+    setPolicyErrorDetails("");
+  }
+
+  function clearSemgrepState() {
+    setSemgrepResult(null);
+    setSemgrepError("");
+  }
+
+  function clearEvaluationState() {
+    clearRegoState();
+    clearSemgrepState();
   }
 
   function finishControlledRun(controller) {
@@ -875,8 +1041,7 @@ export default function CbomkitSimpleScanner() {
   async function handleGenerateCbom() {
     const controller = startControlledRun();
 
-    setPolicyResult(null);
-    setSemgrepResult(null);
+    clearEvaluationState();
 
     if (!requireUrl()) {
       finishControlledRun(controller);
@@ -903,10 +1068,8 @@ export default function CbomkitSimpleScanner() {
   async function handleRegoEvaluation() {
     const controller = startControlledRun();
 
-    setPolicyResult(null);
-    setSemgrepResult(null);
-    setPolicyError("");
-    setPolicyErrorDetails("");
+    clearSemgrepState();
+    clearRegoState();
 
     if (!requireUrl()) {
       finishControlledRun(controller);
@@ -944,7 +1107,8 @@ export default function CbomkitSimpleScanner() {
   async function handleSemgrepEvaluation() {
     const controller = startControlledRun();
 
-    setSemgrepResult(null);
+    clearRegoState();
+    clearSemgrepState();
 
     if (!requireUrl()) {
       finishControlledRun(controller);
@@ -1143,12 +1307,8 @@ export default function CbomkitSimpleScanner() {
     setPat("");
     setStatus("Ready");
     setError("");
-    setPolicyError("");
-    setPolicyErrorDetails("");
-    setSemgrepError("");
     setCbom(null);
-    setPolicyResult(null);
-    setSemgrepResult(null);
+    clearEvaluationState();
   }
 
   return (
@@ -1423,17 +1583,17 @@ export default function CbomkitSimpleScanner() {
 
         {semgrepResult && (
           <FindingGroups
-            title="Semgrep findings"
+            title="Semgrep high and critical findings"
             emptyText="No Semgrep findings were returned."
             resultText={`${semgrepFindings.length} finding${
               semgrepFindings.length === 1 ? "" : "s"
-            } across ${groupedSemgrepFindings.length} rule${
+            } across ${groupedSemgrepFindings.length} group${
               groupedSemgrepFindings.length === 1 ? "" : "s"
             }.`}
             groups={groupedSemgrepFindings}
             theme={theme}
-            showGroupSeverity={true}
-            showFindingSeverity={false}
+            showGroupSeverity={false}
+            showFindingSeverity={true}
           />
         )}
 

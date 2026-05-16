@@ -2,9 +2,22 @@ rules:
   # ==========================================================
   # DISALLOWED / LEGACY PRIMITIVES
   # ==========================================================
+
+  # ----------------------------------------------------------
+  # Rule: crypto.blockcipher.3des.legacy
+  #
+  # Purpose:
+  # Detect direct use of Triple-DES / 3DES as a block cipher or
+  # through TLS/OpenSSL cipher-suite configuration strings.
+  #
+  # Security rationale:
+  # 3DES is treated as legacy because of its 64-bit block size,
+  # reduced security margin, and planned legacy-only status.
+  # Prefer AES with 128, 192, or 256-bit keys.
+  # ----------------------------------------------------------
   - id: crypto.blockcipher.3des.legacy
     languages: [python]
-    severity: ERROR
+    severity: HIGH
     message: >
       Triple-DES (3DES) detected. Status: LEGACY (expires 2027).
       64-bit block size and reduced security margin.
@@ -12,6 +25,7 @@ rules:
     metadata:
       category: security
       display_name: Triple-DES (3DES) Legacy Block Cipher
+      policy_section: Symmetric Atomic Primitives / Block Ciphers
       standard: [FIPS-46-3, ISO-18033-3]
       status: L
     pattern-either:
@@ -38,9 +52,21 @@ rules:
               metavariable: $CIPHERS
               regex: '.*(3DES|DES-CBC3|EDH-RSA-DES-CBC3|ECDHE.*DES-CBC3).*'
 
+  # ----------------------------------------------------------
+  # Rule: python.crypto.3des.keysize.bad-explicit-length
+  #
+  # Purpose:
+  # Detect explicitly generated 3DES key material whose length is
+  # not 24 bytes.
+  #
+  # Security rationale:
+  # 3-key TripleDES requires 24 bytes of key material, corresponding
+  # to nominal 168-bit security before parity bits. Any other explicit
+  # length is policy-invalid for this rule.
+  # ----------------------------------------------------------
   - id: python.crypto.3des.keysize.bad-explicit-length
     languages: [python]
-    severity: ERROR
+    severity: CRITICAL
     message: >
       3DES-168 (3-key TripleDES) policy: key material must be 24 bytes
       (192 bits including parity), corresponding to nominal 168-bit 3DES.
@@ -51,7 +77,7 @@ rules:
       display_name: 3DES Key Size (Explicit Length)
       tags: [crypto, 3des, tripledes, key-size, policy]
       confidence: HIGH
-
+      policy_section: Symmetric Atomic Primitives / Block Ciphers
     pattern-either:
       # Inline bad key generation directly in 3DES sinks
       - patterns:
@@ -248,17 +274,26 @@ rules:
               metavariable: $N
               regex: '^(?!24$)\d+$'
 
-
+  # ----------------------------------------------------------
+  # Rule: python.crypto.aes.keysize.bad-explicit-length
   #
-  # Rule A: If code explicitly requests key material of the wrong length, flag it.
+  # Purpose:
+  # Detect explicit AES key material lengths that are not one of
+  # the approved AES key sizes: 16, 24, or 32 bytes.
   #
+  # Security rationale:
+  # AES requires 128, 192, or 256-bit keys. Random byte generation
+  # or KDF output lengths outside {16, 24, 32} indicate invalid AES
+  # key sizing.
+  # ----------------------------------------------------------
   - id: python.crypto.aes.keysize.bad-explicit-length
     languages: [python]
     message: >
       AES key size requirement: keys must be 16/24/32 bytes (128/192/256-bit).
       Detected explicit key length that is not one of {16, 24, 32}.
-    severity: ERROR
+    severity: CRITICAL
     metadata:
+      policy_section: Symmetric Atomic Primitives / Block Ciphers
       category: security
       display_name: AES Key Size (Explicit Length)
       tags: [crypto, aes, key-size, policy]
@@ -294,6 +329,7 @@ rules:
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!16$|24$|32$)\d+$'
+
       # NIST SP800-56A Concat KDFs (cryptography)
       - patterns:
           - pattern: ConcatKDFHash(..., length=$N, ...)
@@ -305,17 +341,27 @@ rules:
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!16$|24$|32$)\d+$'
-       # ANSI X9.63 KDF (cryptography)
+
+      # ANSI X9.63 KDF (cryptography)
       - patterns:
           - pattern: X963KDF(..., length=$N, ...)
           - metavariable-regex:
               metavariable: $N
               regex: '^(?!16$|24$|32$)\d+$'
 
+  # ----------------------------------------------------------
+  # Rule: python.crypto.aes.keysize.unvalidated-external-key
   #
-  # Rule B: Dataflow rule — key comes from an unknown-length source (file/env/etc.)
-  # and is used as an AES key WITHOUT being validated/normalized to 16/24/32.
+  # Purpose:
+  # Detect AES keys that originate from external or unknown-length
+  # sources and are used without validation or derivation to an
+  # approved AES size.
   #
+  # Security rationale:
+  # External keys from files, environment variables, CLI arguments,
+  # request bodies, or decoded strings may have arbitrary length.
+  # They must be checked or transformed through an approved KDF.
+  # ----------------------------------------------------------
   - id: python.crypto.aes.keysize.unvalidated-external-key
     languages: [python]
     mode: taint
@@ -323,10 +369,11 @@ rules:
       AES key size requirement: key material must be 16/24/32 bytes.
       Key appears to come from an external/unknown-length source (file/env/etc.)
       and is used for AES without a length check or derivation to an approved size.
-    severity: HIGH
+    severity: MEDIUM
     metadata:
       category: security
       display_name: AES Key Size (Unvalidated External Key)
+      policy_section: Symmetric Atomic Primitives / Block Ciphers
       tags: [crypto, aes, key-size, taint]
       confidence: MEDIUM
 
@@ -338,6 +385,7 @@ rules:
         - pattern: $KEY = $F.read()
         - pattern: $KEY = Path($P).read_bytes()
         - pattern: $KEY = pathlib.Path($P).read_bytes()
+
       # NOTE this only works with Pro engine
       - patterns:
         # call to a function that returns open(...).read()
@@ -345,12 +393,14 @@ rules:
         - pattern-inside: |
             def $FUNC(...):
               ...
+
       # NOTE this only works with Pro engine
-      - patterns: 
+      - patterns:
         - pattern: return open(..., "rb").read()
         - pattern-inside: |
             def $FUNC(...):
               ...
+
       # TODO TEST
       - patterns:
         - pattern: $KEY = $FUNC(...)
@@ -361,6 +411,7 @@ rules:
               def $FUNC(...):
                 ...
                 return open(..., "rb").read()
+
       # NOTE this only works with Pro engine
       - patterns:
         - pattern: return $FH.read()
@@ -369,14 +420,16 @@ rules:
               ...
               $FH = open(...)
               ...
+
       # NOTE this only works with Pro engine
-      - patterns: 
+      - patterns:
         - pattern: return Path(...).read_bytes()
         - pattern-inside: |
             def $FUNC(...):
               ...
+
       # NOTE this only works with Pro engine
-      - patterns: 
+      - patterns:
         - pattern: return pathlib.Path(...).read_bytes()
         - pattern-inside: |
             def $FUNC(...):
@@ -387,18 +440,21 @@ rules:
         - pattern: $KEY = os.environ[$K]
         - pattern: $KEY = os.getenv(...)
         - pattern: $KEY = sys.argv[$I]
+
       # NOTE this only works with Pro engine
       - patterns:
         - pattern: os.environ[$K]
         - pattern-inside: |
             def $FUNC(...):
               ...
+
       # NOTE this only works with Pro engine
       - patterns:
         - pattern: os.getenv(...)
         - pattern-inside: |
             def $FUNC(...):
               ...
+
       # NOTE this only works with Pro engine
       - patterns:
         - pattern: return sys.argv[$I]
@@ -406,24 +462,26 @@ rules:
             def $FUNC(...):
               ...
 
-
       # ---- Typical decoding of external strings into bytes (still unknown-length) ----
       - patterns:
         - pattern: $KEY = base64.b64decode(...)
         - pattern: $KEY = binascii.unhexlify(...)
         - pattern: $KEY = bytes.fromhex(...)
-      - patterns:
+
       # NOTE this only works with Pro engine
+      - patterns:
         - pattern: return base64.b64decode(...)
         - pattern-inside: |
             def $F(...):
               ...
+
       # NOTE this only works with Pro engine
       - patterns:
         - pattern: return binascii.unhexlify(...)
         - pattern-inside: |
             def $F(...):
               ...
+
       # NOTE this only works with Pro engine
       - patterns:
         - pattern: return bytes.fromhex(...)
@@ -500,10 +558,18 @@ rules:
       - pattern: cryptography.hazmat.primitives.ciphers.algorithms.AES($KEY, ...)
       - pattern: algorithms.AES($KEY, ...)
 
+  # ----------------------------------------------------------
+  # Rule: python.crypto.3des.keysize.unvalidated-external-key
   #
-  # Rule B (3DES): Dataflow rule — key comes from an unknown-length source (file/env/etc.)
-  # and is used as a 3DES key WITHOUT being validated/normalized to 24 bytes.
+  # Purpose:
+  # Detect 3DES keys that originate from external or unknown-length
+  # sources and are used without validation or derivation to exactly
+  # 24 bytes.
   #
+  # Security rationale:
+  # 3-key TripleDES requires 24 bytes of key material. External key
+  # sources must be validated or derived to 24 bytes before use.
+  # ----------------------------------------------------------
   - id: python.crypto.3des.keysize.unvalidated-external-key
     languages: [python]
     mode: taint
@@ -511,12 +577,14 @@ rules:
       3DES-168 (3-key TripleDES) policy: key material must be 24 bytes.
       Key appears to come from an external/unknown-length source (file/env/etc.)
       and is used for 3DES/TripleDES without a strict length check or derivation to 24 bytes.
-    severity: ERROR
+    severity: MEDIUM
     metadata:
       category: security
       tags: [crypto, 3des, tripledes, key-size, taint]
       confidence: MEDIUM
       display_name: 3DES Key Size (Unvalidated External Key)
+      policy_section: Symmetric Atomic Primitives / Block Ciphers
+
 
     pattern-sources:
       - patterns:
@@ -533,6 +601,7 @@ rules:
           - pattern-inside: |
               def $FUNC(...):
                 ...
+
       # NOTE this only works with Pro engine (function returns)
       - patterns:
           - pattern: return open(..., "rb").read()
@@ -566,6 +635,7 @@ rules:
           - pattern-inside: |
               def $FUNC(...):
                 ...
+
       # NOTE this only works with Pro engine (pathlib.Path returns)
       - patterns:
           - pattern: return pathlib.Path(...).read_bytes()
@@ -573,8 +643,8 @@ rules:
               def $FUNC(...):
                 ...
 
+      # ---- Environment / CLI / config ----
       - patterns:
-          # ---- Environment / CLI / config ----
           - pattern: $KEY = os.environ[$K]
           - pattern: $KEY = os.getenv(...)
           - pattern: $KEY = sys.argv[$I]
@@ -585,12 +655,14 @@ rules:
           - pattern-inside: |
               def $FUNC(...):
                 ...
+
       # NOTE this only works with Pro engine (getenv in helper)
       - patterns:
           - pattern: os.getenv(...)
           - pattern-inside: |
               def $FUNC(...):
                 ...
+
       # NOTE this only works with Pro engine (argv returned from helper)
       - patterns:
           - pattern: return sys.argv[$I]
@@ -598,8 +670,8 @@ rules:
               def $FUNC(...):
                 ...
 
+      # ---- Typical decoding of external strings into bytes (still unknown-length) ----
       - patterns:
-          # ---- Typical decoding of external strings into bytes (still unknown-length) ----
           - pattern: $KEY = base64.b64decode(...)
           - pattern: $KEY = binascii.unhexlify(...)
           - pattern: $KEY = bytes.fromhex(...)
@@ -610,12 +682,14 @@ rules:
           - pattern-inside: |
               def $F(...):
                 ...
+
       # NOTE this only works with Pro engine (decoding returned from helper)
       - patterns:
           - pattern: return binascii.unhexlify(...)
           - pattern-inside: |
               def $F(...):
                 ...
+
       # NOTE this only works with Pro engine (decoding returned from helper)
       - patterns:
           - pattern: return bytes.fromhex(...)
@@ -675,29 +749,31 @@ rules:
       - pattern: cryptography.hazmat.primitives.ciphers.algorithms.TripleDES($KEY, ...)
       - pattern: algorithms.TripleDES($KEY, ...)
       - pattern: TripleDES($KEY, ...)
-      # ==========================================================
-  # HASH LENGTH POLICY (per approved table)
-  #
-  # Allowed:
-  #   SHA-2: 256 / 384 / 512 / 512-256
-  #   SHA-3: 256 / 384 / 512
-  #
-  # Legacy (L [2025]):
-  #   SHA-224
-  #   SHA-512/224
+
+  # ==========================================================
+  # HASH LENGTH POLICY
   # ==========================================================
 
   # ----------------------------------------------------------
-  # hashlib — SHA-224
+  # Rule: python.hash.hashlib.sha224.legacy
+  #
+  # Purpose:
+  # Detect use of SHA-224 through Python hashlib.
+  #
+  # Security rationale:
+  # SHA-224 is treated as legacy. Prefer SHA-256, SHA-384,
+  # SHA-512, or SHA-512/256.
   # ----------------------------------------------------------
   - id: python.hash.hashlib.sha224.legacy
     languages: [python]
-    severity: ERROR
+    severity: CRITICAL
     message: SHA-224 is LEGACY (L [2025]). Use SHA-256/384/512 or SHA-512/256.
-    metadata: 
+    metadata:
       category: security
       tags: [crypto, hash, sha224, legacy]
       display_name: hashlib SHA-224 Legacy Hash Function
+      policy_section: Symmetric Atomic Primitives / Hashes
+
     pattern-either:
       - pattern: hashlib.sha224(...)
       - pattern: hashlib.new("sha224", ...)
@@ -709,14 +785,21 @@ rules:
               regex: '^(?i)sha224$'
 
   # ----------------------------------------------------------
-  # hashlib — SHA-512/224
+  # Rule: python.hash.hashlib.sha512_224.legacy
+  #
+  # Purpose:
+  # Detect use of SHA-512/224 through Python hashlib.
+  #
+  # Security rationale:
+  # SHA-512/224 is treated as legacy. Prefer SHA-512/256 or
+  # approved SHA-2 output sizes such as SHA-256, SHA-384, or SHA-512.
   # ----------------------------------------------------------
   - id: python.hash.hashlib.sha512_224.legacy
     languages: [python]
-    severity: ERROR
+    severity: CRITICAL
     message: SHA-512/224 is LEGACY (L [2025). Use SHA-512/256 or SHA-256/384/512.
-    metadata: 
-      category: security 
+    metadata:
+      category: security
       tags: [crypto, hash, sha512-224, legacy]
       display_name: hashlib SHA-512/224 Legacy Hash Function
     pattern-either:
@@ -730,78 +813,122 @@ rules:
               regex: '^(?i)sha512_224$'
 
   # ----------------------------------------------------------
-  # cryptography — SHA-224
+  # Rule: python.hash.crypto.sha224.legacy
+  #
+  # Purpose:
+  # Detect use of SHA224 from pyca/cryptography hash APIs.
+  #
+  # Security rationale:
+  # SHA-224 is treated as legacy. Prefer approved SHA-2 or SHA-3
+  # hash functions with stronger output sizes.
   # ----------------------------------------------------------
   - id: python.hash.crypto.sha224.legacy
     languages: [python]
-    severity: ERROR
+    severity: CRITICAL
     message: cryptography SHA224 is LEGACY (L [2025]).
-    metadata: 
-      category: security 
+    metadata:
+      category: security
       tags: [crypto, hash, sha224, legacy]
       display_name: cryptography SHA-224 Legacy Hash Function
+      policy_section: Symmetric Atomic Primitives / Hashes
     pattern-either:
       - pattern: hashes.SHA224(...)
       - pattern: cryptography.hazmat.primitives.hashes.SHA224(...)
       - pattern: SHA224(...)
 
   # ----------------------------------------------------------
-  # cryptography — SHA-512/224
+  # Rule: python.hash.crypto.sha512_224.legacy
+  #
+  # Purpose:
+  # Detect use of SHA512/224 from pyca/cryptography hash APIs.
+  #
+  # Security rationale:
+  # SHA-512/224 is treated as legacy. Prefer SHA-512/256 or
+  # other approved SHA-2/SHA-3 output sizes.
   # ----------------------------------------------------------
   - id: python.hash.crypto.sha512_224.legacy
     languages: [python]
-    severity: ERROR
+    severity: HIGH
     message: cryptography SHA512/224 is LEGACY (L [2025]).
-    metadata: 
-      category: security 
+    metadata:
+      category: security
       tags: [crypto, hash, sha512-224, legacy]
       display_name: cryptography SHA-512/224 Legacy Hash Function
+      policy_section: Symmetric Atomic Primitives / Hashes
     pattern-either:
       - pattern: hashes.SHA512_224(...)
       - pattern: cryptography.hazmat.primitives.hashes.SHA512_224(...)
       - pattern: SHA512_224(...)
 
   # ----------------------------------------------------------
-  # HMAC (stdlib)
+  # Rule: python.hash.hmac.legacy
+  #
+  # Purpose:
+  # Detect HMAC constructions that use legacy SHA-224 or SHA-512/224
+  # digest modules through Python stdlib hmac.
+  #
+  # Security rationale:
+  # HMAC security depends on the underlying hash function. Legacy
+  # hash functions should not be used as HMAC digest algorithms.
   # ----------------------------------------------------------
   - id: python.hash.hmac.legacy
     languages: [python]
-    severity: ERROR
+    severity: HIGH
     message: HMAC uses a LEGACY hash (SHA-224 or SHA-512/224).
-    metadata: 
-      category: security 
+    metadata:
+      category: security
       tags: [crypto, hmac, legacy]
       display_name: HMAC Legacy Hash Function
+      policy_section: Symmetric Atomic Primitives / Hashes
     pattern-either:
       - pattern: hmac.new(..., digestmod=hashlib.sha224)
       - pattern: hmac.new(..., digestmod=hashlib.sha512_224)
 
   # ----------------------------------------------------------
-  # HMAC (cryptography)
+  # Rule: python.hash.crypto.hmac.legacy
+  #
+  # Purpose:
+  # Detect pyca/cryptography HMAC constructions that use legacy
+  # SHA-224 or SHA-512/224 hash algorithms.
+  #
+  # Security rationale:
+  # HMAC must be instantiated with an agreed hash function. Legacy
+  # hash functions should be replaced with approved SHA-2/SHA-3 variants.
   # ----------------------------------------------------------
   - id: python.hash.crypto.hmac.legacy
     languages: [python]
-    severity: ERROR
+    severity: HIGH
     message: cryptography HMAC uses a LEGACY hash (SHA-224 or SHA-512/224).
-    metadata: 
-      category: security 
+    metadata:
+      category: security
       tags: [crypto, hmac, legacy]
       display_name: cryptography HMAC Legacy Hash Function
+      policy_section: Symmetric Atomic Primitives / Hashes
     pattern-either:
       - pattern: HMAC(..., hashes.SHA224(), ...)
       - pattern: HMAC(..., hashes.SHA512_224(), ...)
 
   # ----------------------------------------------------------
-  # KDFs — cryptography (HKDF, PBKDF2, Concat, X9.63)
+  # Rule: python.hash.crypto.kdf.legacy
+  #
+  # Purpose:
+  # Detect KDF constructions that use legacy SHA-224 or SHA-512/224
+  # as the underlying hash algorithm.
+  #
+  # Security rationale:
+  # KDFs inherit security assumptions from their hash or PRF basis.
+  # Legacy hash functions should not be used in HKDF, PBKDF2HMAC,
+  # ConcatKDF, or X963KDF constructions.
   # ----------------------------------------------------------
   - id: python.hash.crypto.kdf.legacy
     languages: [python]
-    severity: ERROR
+    severity: HIGH
     message: KDF uses a LEGACY hash (SHA-224 or SHA-512/224).
-    metadata: 
-      category: security 
+    metadata:
+      category: security
       tags: [crypto, kdf, legacy]
       display_name: KDF Legacy Hash Function
+      policy_section: Symmetric Atomic Primitives / Hashes
     pattern-either:
       - pattern: HKDF(..., algorithm=hashes.SHA224(), ...)
       - pattern: HKDF(..., algorithm=hashes.SHA512_224(), ...)
@@ -815,34 +942,53 @@ rules:
       - pattern: X963KDF(..., algorithm=hashes.SHA512_224(), ...)
 
   # ----------------------------------------------------------
-  # PyCryptodome
+  # Rule: python.hash.pycryptodome.legacy
+  #
+  # Purpose:
+  # Detect use of legacy SHA-224 or SHA-512/224 hash algorithms
+  # through PyCryptodome.
+  #
+  # Security rationale:
+  # These hash variants are treated as legacy and should be replaced
+  # with approved SHA-2/SHA-3 alternatives.
   # ----------------------------------------------------------
   - id: python.hash.pycryptodome.legacy
     languages: [python]
-    severity: ERROR
+    severity: HIGH
     message: PyCryptodome SHA-224 or SHA-512/224 is LEGACY (L [2025]).
-    metadata: 
-      category: security 
+    metadata:
+      category: security
       tags: [crypto, hash, legacy, pycryptodome]
       display_name: PyCryptodome Legacy Hash Function
+      policy_section: Symmetric Atomic Primitives / Hashes
     pattern-either:
       - pattern: Crypto.Hash.SHA224.new(...)
       - pattern: SHA224.new(...)
       - pattern: Crypto.Hash.SHA512_224.new(...)
       - pattern: SHA512_224.new(...)
 
+  # ----------------------------------------------------------
+  # Rule: crypto.secretsharing.require-shamir
   #
-  #    ENFORCEMENT: Flag “secret splitting” patterns unless Shamir is used.
-  #    This is the main enforcement rule.
+  # Purpose:
+  # Detect ad-hoc secret splitting, chunking, XOR sharing, or manual
+  # share storage patterns that are not using an approved Shamir API.
   #
+  # Security rationale:
+  # Secret sharing should use a well-defined Shamir secret sharing
+  # construction rather than DIY splitting/chunking, which may not
+  # provide threshold security or robust reconstruction guarantees.
+  # ----------------------------------------------------------
   - id: crypto.secretsharing.require-shamir
     message: >
       Potential secret sharing / secret splitting detected, but not via approved Shamir API.
       Use Shamir secret sharing (e.g., Crypto.Protocol.SecretSharing.Shamir) instead of DIY splitting/chunking.
-    metadata: 
+    metadata:
       category: security
       tags: [crypto, secret-sharing, secret-splitting, shamir, policy]
       display_name: Secret Sharing / Splitting Without Shamir
+      confidence: LOW
+      policy_section: Symmetric Atomic Primitives / Secret Sharing
     languages: [python]
     severity: WARNING
 
@@ -867,6 +1013,7 @@ rules:
           # Storing shares in lists/dicts by index (very rough heuristic)
           - pattern: $SHARES[$IDX] = $PART
           - pattern: $SHARES.append($PART)
+
       # ...BUT do NOT flag if the file imports/uses the allowlisted Shamir API.
       - pattern-not-inside: |
           from Crypto.Protocol.SecretSharing import Shamir

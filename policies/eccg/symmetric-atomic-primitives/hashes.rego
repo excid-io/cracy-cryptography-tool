@@ -83,7 +83,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-HASH-003",
-        "critical",
+        "warning",
         sprintf("Hash function '%s' is not in the agreed hash function list. This does not mean that your code is unsafe, but this should probably be flagged as non compliant.", [component.name]),
         component,
         {
