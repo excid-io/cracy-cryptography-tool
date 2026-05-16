@@ -220,14 +220,12 @@ function extractImportantFindings(policyResult) {
     if (IMPORTANT_SEVERITIES.has(severity)) {
       findings.push({
         title: getRegoFindingTitle(value, path),
-        info: getRegoFindingInfo(value),
+        message: getRegoFindingInfo(value),
         severity,
         ruleId: getStringValue(value, ["ruleId", "rule_id", "id"]),
-        component: getStringValue(value, ["component", "algorithm", "scheme"]),
         section: makePathLabel(path),
-        path,
-        raw: value,
         references: Array.isArray(value.references) ? value.references : [],
+        raw: value,
       });
     }
 
@@ -241,7 +239,7 @@ function extractImportantFindings(policyResult) {
   const seen = new Set();
 
   return findings.filter((finding) => {
-    const key = `${finding.severity}|${finding.ruleId}|${finding.title}|${finding.info}`;
+    const key = `${finding.severity}|${finding.ruleId}|${finding.title}|${finding.message}`;
 
     if (seen.has(key)) {
       return false;
@@ -263,15 +261,14 @@ function groupRegoFindings(findings) {
         title: groupKey,
         ruleId: "",
         severity: finding.severity || "unknown",
-        message: "REGO policy findings.",
-        source: "REGO",
+        message: "",
         findings: [],
       });
     }
 
     groups.get(groupKey).findings.push({
       title: finding.title,
-      message: finding.info,
+      message: finding.message,
       severity: finding.severity || "unknown",
       ruleId: finding.ruleId,
       location: "",
@@ -405,10 +402,9 @@ function groupSemgrepFindingsByRuleId(findings) {
         title: "",
         ruleId,
         algorithm: finding.algorithm || "Unknown algorithm",
-        message: finding.message || "No Semgrep message provided.",
+        message: finding.message || "",
         severity: finding.severity || "unknown",
         metadata: finding.metadata || {},
-        source: "Semgrep",
         findings: [],
       });
     }
@@ -416,8 +412,8 @@ function groupSemgrepFindingsByRuleId(findings) {
     const group = groups.get(ruleId);
 
     group.findings.push({
-      title: finding.algorithm || getRuleDisplayName(group),
-      message: finding.message || group.message,
+      title: finding.algorithm || "Finding",
+      message: finding.message || "",
       severity: finding.severity || group.severity || "unknown",
       ruleId: finding.ruleId || ruleId,
       location: formatLocation(finding),
@@ -510,6 +506,16 @@ function makeErrorDetails(error) {
   return error instanceof Error ? error.message : String(error);
 }
 
+function shouldShowFindingMessage(finding, group) {
+  const findingMessage = String(finding.message || "").trim();
+  const groupMessage = String(group.message || "").trim();
+
+  if (!findingMessage) return false;
+  if (groupMessage && findingMessage === groupMessage) return false;
+
+  return true;
+}
+
 function sleep(ms, signal) {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(resolve, ms);
@@ -547,14 +553,7 @@ function Field({ label, value, onChange, placeholder, type = "text", theme }) {
   );
 }
 
-function FindingGroups({
-  title,
-  emptyText,
-  resultText,
-  groups,
-  theme,
-  sourceLabel,
-}) {
+function FindingGroups({ title, emptyText, resultText, groups, theme }) {
   return (
     <section
       style={{
@@ -576,7 +575,7 @@ function FindingGroups({
 
             return (
               <article
-                key={`${sourceLabel}-${group.title}-${group.ruleId}-${groupIndex}`}
+                key={`${group.title}-${group.ruleId}-${groupIndex}`}
                 style={{
                   ...styles.findingCard,
                   background: theme.findingBg,
@@ -605,16 +604,6 @@ function FindingGroups({
                         Rule: {group.ruleId}
                       </p>
                     )}
-
-                    <p
-                      style={{
-                        ...styles.findingMeta,
-                        color: theme.muted,
-                        marginTop: 4,
-                      }}
-                    >
-                      Source: {sourceLabel}
-                    </p>
                   </div>
 
                   <div style={styles.badgeStack}>
@@ -666,14 +655,14 @@ function FindingGroups({
 
                   <ol style={styles.locationList}>
                     {group.findings.map((finding, findingIndex) => {
-                      const findingSeverityStyle = getSeverityTheme(
-                        finding.severity,
-                        theme
+                      const showMessage = shouldShowFindingMessage(
+                        finding,
+                        group
                       );
 
                       return (
                         <li
-                          key={`${sourceLabel}-${group.title}-${finding.title}-${findingIndex}`}
+                          key={`${group.title}-${finding.title}-${finding.location}-${findingIndex}`}
                           style={{
                             ...styles.locationItem,
                             color: theme.muted,
@@ -689,15 +678,6 @@ function FindingGroups({
                             >
                               {finding.title || "Finding"}
                             </strong>
-
-                            <span
-                              style={{
-                                ...styles.miniSeverityBadge,
-                                ...findingSeverityStyle,
-                              }}
-                            >
-                              {finding.severity || "unknown"}
-                            </span>
                           </div>
 
                           {finding.ruleId && finding.ruleId !== group.ruleId && (
@@ -712,7 +692,7 @@ function FindingGroups({
                             </div>
                           )}
 
-                          {finding.message && (
+                          {showMessage && (
                             <p
                               style={{
                                 ...styles.locationMessage,
@@ -1418,7 +1398,6 @@ export default function CbomkitSimpleScanner() {
         {semgrepResult && (
           <FindingGroups
             title="Semgrep findings"
-            sourceLabel="Semgrep"
             emptyText="No Semgrep findings were returned."
             resultText={`${semgrepFindings.length} finding${
               semgrepFindings.length === 1 ? "" : "s"
@@ -1433,7 +1412,6 @@ export default function CbomkitSimpleScanner() {
         {policyResult && (
           <FindingGroups
             title="REGO high and critical findings"
-            sourceLabel="REGO"
             emptyText="No high or critical REGO findings were returned."
             resultText={`${importantFindings.length} high/critical finding${
               importantFindings.length === 1 ? "" : "s"
@@ -1731,15 +1709,6 @@ const styles = {
     textTransform: "uppercase",
     whiteSpace: "nowrap",
   },
-  miniSeverityBadge: {
-    border: "1px solid",
-    borderRadius: 999,
-    padding: "2px 7px",
-    fontSize: 11,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
-  },
   countBadge: {
     border: "1px solid",
     borderRadius: 999,
@@ -1793,7 +1762,7 @@ const styles = {
   findingRowHeader: {
     display: "flex",
     alignItems: "flex-start",
-    justifyContent: "space-between",
+    justifyContent: "center",
     gap: 10,
     marginBottom: 6,
   },
