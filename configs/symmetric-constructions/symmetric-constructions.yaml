@@ -1,39 +1,15 @@
 rules:
-  # ==========================================================
-  # ECCG Symmetric Encryption Schemes (Python)
-  #
-  # Allowed if integrity is enforced:
-  #   - CTR / OFB / CBC / CFB   (confidentiality-only; must have integrity)
-  #
-  # Allowed (integrity built-in AEAD):
-  #   - GCM / CCM
-  #
-  # Flag:
-  #   - Any other mode as NOT RECOMMENDED by ECCG
-  #
-  # Also enforce:
-  #   - No fixed/predictable IV/nonce for CTR/OFB/CBC/CFB and for AEAD nonces where matched
-  # ==========================================================
-
-  # ----------------------------------------------------------
-  # (A) ERROR: CTR/OFB/CBC/CFB used without detected integrity
-  # Integrity detection includes:
-  #   - stdlib hmac.new(...)
-  #   - cryptography.hazmat.primitives.hmac.HMAC(...)
-  #   - PyCryptodome AEAD helpers encrypt_and_digest/decrypt_and_verify
-  #   - cryptography AEAD objects AESGCM / AESCCM / ChaCha20Poly1305
-  #
-  # This is a heuristic "presence" check in the same function.
-  # ----------------------------------------------------------
   - id: python.crypto.symm.rstar_missing_integrity
     languages: [python]
-    severity: ERROR
+    severity: CRITICAL
     message: >
       ECCG policy: CTR/OFB/CBC/CFB require integrity (AEAD or Encrypt-then-MAC).
       No integrity mechanism detected in the same function.
     metadata:
       category: security
       tags: [crypto, symmetric, eccg, integrity, policy]
+      policy_section: Symmetric Constructions / Confidentiality Modes of Operation Encryption/Decryption Modes
+      standard: [SP800-38A, ISO10116, SP800-38A-Addendum]
       confidence: MEDIUM
     patterns:
       - pattern-inside: |
@@ -119,19 +95,16 @@ rules:
             ...
             decrypt_and_verify(...)
 
-  # ----------------------------------------------------------
-  # (C) ERROR: fixed/predictable IV/nonce (CTR/OFB/CBC/CFB)
-  # + fixed nonce patterns for GCM/CCM where we can match them
-  # ----------------------------------------------------------
   - id: python.crypto.symm.iv_or_nonce.fixed_or_predictable
     languages: [python]
-    severity: ERROR
+    severity: CRITICAL
     message: >
       Fixed/predictable IV/nonce detected. ECCG policy requires random IV/nonce or a nonce never reused with the same key.
     metadata:
       category: security
       tags: [crypto, symmetric, iv, nonce, predictable, eccg]
-      confidence: HIGH
+      policy_section: Symmetric Constructions / Note 5-IVType
+      confidence: MEDIUM
     pattern-either:
       # cryptography: fixed bytes/constant buffers
       - pattern-either:
@@ -175,16 +148,9 @@ rules:
           - pattern: ChaCha20Poly1305(...).encrypt(b"...", ..., ...)
           - pattern: ChaCha20Poly1305(...).decrypt(b"...", ..., ...)
 
-  # ----------------------------------------------------------
-  # (D) ERROR: non-recommended modes (allowlist)
-  # Allowed:
-  #   - cryptography modes: CTR/OFB/CBC/CFB/GCM/CCM
-  #   - PyCryptodome AES.MODE_: CTR/OFB/CBC/CFB/GCM/CCM
-  # Everything else => NOT RECOMMENDED by ECCG.
-  # ----------------------------------------------------------
   - id: python.crypto.symm.eccg.non_recommended_mode
     languages: [python]
-    severity: ERROR
+    severity: WARNING
     message: >
       Symmetric encryption mode NOT RECOMMENDED by ECCG allowlist.
       Allowed: CTR/OFB/CBC/CFB (with integrity) and GCM/CCM (AEAD).
@@ -192,6 +158,7 @@ rules:
       category: security
       tags: [crypto, symmetric, eccg, policy, mode, allowlist]
       confidence: MEDIUM
+      policy_section: Symmetric Constructions / Confidentiality Modes of Operation Encryption/Decryption Modes
     pattern-either:
       # cryptography modes.*
       - patterns:
@@ -227,7 +194,7 @@ rules:
     metadata:
       category: security
       tags: [crypto, mac, truncation, eccg, policy]
-      confidence: HIGH
+      confidence: LOW
     pattern-either:
       # direct slice on common MAC/tag producers
       - patterns:
@@ -291,7 +258,7 @@ rules:
 
   - id: python.crypto.mac.hmac_sha1.legacy
     languages: [python]
-    severity: WARNING
+    severity: HIGH
     message: >
       HMAC-SHA1 detected. ECCG considers it acceptable legacy for now but recommends phasing it out until becoming legacy to 2030.
       Prefer HMAC-SHA-256/384/512 (and keep tag >= 96 bits).
@@ -299,26 +266,10 @@ rules:
       category: security
       tags: [crypto, mac, hmac, sha1, legacy, eccg]
       confidence: HIGH
+      policy_section: Symmetric Constructions / Agreed MAC Schemes based on a Hash Function
     pattern-either:
       - pattern: hmac.new(..., digestmod=hashlib.sha1)
       - pattern: hmac.new(..., digestmod=hashlib.sha1, ...)
       - pattern: HMAC(..., hashes.SHA1(), ...)
       - pattern: cryptography.hazmat.primitives.hmac.HMAC(..., hashes.SHA1(), ...)
 
-  - id: python.crypto.mac.non_eccg_mac
-    languages: [python]
-    severity: WARNING
-    message: >
-      MAC mechanism not on ECCG approved list (HMAC/KMAC/CMAC/CBC-MAC/GMAC).
-      Review against ECCG policy.
-    metadata:
-      category: security
-      tags: [crypto, mac, eccg, policy]
-      confidence: MEDIUM
-    pattern-either:
-      # common non-ECCG MAC implementations in Python ecosystems
-      - pattern: Crypto.Hash.Poly1305.new(...)
-      - pattern: Poly1305.new(...)
-      - pattern: nacl.bindings.crypto_onetimeauth(...)
-      - pattern: nacl.secret.SecretBox(...)
-      - pattern: SipHash(...)

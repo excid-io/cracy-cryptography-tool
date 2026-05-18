@@ -11,7 +11,7 @@ const POLICY_API_BASE = import.meta.env.VITE_POLICY_API_BASE || "/opa";
 const OPA_DECISION_PATH =
   import.meta.env.VITE_OPA_DECISION_PATH || "/v1/data/cbom/eccg";
 
-const IMPORTANT_SEVERITIES = new Set(["high", "critical"]);
+const IMPORTANT_SEVERITIES = new Set(["high", "critical", "warning"]);
 
 function normalizeScanUrl(value) {
   let scanUrl = value.trim();
@@ -146,6 +146,34 @@ function normalizeSeverity(value) {
   return value.trim().toLowerCase();
 }
 
+function normalizeConfidence(value) {
+  if (typeof value !== "string") return "";
+
+  const normalized = value.trim().toLowerCase();
+
+  if (["very-high", "very_high", "very high"].includes(normalized)) {
+    return "very high";
+  }
+
+  if (["high", "medium", "low", "unknown"].includes(normalized)) {
+    return normalized;
+  }
+
+  return normalized || "unknown";
+}
+
+function getConfidenceFromMetadata(metadata) {
+  return normalizeConfidence(
+    getStringValue(metadata || {}, [
+      "confidence",
+      "rule_confidence",
+      "ruleConfidence",
+      "precision",
+      "certainty",
+    ])
+  );
+}
+
 function humanizeKey(value) {
   if (!value) return "";
 
@@ -270,6 +298,7 @@ function groupRegoFindings(findings) {
       title: finding.title,
       message: finding.message,
       severity: finding.severity || "unknown",
+      confidence: "",
       ruleId: finding.ruleId,
       location: "",
       references: finding.references,
@@ -517,12 +546,30 @@ function getMoreSevereSeverity(a, b) {
   return getSeverityRank(a) <= getSeverityRank(b) ? a : b;
 }
 
+function getConfidenceRank(confidence) {
+  const confidenceOrder = {
+    "very high": 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    unknown: 4,
+  };
+
+  return confidenceOrder[normalizeConfidence(confidence)] ?? 99;
+}
+
+function getHigherConfidence(a, b) {
+  return getConfidenceRank(a) <= getConfidenceRank(b) ? a : b;
+}
+
 function groupSemgrepFindingsBySection(findings) {
   const sectionGroups = new Map();
 
   for (const finding of findings) {
     const section = getSemgrepSection(finding);
     const ruleId = finding.ruleId || "unknown-rule";
+    const confidence =
+      getConfidenceFromMetadata(finding.metadata || {}) || "unknown";
 
     if (!sectionGroups.has(section)) {
       sectionGroups.set(section, {
@@ -541,9 +588,10 @@ function groupSemgrepFindingsBySection(findings) {
         title:
           getRuleDisplayNameFromMetadata(finding.metadata || {}) ||
           finding.algorithm ||
-                    humanizeRuleId(ruleId),
+          humanizeRuleId(ruleId),
         message: finding.message || "",
         severity: finding.severity || "unknown",
+        confidence,
         ruleId,
         location: "",
         references: [],
@@ -556,6 +604,11 @@ function groupSemgrepFindingsBySection(findings) {
     ruleFinding.severity = getMoreSevereSeverity(
       ruleFinding.severity,
       finding.severity || "unknown"
+    );
+
+    ruleFinding.confidence = getHigherConfidence(
+      ruleFinding.confidence || "unknown",
+      confidence || "unknown"
     );
 
     if (!ruleFinding.message && finding.message) {
@@ -587,6 +640,13 @@ function groupSemgrepFindingsBySection(findings) {
 
           if (aSeverity !== bSeverity) {
             return aSeverity - bSeverity;
+          }
+
+          const aConfidence = getConfidenceRank(a.confidence);
+          const bConfidence = getConfidenceRank(b.confidence);
+
+          if (aConfidence !== bConfidence) {
+            return aConfidence - bConfidence;
           }
 
           return a.title.localeCompare(b.title);
@@ -626,6 +686,40 @@ function getSeverityTheme(severity, theme) {
     background: theme.infoBg,
     color: theme.infoText,
     borderColor: theme.infoBorder,
+  };
+}
+
+function getConfidenceTheme(confidence, theme) {
+  const normalized = normalizeConfidence(confidence);
+
+  if (normalized === "very high" || normalized === "high") {
+    return {
+      background: theme.confidenceHighBg,
+      color: theme.confidenceHighText,
+      borderColor: theme.confidenceHighBorder,
+    };
+  }
+
+  if (normalized === "medium") {
+    return {
+      background: theme.confidenceMediumBg,
+      color: theme.confidenceMediumText,
+      borderColor: theme.confidenceMediumBorder,
+    };
+  }
+
+  if (normalized === "low") {
+    return {
+      background: theme.confidenceLowBg,
+      color: theme.confidenceLowText,
+      borderColor: theme.confidenceLowBorder,
+    };
+  }
+
+  return {
+    background: theme.badgeBg,
+    color: theme.badgeText,
+    borderColor: theme.badgeBorder,
   };
 }
 
@@ -714,6 +808,7 @@ function FindingGroups({
   theme,
   showGroupSeverity = true,
   showFindingSeverity = false,
+  showFindingConfidence = false,
 }) {
   return (
     <section
@@ -775,7 +870,7 @@ function FindingGroups({
                           ...groupSeverityStyle,
                         }}
                       >
-                        {group.severity || "unknown"}
+                        Severity: {group.severity || "unknown"}
                       </span>
                     )}
 
@@ -828,6 +923,11 @@ function FindingGroups({
                         theme
                       );
 
+                      const findingConfidenceStyle = getConfidenceTheme(
+                        finding.confidence,
+                        theme
+                      );
+
                       return (
                         <li
                           key={`${group.title}-${finding.title}-${finding.ruleId}-${findingIndex}`}
@@ -847,16 +947,29 @@ function FindingGroups({
                               {finding.title || "Finding"}
                             </strong>
 
-                            {showFindingSeverity && (
-                              <span
-                                style={{
-                                  ...styles.severityBadge,
-                                  ...findingSeverityStyle,
-                                }}
-                              >
-                                {finding.severity || "unknown"}
-                              </span>
-                            )}
+                            <div style={styles.findingRowBadges}>
+                              {showFindingSeverity && (
+                                <span
+                                  style={{
+                                    ...styles.severityBadge,
+                                    ...findingSeverityStyle,
+                                  }}
+                                >
+                                  Severity: {finding.severity || "unknown"}
+                                </span>
+                              )}
+
+                              {showFindingConfidence && finding.confidence && (
+                                <span
+                                  style={{
+                                    ...styles.confidenceBadge,
+                                    ...findingConfidenceStyle,
+                                  }}
+                                >
+                                  Confidence: {finding.confidence}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {finding.ruleId && finding.ruleId !== group.ruleId && (
@@ -1594,6 +1707,7 @@ export default function CbomkitSimpleScanner() {
             theme={theme}
             showGroupSeverity={false}
             showFindingSeverity={true}
+            showFindingConfidence={true}
           />
         )}
 
@@ -1610,6 +1724,7 @@ export default function CbomkitSimpleScanner() {
             theme={theme}
             showGroupSeverity={false}
             showFindingSeverity={true}
+            showFindingConfidence={false}
           />
         )}
       </section>
@@ -1647,6 +1762,15 @@ const lightTheme = {
   infoBg: "#eff6ff",
   infoText: "#1d4ed8",
   infoBorder: "#bfdbfe",
+  confidenceHighBg: "#ecfdf5",
+  confidenceHighText: "#166534",
+  confidenceHighBorder: "#bbf7d0",
+  confidenceMediumBg: "#fefce8",
+  confidenceMediumText: "#854d0e",
+  confidenceMediumBorder: "#fde68a",
+  confidenceLowBg: "#f8fafc",
+  confidenceLowText: "#475569",
+  confidenceLowBorder: "#cbd5e1",
 };
 
 const darkTheme = {
@@ -1679,6 +1803,15 @@ const darkTheme = {
   infoBg: "#172554",
   infoText: "#bfdbfe",
   infoBorder: "#1d4ed8",
+  confidenceHighBg: "#052e16",
+  confidenceHighText: "#bbf7d0",
+  confidenceHighBorder: "#15803d",
+  confidenceMediumBg: "#422006",
+  confidenceMediumText: "#fde68a",
+  confidenceMediumBorder: "#a16207",
+  confidenceLowBg: "#0f172a",
+  confidenceLowText: "#cbd5e1",
+  confidenceLowBorder: "#475569",
 };
 
 const styles = {
@@ -1899,6 +2032,15 @@ const styles = {
     textTransform: "uppercase",
     whiteSpace: "nowrap",
   },
+  confidenceBadge: {
+    border: "1px solid",
+    borderRadius: 999,
+    padding: "3px 8px",
+    fontSize: 12,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
+  },
   countBadge: {
     border: "1px solid",
     borderRadius: 999,
@@ -1955,6 +2097,13 @@ const styles = {
     justifyContent: "space-between",
     gap: 10,
     marginBottom: 6,
+  },
+  findingRowBadges: {
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "flex-end",
+    gap: 6,
+    flexWrap: "wrap",
   },
   findingRowTitle: {
     fontSize: 13,

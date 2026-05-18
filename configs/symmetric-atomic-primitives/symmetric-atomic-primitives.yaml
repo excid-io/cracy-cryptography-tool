@@ -27,6 +27,7 @@ rules:
       display_name: Triple-DES (3DES) Legacy Block Cipher
       policy_section: Symmetric Atomic Primitives / Block Ciphers
       standard: [FIPS-46-3, ISO-18033-3]
+      confidence: HIGH
       status: L
     pattern-either:
       # --- PyCryptodome / PyCrypto style ---
