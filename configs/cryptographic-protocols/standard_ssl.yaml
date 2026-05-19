@@ -1,24 +1,196 @@
 rules:
-  # --------------------------------------------------
-  # Direct use of legacy TLS protocol constants
-  # --------------------------------------------------
-  - id: python-tls-legacy-protocol-constant
+  - id: python-tls-legacy-protocol-constructor
     message: >
-      ECCG TLS rule violation: legacy TLS protocol constant used.
-      TLS 1.2 is legacy; prefer TLS 1.3 only.
-    severity: ERROR
+      ECCG TLS rule violation: legacy TLS/SSL protocol constant used to construct
+      or configure a TLS context. TLS 1.3 is recommended; TLS 1.2 and below are legacy.
+    severity: CRITICAL
     languages: [python]
     metadata:
       category: security
       technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
       eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: HIGH
+      tags: [crypto, tls, ssl, legacy]
     pattern-either:
-      - pattern: ssl.PROTOCOL_TLSv1_2
-      - pattern: ssl.PROTOCOL_TLSv1_1
-      - pattern: ssl.PROTOCOL_TLSv1
-      - pattern: PROTOCOL_TLSv1_2
-      - pattern: PROTOCOL_TLSv1_1
-      - pattern: PROTOCOL_TLSv1
+      - pattern: ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+      - pattern: ssl.SSLContext(ssl.PROTOCOL_TLSv1_1)
+      - pattern: ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+      - pattern: ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+      - pattern: ssl.SSLContext(ssl.PROTOCOL_SSLv3)
+      - pattern: ssl.SSLContext(ssl.PROTOCOL_SSLv2)
+
+      - pattern: ssl.SSLContext(PROTOCOL_TLSv1_2)
+      - pattern: ssl.SSLContext(PROTOCOL_TLSv1_1)
+      - pattern: ssl.SSLContext(PROTOCOL_TLSv1)
+      - pattern: ssl.SSLContext(PROTOCOL_SSLv23)
+      - pattern: ssl.SSLContext(PROTOCOL_SSLv3)
+      - pattern: ssl.SSLContext(PROTOCOL_SSLv2)
+
+      - pattern: SSLContext(ssl.PROTOCOL_TLSv1_2)
+      - pattern: SSLContext(ssl.PROTOCOL_TLSv1_1)
+      - pattern: SSLContext(ssl.PROTOCOL_TLSv1)
+      - pattern: SSLContext(ssl.PROTOCOL_SSLv23)
+      - pattern: SSLContext(ssl.PROTOCOL_SSLv3)
+      - pattern: SSLContext(ssl.PROTOCOL_SSLv2)
+
+      - pattern: SSLContext(PROTOCOL_TLSv1_2)
+      - pattern: SSLContext(PROTOCOL_TLSv1_1)
+      - pattern: SSLContext(PROTOCOL_TLSv1)
+      - pattern: SSLContext(PROTOCOL_SSLv23)
+      - pattern: SSLContext(PROTOCOL_SSLv3)
+      - pattern: SSLContext(PROTOCOL_SSLv2)
+
+      - pattern: ssl.wrap_socket(..., ssl_version=ssl.PROTOCOL_TLSv1_2, ...)
+      - pattern: ssl.wrap_socket(..., ssl_version=ssl.PROTOCOL_TLSv1_1, ...)
+      - pattern: ssl.wrap_socket(..., ssl_version=ssl.PROTOCOL_TLSv1, ...)
+      - pattern: ssl.wrap_socket(..., ssl_version=ssl.PROTOCOL_SSLv23, ...)
+      - pattern: ssl.wrap_socket(..., ssl_version=ssl.PROTOCOL_SSLv3, ...)
+      - pattern: ssl.wrap_socket(..., ssl_version=ssl.PROTOCOL_SSLv2, ...)
+
+  - id: python-tls-legacy-version-string
+    message: >
+      ECCG TLS review: legacy TLS/SSL version string detected in configuration.
+      TLS 1.3 is recommended; TLS 1.2 and below are legacy.
+    severity: CRITICAL
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: LOW
+      tags: [crypto, tls, ssl, config, legacy]
+    pattern-either:
+    - patterns:
+        - pattern: $X = $VERSION
+        - metavariable-regex:
+            metavariable: $VERSION
+            regex: '["''](?i:TLSv1\.2|TLSv1_2|TLS1\.2|TLS_1_2|TLSv1\.1|TLSv1_1|TLS1\.1|TLS_1_1|TLSv1\.0|TLSv1|TLS1\.0|TLS_1_0|SSLv3|SSLv2)["'']'
+
+    - patterns:
+        - pattern: $CONFIG[$KEY] = $VERSION
+        - metavariable-regex:
+            metavariable: $VERSION
+            regex: '["''](?i:TLSv1\.2|TLSv1_2|TLS1\.2|TLS_1_2|TLSv1\.1|TLSv1_1|TLS1\.1|TLS_1_1|TLSv1\.0|TLSv1|TLS1\.0|TLS_1_0|SSLv3|SSLv2)["'']'
+
+    - patterns:
+        - pattern: $OBJ.$ATTR = $VERSION
+        - metavariable-regex:
+            metavariable: $VERSION
+            regex: '["''](?i:TLSv1\.2|TLSv1_2|TLS1\.2|TLS_1_2|TLSv1\.1|TLSv1_1|TLS1\.1|TLS_1_1|TLSv1\.0|TLSv1|TLS1\.0|TLS_1_0|SSLv3|SSLv2)["'']'
+
+  - id: python-pyopenssl-legacy-tls-version
+    message: >
+      ECCG TLS rule violation: pyOpenSSL context uses or allows a legacy TLS/SSL
+      version. TLS 1.3 is recommended; TLS 1.2 and below are legacy.
+    severity: CRITICAL
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, pyopenssl, openssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: HIGH
+      tags: [crypto, tls, ssl, pyopenssl, legacy]
+    pattern-either:
+      - pattern: OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
+      - pattern: OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_1_METHOD)
+      - pattern: OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_METHOD)
+      - pattern: OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
+      - pattern: OpenSSL.SSL.Context(OpenSSL.SSL.SSLv3_METHOD)
+      - pattern: OpenSSL.SSL.Context(OpenSSL.SSL.SSLv2_METHOD)
+
+      - pattern: SSL.Context(SSL.TLSv1_2_METHOD)
+      - pattern: SSL.Context(SSL.TLSv1_1_METHOD)
+      - pattern: SSL.Context(SSL.TLSv1_METHOD)
+      - pattern: SSL.Context(SSL.SSLv23_METHOD)
+      - pattern: SSL.Context(SSL.SSLv3_METHOD)
+      - pattern: SSL.Context(SSL.SSLv2_METHOD)
+
+      - pattern: Context(TLSv1_2_METHOD)
+      - pattern: Context(TLSv1_1_METHOD)
+      - pattern: Context(TLSv1_METHOD)
+      - pattern: Context(SSLv23_METHOD)
+      - pattern: Context(SSLv3_METHOD)
+      - pattern: Context(SSLv2_METHOD)
+
+      - pattern: $CTX.set_min_proto_version(OpenSSL.SSL.TLS1_2_VERSION)
+      - pattern: $CTX.set_min_proto_version(OpenSSL.SSL.TLS1_1_VERSION)
+      - pattern: $CTX.set_min_proto_version(OpenSSL.SSL.TLS1_VERSION)
+
+      - pattern: $CTX.set_max_proto_version(OpenSSL.SSL.TLS1_2_VERSION)
+      - pattern: $CTX.set_max_proto_version(OpenSSL.SSL.TLS1_1_VERSION)
+      - pattern: $CTX.set_max_proto_version(OpenSSL.SSL.TLS1_VERSION)
+
+      - pattern: $CTX.set_min_proto_version(SSL.TLS1_2_VERSION)
+      - pattern: $CTX.set_min_proto_version(SSL.TLS1_1_VERSION)
+      - pattern: $CTX.set_min_proto_version(SSL.TLS1_VERSION)
+
+      - pattern: $CTX.set_max_proto_version(SSL.TLS1_2_VERSION)
+      - pattern: $CTX.set_max_proto_version(SSL.TLS1_1_VERSION)
+      - pattern: $CTX.set_max_proto_version(SSL.TLS1_VERSION)
+
+  - id: python-urllib3-legacy-tls-version
+    message: >
+      ECCG TLS rule violation: urllib3 context allows or selects legacy TLS.
+      TLS 1.3 is recommended; TLS 1.2 and below are legacy.
+    severity: CRITICAL
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, urllib3, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: HIGH
+      tags: [crypto, tls, ssl, urllib3, legacy]
+    pattern-either:
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_version=ssl.PROTOCOL_TLSv1_2, ...)
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_version=ssl.PROTOCOL_TLSv1_1, ...)
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_version=ssl.PROTOCOL_TLSv1, ...)
+
+      - pattern: create_urllib3_context(..., ssl_version=ssl.PROTOCOL_TLSv1_2, ...)
+      - pattern: create_urllib3_context(..., ssl_version=ssl.PROTOCOL_TLSv1_1, ...)
+      - pattern: create_urllib3_context(..., ssl_version=ssl.PROTOCOL_TLSv1, ...)
+
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_minimum_version=ssl.TLSVersion.TLSv1_2, ...)
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_minimum_version=ssl.TLSVersion.TLSv1_1, ...)
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_minimum_version=ssl.TLSVersion.TLSv1, ...)
+
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_maximum_version=ssl.TLSVersion.TLSv1_2, ...)
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_maximum_version=ssl.TLSVersion.TLSv1_1, ...)
+      - pattern: urllib3.util.ssl_.create_urllib3_context(..., ssl_maximum_version=ssl.TLSVersion.TLSv1, ...)
+
+      - pattern: create_urllib3_context(..., ssl_minimum_version=ssl.TLSVersion.TLSv1_2, ...)
+      - pattern: create_urllib3_context(..., ssl_minimum_version=ssl.TLSVersion.TLSv1_1, ...)
+      - pattern: create_urllib3_context(..., ssl_minimum_version=ssl.TLSVersion.TLSv1, ...)
+
+      - pattern: create_urllib3_context(..., ssl_maximum_version=ssl.TLSVersion.TLSv1_2, ...)
+      - pattern: create_urllib3_context(..., ssl_maximum_version=ssl.TLSVersion.TLSv1_1, ...)
+      - pattern: create_urllib3_context(..., ssl_maximum_version=ssl.TLSVersion.TLSv1, ...)
+
+  - id: python-tls13-disabled
+    message: >
+      ECCG TLS rule violation: TLS 1.3 is explicitly disabled. TLS 1.3 is
+      recommended; disabling it prevents TLS 1.3-only compliance.
+    severity: CRITICAL
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: HIGH
+      tags: [crypto, tls, ssl, tls13-disabled]
+    pattern-either:
+      - pattern: $CTX.options |= ssl.OP_NO_TLSv1_3
+      - pattern: $CTX.options = $CTX.options | ssl.OP_NO_TLSv1_3
+      - pattern: $CTX.options |= OP_NO_TLSv1_3
+      - pattern: $CTX.options = $CTX.options | OP_NO_TLSv1_3
+
+      - pattern: $CTX.set_options(OpenSSL.SSL.OP_NO_TLSv1_3)
+      - pattern: $CTX.set_options(SSL.OP_NO_TLSv1_3)
+      - pattern: $CTX.set_options(OP_NO_TLSv1_3)
   # --------------------------------------------------
   # minimum_version explicitly set to TLS 1.2
   # --------------------------------------------------
@@ -26,40 +198,57 @@ rules:
     message: >
       ECCG TLS rule violation: minimum TLS version is set to TLS 1.2,
       which is legacy under the ECCG guidance.
-    severity: ERROR
+    severity: HIGH
     languages: [python]
     metadata:
       category: security
       technology: [python, ssl, tls]
       eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      policy_section: Cryptographic Protocols / TLS
+      confidence: HIGH
     pattern-either:
       - pattern: $CTX.minimum_version = ssl.TLSVersion.TLSv1_2
+      - pattern: $CTX.minimum_version = ssl.TLSVersion.TLSv1_1
+      - pattern: $CTX.minimum_version = ssl.TLSVersion.TLSv1
+
       - pattern: $CTX.minimum_version = TLSVersion.TLSv1_2
+      - pattern: $CTX.minimum_version = TLSVersion.TLSv1_1
+      - pattern: $CTX.minimum_version = TLSVersion.TLSv1
   # --------------------------------------------------
   # minimum_version explicitly set to TLS 1.2 through a variable
   # --------------------------------------------------
-  - id: python-tls-min-version-tls12-via-variable
+  - id: python-tls-min-version-legacy-via-variable
     message: >
       ECCG TLS rule violation: minimum TLS version is set indirectly from a value
-      assigned to TLS 1.2.
-    severity: WARNING
+      assigned to a legacy TLS version.
+    severity: HIGH
     languages: [python]
     metadata:
       category: security
       technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
       eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: HIGH
     patterns:
+      - pattern: $CTX.minimum_version = $V
+
       - pattern-inside: |
-          ...
-          $V = $TLS12
-          ...
-          $CTX.minimum_version = $V
-          ...
+          def $F(...):
+            ...
+            $V = $LEGACY
+            ...
+            $CTX.minimum_version = $V
+            ...
+
       - metavariable-pattern:
-          metavariable: $TLS12
+          metavariable: $LEGACY
           pattern-either:
             - pattern: ssl.TLSVersion.TLSv1_2
+            - pattern: ssl.TLSVersion.TLSv1_1
+            - pattern: ssl.TLSVersion.TLSv1
             - pattern: TLSVersion.TLSv1_2
+            - pattern: TLSVersion.TLSv1_1
+            - pattern: TLSVersion.TLSv1
   
   # --------------------------------------------------
   # maximum_version explicitly set to TLS 1.2
@@ -68,74 +257,120 @@ rules:
     message: >
       ECCG TLS rule violation: maximum TLS version is set to TLS 1.2,
       which enforces or permits legacy TLS under the ECCG guidance.
-    severity: ERROR
+    severity: CRITICAL
     languages: [python]
     metadata:
       category: security
       technology: [python, ssl, tls]
       eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      policy_section: Cryptographic Protocols / TLS
+      confidence: HIGH
     pattern-either:
       - pattern: $CTX.maximum_version = ssl.TLSVersion.TLSv1_2
+      - pattern: $CTX.maximum_version = ssl.TLSVersion.TLSv1_1
+      - pattern: $CTX.maximum_version = ssl.TLSVersion.TLSv1
+
       - pattern: $CTX.maximum_version = TLSVersion.TLSv1_2
+      - pattern: $CTX.maximum_version = TLSVersion.TLSv1_1
+      - pattern: $CTX.maximum_version = TLSVersion.TLSv1
 
   # --------------------------------------------------
   # maximum_version explicitly set to TLS 1.2 through a variable
   # --------------------------------------------------
-  - id: python-tls-max-version-tls12-via-variable
+  - id: python-tls-max-version-legacy-via-variable
     message: >
       ECCG TLS rule violation: maximum TLS version is set indirectly from a value
-      assigned to TLS 1.2.
-    severity: WARNING
+      assigned to a legacy TLS version.
+    severity: CRITICAL
     languages: [python]
     metadata:
       category: security
       technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
       eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: HIGH
     patterns:
+      # This is the actual finding location.
+      - pattern: $CTX.maximum_version = $V
+
+      # This constrains the match to cases where $V was assigned earlier.
       - pattern-inside: |
-          ...
-          $V = $TLS12
-          ...
-          $CTX.maximum_version = $V
-          ...
+          def $F(...):
+            ...
+            $V = $LEGACY
+            ...
+            $CTX.maximum_version = $V
+            ...
+
       - metavariable-pattern:
-          metavariable: $TLS12
+          metavariable: $LEGACY
           pattern-either:
             - pattern: ssl.TLSVersion.TLSv1_2
+            - pattern: ssl.TLSVersion.TLSv1_1
+            - pattern: ssl.TLSVersion.TLSv1
             - pattern: TLSVersion.TLSv1_2
+            - pattern: TLSVersion.TLSv1_1
+            - pattern: TLSVersion.TLSv1
+
   # --------------------------------------------------
   # Allows TLS 1.2 in a range (e.g. min=1.2, max=1.3)
   # --------------------------------------------------
   - id: python-tls-allows-tls12-range
     message: >
-      ECCG TLS rule violation: this SSLContext allows TLS 1.2.
-      Even if TLS 1.3 is also allowed, ECCG classifies TLS 1.2 as legacy.
-    severity: WARNING
+      ECCG TLS rule violation: this SSLContext allows TLS 1.2. Even if TLS 1.3
+      is also allowed, TLS 1.2 is legacy under ECCG guidance.
+    severity: HIGH
     languages: [python]
     metadata:
       category: security
       technology: [python, ssl, tls]
-      confidence: high
+      policy_section: Cryptographic Protocols / TLS
       eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
-    patterns:
-      - pattern-inside: |
-          ...
-          $CTX = ...
-          ...
-          $CTX.minimum_version = $MIN
-          ...
-          $CTX.maximum_version = $MAX
-          ...
-      - metavariable-pattern:
-          metavariable: $MIN
-          pattern-either:
-            - pattern: ssl.TLSVersion.TLSv1_2
-            - pattern: TLSVersion.TLSv1_2
-      - metavariable-pattern:
-          metavariable: $MAX
-          pattern-either:
-            - pattern: ssl.TLSVersion.TLSv1_3
-            - pattern: TLSVersion.TLSv1_3
+      confidence: HIGH
+      tags: [crypto, tls, ssl, legacy, tls12, tls13]
+    pattern-either:
+      # min before max: report the minimum_version line
+      - patterns:
+          - pattern: $CTX.minimum_version = $MIN
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $CTX.minimum_version = $MIN
+                ...
+                $CTX.maximum_version = $MAX
+                ...
+          - metavariable-pattern:
+              metavariable: $MIN
+              pattern-either:
+                - pattern: ssl.TLSVersion.TLSv1_2
+                - pattern: TLSVersion.TLSv1_2
+          - metavariable-pattern:
+              metavariable: $MAX
+              pattern-either:
+                - pattern: ssl.TLSVersion.TLSv1_3
+                - pattern: TLSVersion.TLSv1_3
+
+      # max before min: report the minimum_version line
+      - patterns:
+          - pattern: $CTX.minimum_version = $MIN
+          - pattern-inside: |
+              def $F(...):
+                ...
+                $CTX.maximum_version = $MAX
+                ...
+                $CTX.minimum_version = $MIN
+                ...
+          - metavariable-pattern:
+              metavariable: $MIN
+              pattern-either:
+                - pattern: ssl.TLSVersion.TLSv1_2
+                - pattern: TLSVersion.TLSv1_2
+          - metavariable-pattern:
+              metavariable: $MAX
+              pattern-either:
+                - pattern: ssl.TLSVersion.TLSv1_3
+                - pattern: TLSVersion.TLSv1_3
+
   # --------------------------------------------------
   # TLS 1.2 only on one context (higher confidence / more specific finding)
   # --------------------------------------------------
@@ -143,29 +378,394 @@ rules:
     message: >
       ECCG TLS rule violation: this SSLContext is pinned to TLS 1.2 only.
       ECCG marks TLS 1.2 as legacy and recommends TLS 1.3.
-    severity: ERROR
+    severity: CRITICAL
     languages: [python]
     metadata:
       category: security
       technology: [python, ssl, tls]
-      confidence: high
+      policy_section: Cryptographic Protocols / TLS
       eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: HIGH
+      tags: [crypto, tls, ssl, legacy, tls12, tls13]
+    pattern-either:
+    # min before max: report the maximum_version line
+    - patterns:
+        - pattern: $CTX.maximum_version = $MAX
+        - pattern-inside: |
+            def $F(...):
+              ...
+              $CTX.minimum_version = $MIN
+              ...
+              $CTX.maximum_version = $MAX
+              ...
+        - metavariable-pattern:
+            metavariable: $MIN
+            pattern-either:
+              - pattern: ssl.TLSVersion.TLSv1_2
+              - pattern: TLSVersion.TLSv1_2
+        - metavariable-pattern:
+            metavariable: $MAX
+            pattern-either:
+              - pattern: ssl.TLSVersion.TLSv1_2
+              - pattern: TLSVersion.TLSv1_2
+
+    # max before min: report the minimum_version line
+    - patterns:
+        - pattern: $CTX.minimum_version = $MIN
+        - pattern-inside: |
+            def $F(...):
+              ...
+              $CTX.maximum_version = $MAX
+              ...
+              $CTX.minimum_version = $MIN
+              ...
+        - metavariable-pattern:
+            metavariable: $MIN
+            pattern-either:
+              - pattern: ssl.TLSVersion.TLSv1_2
+              - pattern: TLSVersion.TLSv1_2
+        - metavariable-pattern:
+            metavariable: $MAX
+            pattern-either:
+              - pattern: ssl.TLSVersion.TLSv1_2
+              - pattern: TLSVersion.TLSv1_2
+
+  - id: python-tls-server-context-without-tls13-enforcement
+    message: >
+      ECCG TLS review: TLS server context is created, but TLS 1.3-only enforcement
+      is not visible in the same function. Set minimum_version and maximum_version
+      to ssl.TLSVersion.TLSv1_3 for strict TLS 1.3 compliance.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, tls13, review]
     patterns:
+      - pattern: $CTX = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
       - pattern-inside: |
-          ...
-          $CTX = ...
-          ...
-          $CTX.minimum_version = $MIN
-          ...
-          $CTX.maximum_version = $MAX
-          ...
-      - metavariable-pattern:
-          metavariable: $MIN
-          pattern-either:
-            - pattern: ssl.TLSVersion.TLSv1_2
-            - pattern: TLSVersion.TLSv1_2
-      - metavariable-pattern:
-          metavariable: $MAX
-          pattern-either:
-            - pattern: ssl.TLSVersion.TLSv1_2
-            - pattern: TLSVersion.TLSv1_2
+          def $F(...):
+            ...
+            $CTX = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+
+  - id: python-tls-client-context-without-tls13-enforcement
+    message: >
+      ECCG TLS review: TLS client context is created, but TLS 1.3-only enforcement
+      is not visible in the same function. Set minimum_version and maximum_version
+      to ssl.TLSVersion.TLSv1_3 for strict TLS 1.3 compliance.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, tls13, review]
+    patterns:
+      - pattern-either:
+          - pattern: $CTX = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+          - pattern: $CTX = ssl.create_default_context(...)
+      - pattern-inside: |
+          def $F(...):
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+  - id: python-tls-legacy-protocol-constructor-generic-alias
+    message: >
+      ECCG TLS rule violation: legacy TLS/SSL protocol constant used to construct
+      or configure a TLS context. TLS 1.3 is recommended; TLS 1.2 and below are legacy.
+    severity: CRITICAL
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, legacy, alias]
+    pattern-either:
+      - patterns:
+          - pattern: $SSL.SSLContext($SSL.$PROTO)
+          - metavariable-regex:
+              metavariable: $PROTO
+              regex: '^(PROTOCOL_TLSv1_2|PROTOCOL_TLSv1_1|PROTOCOL_TLSv1|PROTOCOL_SSLv23|PROTOCOL_SSLv3|PROTOCOL_SSLv2)$'
+
+      - patterns:
+          - pattern: $SSL.wrap_socket(..., ssl_version=$SSL.$PROTO, ...)
+          - metavariable-regex:
+              metavariable: $PROTO
+              regex: '^(PROTOCOL_TLSv1_2|PROTOCOL_TLSv1_1|PROTOCOL_TLSv1|PROTOCOL_SSLv23|PROTOCOL_SSLv3|PROTOCOL_SSLv2)$'
+
+      - patterns:
+          - pattern: $CTX.minimum_version = $SSL.TLSVersion.$VER
+          - metavariable-regex:
+              metavariable: $VER
+              regex: '^(TLSv1_2|TLSv1_1|TLSv1)$'
+
+      - patterns:
+          - pattern: $CTX.maximum_version = $SSL.TLSVersion.$VER
+          - metavariable-regex:
+              metavariable: $VER
+              regex: '^(TLSv1_2|TLSv1_1|TLSv1)$'
+
+  - id: python-tls-legacy-ssl-version-keyword
+    message: >
+      ECCG TLS rule violation: ssl_version is set to a legacy TLS/SSL protocol.
+      TLS 1.3 is recommended; TLS 1.2 and below are legacy.
+    severity: CRITICAL
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, legacy, wrapper]
+    pattern-either:
+      - patterns:
+          - pattern: $FUNC(..., ssl_version=ssl.$PROTO, ...)
+          - metavariable-regex:
+              metavariable: $PROTO
+              regex: '^(PROTOCOL_TLSv1_2|PROTOCOL_TLSv1_1|PROTOCOL_TLSv1|PROTOCOL_SSLv23|PROTOCOL_SSLv3|PROTOCOL_SSLv2)$'
+
+      - patterns:
+          - pattern: $FUNC(..., ssl_version=$PROTO, ...)
+          - metavariable-regex:
+              metavariable: $PROTO
+              regex: '^(PROTOCOL_TLSv1_2|PROTOCOL_TLSv1_1|PROTOCOL_TLSv1|PROTOCOL_SSLv23|PROTOCOL_SSLv3|PROTOCOL_SSLv2)$'
+
+  - id: python-tls-legacy-min-max-keyword
+    message: >
+      ECCG TLS rule violation: TLS min/max keyword allows or pins a legacy TLS
+      version. TLS 1.3 is recommended; TLS 1.2 and below are legacy.
+    severity: HIGH
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, legacy, wrapper]
+    pattern-either:
+      - patterns:
+          - pattern: $FUNC(..., ssl_minimum_version=ssl.TLSVersion.$VER, ...)
+          - metavariable-regex:
+              metavariable: $VER
+              regex: '^(TLSv1_2|TLSv1_1|TLSv1)$'
+
+      - patterns:
+          - pattern: $FUNC(..., ssl_maximum_version=ssl.TLSVersion.$VER, ...)
+          - metavariable-regex:
+              metavariable: $VER
+              regex: '^(TLSv1_2|TLSv1_1|TLSv1)$'
+
+      - patterns:
+          - pattern: $FUNC(..., ssl_minimum_version=TLSVersion.$VER, ...)
+          - metavariable-regex:
+              metavariable: $VER
+              regex: '^(TLSv1_2|TLSv1_1|TLSv1)$'
+
+      - patterns:
+          - pattern: $FUNC(..., ssl_maximum_version=TLSVersion.$VER, ...)
+          - metavariable-regex:
+              metavariable: $VER
+              regex: '^(TLSv1_2|TLSv1_1|TLSv1)$'
+
+  - id: python-aiohttp-custom-ssl-context-without-tls13-enforcement
+    message: >
+      ECCG TLS review: aiohttp is passed a custom SSLContext without visible
+      TLS 1.3-only enforcement. Ensure minimum_version and maximum_version are
+      both set to TLSv1_3.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, aiohttp, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, aiohttp, review]
+    patterns:
+      - pattern-either:
+          - pattern: aiohttp.TCPConnector(..., ssl=$CTX, ...)
+          - pattern: TCPConnector(..., ssl=$CTX, ...)
+          - pattern: $SESSION.get(..., ssl=$CTX, ...)
+          - pattern: $SESSION.post(..., ssl=$CTX, ...)
+          - pattern: $SESSION.request(..., ssl=$CTX, ...)
+      - pattern-inside: |
+          def $F(...):
+            ...
+            $CTX = ssl.$CREATE(...)
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+
+  - id: python-httpx-custom-ssl-context-without-tls13-enforcement
+    message: >
+      ECCG TLS review: HTTPX is passed a custom SSLContext without visible
+      TLS 1.3-only enforcement. Ensure minimum_version and maximum_version are
+      both set to TLSv1_3.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, httpx, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, httpx, review]
+    patterns:
+      - pattern-either:
+          - pattern: httpx.Client(..., verify=$CTX, ...)
+          - pattern: httpx.AsyncClient(..., verify=$CTX, ...)
+          - pattern: httpx.get(..., verify=$CTX, ...)
+          - pattern: httpx.post(..., verify=$CTX, ...)
+          - pattern: httpx.request(..., verify=$CTX, ...)
+          - pattern: Client(..., verify=$CTX, ...)
+          - pattern: AsyncClient(..., verify=$CTX, ...)
+      - pattern-inside: |
+          def $F(...):
+            ...
+            $CTX = ssl.$CREATE(...)
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+
+  - id: python-asyncio-ssl-context-without-tls13-enforcement
+    message: >
+      ECCG TLS review: asyncio is passed a custom SSLContext without visible
+      TLS 1.3-only enforcement.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, asyncio, ssl, tls]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, asyncio, review]
+    patterns:
+      - pattern-either:
+          - pattern: asyncio.start_server(..., ssl=$CTX, ...)
+          - pattern: asyncio.open_connection(..., ssl=$CTX, ...)
+          - pattern: $LOOP.create_server(..., ssl=$CTX, ...)
+          - pattern: $LOOP.create_connection(..., ssl=$CTX, ...)
+          - pattern: $WRITER.start_tls($CTX, ...)
+      - pattern-inside: |
+          def $F(...):
+            ...
+            $CTX = ssl.$CREATE(...)
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+  - id: python-stdlib-protocol-client-ssl-context-without-tls13-enforcement
+    message: >
+      ECCG TLS review: stdlib protocol client is passed a custom SSLContext
+      without visible TLS 1.3-only enforcement.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      technology: [python, ssl, tls, stdlib]
+      policy_section: Cryptographic Protocols / TLS
+      eccg_rule: "TLSv1.3 recommended, TLSv1.2 legacy"
+      confidence: MEDIUM
+      tags: [crypto, tls, ssl, smtplib, imaplib, poplib, ftplib, review]
+    patterns:
+      - pattern-either:
+          - pattern: smtplib.SMTP_SSL(..., context=$CTX, ...)
+          - pattern: SMTP_SSL(..., context=$CTX, ...)
+          - pattern: $SMTP.starttls(..., context=$CTX, ...)
+          - pattern: imaplib.IMAP4_SSL(..., ssl_context=$CTX, ...)
+          - pattern: IMAP4_SSL(..., ssl_context=$CTX, ...)
+          - pattern: poplib.POP3_SSL(..., context=$CTX, ...)
+          - pattern: POP3_SSL(..., context=$CTX, ...)
+          - pattern: ftplib.FTP_TLS(..., context=$CTX, ...)
+          - pattern: FTP_TLS(..., context=$CTX, ...)
+      - pattern-inside: |
+          def $F(...):
+            ...
+            $CTX = ssl.$CREATE(...)
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+      - pattern-not-inside: |
+          def $F(...):
+            ...
+            $CTX.maximum_version = ssl.TLSVersion.TLSv1_3
+            ...
+            $CTX.minimum_version = ssl.TLSVersion.TLSv1_3
+            ...
