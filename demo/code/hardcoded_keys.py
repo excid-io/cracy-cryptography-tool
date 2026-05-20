@@ -110,6 +110,48 @@ def fire_eccg_rsa_002_with_hardcoded_private_key():
     return signature
 
 
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes
+
+
+def fire_eccg_rsa_002_generate_2048_and_use():
+    """
+    Should fire ECCG-RSA-002 if CBOMkit extracts RSA with parameterSetIdentifier=2048.
+
+    ECCG-RSA-002 condition:
+      is_rsa_primitive(component)
+      1900 <= n < 3000
+    """
+
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+
+    public_key = private_key.public_key()
+
+    ciphertext = public_key.encrypt(
+        b"rsa 2048 test message",
+        padding.OAEP(
+            mgf=padding.MGF1(hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
+
+    signature = private_key.sign(
+        b"rsa 2048 signing test",
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH,
+        ),
+        hashes.SHA256(),
+    )
+
+    return ciphertext, signature
+
+
+
 if __name__ == "__main__":
     private_key = load_hardcoded_private_key()
     public_key = load_hardcoded_public_key()
@@ -123,3 +165,8 @@ if __name__ == "__main__":
     print("RSA public exponent:", public_numbers.e)
     print("RSA-OAEP ciphertext length:", len(ciphertext))
     print("RSA-PSS signature length:", len(signature))
+
+    ciphertext, signature = fire_eccg_rsa_002_generate_2048_and_use()
+
+    print("RSA-2048 ciphertext length:", len(ciphertext))
+    print("RSA-2048 signature length:", len(signature))
