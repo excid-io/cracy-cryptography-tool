@@ -1,60 +1,63 @@
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, hmac
 
 
-def fire_eccg_hash_001_sha224():
+def fire_eccg_hash_001_sha224_via_hmac():
     """
-    Should fire ECCG-HASH-001.
+    Target: ECCG-HASH-001
 
-    SHA-224 is explicitly legacy-only according to your REGO rule:
-      is_hash_primitive(component)
-      is_sha224(component)
-    """
-
-    digest = hashes.Hash(hashes.SHA224())
-    digest.update(b"test message for SHA-224")
-
-    return digest.finalize()
-
-
-def fire_eccg_hash_002_sha512_224():
-    """
-    Should fire ECCG-HASH-002.
-
-    SHA-512/224 is explicitly legacy-only according to your REGO rule:
-      is_hash_primitive(component)
-      is_sha512_224(component)
+    Uses SHA224 through pyca/cryptography HMAC.
+    CBOMkit may be more likely to emit the underlying hash primitive
+    when the hash is used inside HMAC rather than as a bare digest.
     """
 
-    digest = hashes.Hash(hashes.SHA512_224())
-    digest.update(b"test message for SHA-512/224")
+    mac = hmac.HMAC(
+        key=b"K" * 32,
+        algorithm=hashes.SHA224(),
+    )
 
-    return digest.finalize()
+    mac.update(b"message using SHA-224 inside HMAC")
+    return mac.finalize()
 
 
-def fire_eccg_hash_003_non_agreed_hash():
+def fire_eccg_hash_002_sha512_224_via_hmac():
     """
-    Should fire ECCG-HASH-003.
+    Target: ECCG-HASH-002
 
-    MD5 is a hash primitive, but it should not be in the agreed hash list.
-    This fires if your helpers do NOT classify MD5 as legacy_hash_component.
-
-    Rule condition:
-      is_hash_primitive(component)
-      not is_legacy_hash_component(component)
-      not is_agreed_hash_component(component)
+    Uses SHA512/224 through pyca/cryptography HMAC.
     """
 
-    digest = hashes.Hash(hashes.MD5())
-    digest.update(b"test message for MD5")
+    mac = hmac.HMAC(
+        key=b"K" * 32,
+        algorithm=hashes.SHA512_224(),
+    )
 
-    return digest.finalize()
+    mac.update(b"message using SHA-512/224 inside HMAC")
+    return mac.finalize()
+
+
+def fire_eccg_hash_003_non_agreed_hash_via_hmac():
+    """
+    Target: ECCG-HASH-003
+
+    SM3 is a hash primitive exposed by pyca/cryptography.
+    It should not be in your agreed ECCG hash list, and it is less likely
+    than MD5/SHA1 to be classified as a legacy hash by your helper.
+    """
+
+    mac = hmac.HMAC(
+        key=b"K" * 32,
+        algorithm=hashes.SM3(),
+    )
+
+    mac.update(b"message using SM3 inside HMAC")
+    return mac.finalize()
 
 
 if __name__ == "__main__":
-    sha224_digest = fire_eccg_hash_001_sha224()
-    sha512_224_digest = fire_eccg_hash_002_sha512_224()
-    md5_digest = fire_eccg_hash_003_non_agreed_hash()
+    sha224_mac = fire_eccg_hash_001_sha224_via_hmac()
+    sha512_224_mac = fire_eccg_hash_002_sha512_224_via_hmac()
+    sm3_mac = fire_eccg_hash_003_non_agreed_hash_via_hmac()
 
-    print("SHA224:", sha224_digest.hex())
-    print("SHA512_224:", sha512_224_digest.hex())
-    print("MD5:", md5_digest.hex())
+    print("HMAC-SHA224:", sha224_mac.hex())
+    print("HMAC-SHA512_224:", sha512_224_mac.hex())
+    print("HMAC-SM3:", sm3_mac.hex())
