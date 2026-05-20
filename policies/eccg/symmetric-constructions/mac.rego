@@ -60,7 +60,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-MAC-001",
-        "warning",
+        "info",
         "CMAC is an agreed MAC scheme.",
         component,
         {
@@ -258,7 +258,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-GMAC-001",
-        "warning",
+        "info",
         "GMAC is an agreed universal-hash-function-based MAC scheme, subject to GCM/GMAC operational constraints.",
         component,
         {

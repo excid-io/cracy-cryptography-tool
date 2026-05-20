@@ -83,7 +83,7 @@ findings contains finding if {
         "ECCG-RSA-002",
         "critical",
         sprintf(
-            "RSA primitive detected with Legacy[2025] modulus size n=%d bits. The ECCG exponent condition log2(e) > 16 could not be verified from CycloneDX data.",
+            "RSA primitive detected with Legacy[2025] modulus size n=%d bits ( 1900 <= bits < 3000 ). The ECCG exponent condition log2(e) > 16 could not be verified from CycloneDX data.",
             [n]
         ),
         component,

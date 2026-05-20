@@ -815,7 +815,7 @@ legacy_marker_status(marker) := "legacy" if {
     is_legacy_marker_expired(marker)
 }
 
-legacy_status_severity(status) := "medium" if {
+legacy_status_severity(status) := "high" if {
     status == "legacy"
 } else := "critical" if {
     status == "expired-legacy"

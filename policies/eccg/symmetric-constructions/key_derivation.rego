@@ -128,7 +128,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-KDF-003",
-        "warning",
+        "info",
         sprintf(
             "PBKDF2 is an agreed key derivation function. Detected PRF basis: %s.",
             [prf]

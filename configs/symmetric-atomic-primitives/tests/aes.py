@@ -21,8 +21,10 @@ def pycryptodome_aes_examples():
     nonce = b"unique_nonce1234"
     data = b"hello world!!!!!"  # 16 bytes for block mode demo
 
+    test = AES.MODE_CBC
     # AES-CBC
-    cipher = AES.new(key128, AES.MODE_CBC, iv=iv)
+    # cipher = AES.new(key128, AES.MODE_CBC, iv=iv)
+    cipher = AES.new(key128, test, iv=iv)
     ct = cipher.encrypt(data)
 
     # AES-ECB
