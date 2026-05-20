@@ -12,7 +12,7 @@ const OPA_DECISION_PATH =
   import.meta.env.VITE_OPA_DECISION_PATH || "/v1/data/cbom/eccg";
 
 //const IMPORTANT_SEVERITIES = new Set(["high", "critical", "warning"]);
-const IMPORTANT_SEVERITIES = new Set(["high", "critical"]);
+const IMPORTANT_SEVERITIES = new Set(["high", "critical", "medium"]);
 
 function normalizeScanUrl(value) {
   let scanUrl = value.trim();

@@ -133,7 +133,7 @@
     - EAX is not currently modeled as a first-class CBOM mode.
 
 - ECCG-AE-005:
-    - Severity: warning
+    - Severity: medium
     - A symmetric-encryption and MAC composition was detected. This may correspond to Encrypt-then-MAC, MAC-then-Encrypt, or Encrypt-and-MAC. Under ECCG, Encrypt-then-MAC is agreed, while MAC-then-Encrypt and Encrypt-and-MAC are legacy. Manual review is required.
 
 ### Agreed Key Protection Schemes

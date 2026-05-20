@@ -219,7 +219,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-AE-005",
-        "warning",
+        "medium",
         "A symmetric-encryption + MAC composition was detected. This may correspond to Encrypt-then-MAC, MAC-then-Encrypt, or Encrypt-and-MAC. Under ECCG, Encrypt-then-MAC is agreed, while MAC-then-Encrypt and Encrypt-and-MAC are legacy. Manual review is required.",
         enc_component,
         {
