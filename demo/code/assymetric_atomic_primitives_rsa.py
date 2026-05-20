@@ -21,6 +21,26 @@ def fire_eccg_rsa_002_legacy_rsa_2048():
 
     return private_key, public_key
 
+def fire_eccg_rsa_002_legacy_rsa_1024():
+    """
+    Should fire ECCG-RSA-002.
+
+    The REGO rule flags RSA primitives with:
+
+      1900 <= modulusBits < 3000
+
+    A 1024-bit RSA key falls in that legacy range.
+    """
+
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=1024,
+    )
+
+    public_key = private_key.public_key()
+
+    return private_key, public_key
+
 
 if __name__ == "__main__":
     private_key, public_key = fire_eccg_rsa_002_legacy_rsa_2048()
