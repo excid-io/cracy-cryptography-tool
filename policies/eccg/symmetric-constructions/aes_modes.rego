@@ -35,7 +35,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-SYM-ENC-001",
-        "warning",
+        "critical",
         sprintf(
             "Symmetric encryption scheme '%s' is not in the agreed scheme list (CTR, OFB, CBC, CBC-CS, CFB). This does not necessarily mean that your code is unsafe, but should be flagged for a warning.",
             [component.name]

@@ -35,7 +35,7 @@
 
 ### Agreed Symmetric Encryption Schemes
 - ECCG-SYM-ENC-001: 
-    - Severity: warning
+    - Severity: critical
     - Symmetric encryption scheme [scheme] is not in the agreed scheme list (CTR, OFB, CBC, CBC-CS, CFB). This does not necessarily mean that your code is unsafe, but should be flagged for a warning.
 - ECCG-SYM-ENC-002:
     - Severity: warning
