@@ -35,29 +35,28 @@ def fire_eccg_hash_002_sha512_224_via_hmac():
     return mac.finalize()
 
 
-def fire_eccg_hash_003_non_agreed_hash_via_hmac():
+def fire_eccg_hash_003_non_agreed_hash():
     """
     Target: ECCG-HASH-003
 
-    SM3 is a hash primitive exposed by pyca/cryptography.
-    It should not be in your agreed ECCG hash list, and it is less likely
-    than MD5/SHA1 to be classified as a legacy hash by your helper.
+    Blake a hash primitive exposed by pyca/cryptography.
+    It should not be in the agreed ECCG hash list, and it is less likely
+    than MD5/SHA1 to be classified as a legacy hash by helper.
     """
 
-    mac = hmac.HMAC(
-        key=b"K" * 32,
-        algorithm=hashes.SM3(),
-    )
+    # External / non-ECCG hash (should likely be flagged by policy)
+    blake2b_obj = hashes.Hash(hashes.BLAKE2b(64))
+    blake2b_obj.update(b"data")
+    digest_blake2b = blake2b_obj.finalize()
 
-    mac.update(b"message using SM3 inside HMAC")
-    return mac.finalize()
+    return digest_blake2b
 
 
 if __name__ == "__main__":
     sha224_mac = fire_eccg_hash_001_sha224_via_hmac()
     sha512_224_mac = fire_eccg_hash_002_sha512_224_via_hmac()
-    sm3_mac = fire_eccg_hash_003_non_agreed_hash_via_hmac()
+    digest_blake2b = fire_eccg_hash_003_non_agreed_hash()
 
     print("HMAC-SHA224:", sha224_mac.hex())
     print("HMAC-SHA512_224:", sha512_224_mac.hex())
-    print("HMAC-SM3:", sm3_mac.hex())
+    print("Blake2B:", digest_blake2b.hex())
