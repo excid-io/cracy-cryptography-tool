@@ -1444,54 +1444,6 @@ export default function CbomkitSimpleScanner() {
             <h1 style={{ ...styles.title, color: theme.title }}>
               CBOM, REGO, and Semgrep
             </h1>
-
-            <p style={{ ...styles.subtitle, color: theme.muted }}>
-              CBOMkit backend
-            </p>
-
-            <div
-              style={{
-                ...styles.apiBadge,
-                background: theme.badgeBg,
-                color: theme.badgeText,
-                borderColor: theme.badgeBorder,
-              }}
-              title={HTTP_API_BASE}
-            >
-              {HTTP_API_BASE}
-            </div>
-
-            <p style={{ ...styles.subtitle, color: theme.muted }}>
-              Semgrep runner
-            </p>
-
-            <div
-              style={{
-                ...styles.apiBadge,
-                background: theme.badgeBg,
-                color: theme.badgeText,
-                borderColor: theme.badgeBorder,
-              }}
-              title={semgrepEndpoint}
-            >
-              {semgrepEndpoint}
-            </div>
-
-            <p style={{ ...styles.subtitle, color: theme.muted }}>
-              OPA / REGO endpoint
-            </p>
-
-            <div
-              style={{
-                ...styles.apiBadge,
-                background: theme.badgeBg,
-                color: theme.badgeText,
-                borderColor: theme.badgeBorder,
-              }}
-              title={opaEndpoint}
-            >
-              {opaEndpoint}
-            </div>
           </div>
 
           <label style={{ ...styles.darkModeLabel, color: theme.text }}>
@@ -1850,18 +1802,18 @@ const styles = {
     fontSize: 32,
     lineHeight: 1.1,
     fontWeight: 800,
-    textAlign: "center",
+    textAlign: "left",
   },
   subtitle: {
     margin: "14px 0 6px",
     fontSize: 14,
-    textAlign: "center",
+    textAlign: "left",
   },
   apiBadge: {
     display: "block",
     width: "fit-content",
     maxWidth: "100%",
-    margin: "0 auto",
+    margin: 0,
     border: "1px solid",
     borderRadius: 8,
     padding: "6px 10px",
@@ -1890,7 +1842,7 @@ const styles = {
     marginBottom: 8,
     fontSize: 14,
     fontWeight: 700,
-    textAlign: "center",
+    textAlign: "left",
   },
   input: {
     width: "100%",
@@ -1953,13 +1905,13 @@ const styles = {
     margin: 0,
     fontSize: 16,
     fontWeight: 800,
-    textAlign: "center",
+    textAlign: "left",
   },
   errorPanelMessage: {
     margin: "8px 0 0",
     fontSize: 14,
     lineHeight: 1.5,
-    textAlign: "center",
+    textAlign: "left",
     overflowWrap: "anywhere",
   },
   errorDetails: {
@@ -1985,12 +1937,12 @@ const styles = {
     margin: 0,
     fontSize: 20,
     fontWeight: 800,
-    textAlign: "center",
+    textAlign: "left",
   },
   resultSummary: {
     margin: "8px 0 12px",
     fontSize: 14,
-    textAlign: "center",
+    textAlign: "left",
   },
   findingsList: {
     display: "grid",
@@ -2054,7 +2006,7 @@ const styles = {
     fontSize: 14,
     lineHeight: 1.5,
     overflowWrap: "anywhere",
-    textAlign: "center",
+    textAlign: "left",
   },
   findingMeta: {
     margin: "8px 0 0",
@@ -2075,7 +2027,7 @@ const styles = {
     fontSize: 13,
     fontWeight: 800,
     userSelect: "none",
-    textAlign: "center",
+    textAlign: "left",
   },
   locationList: {
     margin: "12px 0 0",
