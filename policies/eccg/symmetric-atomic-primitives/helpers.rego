@@ -57,10 +57,16 @@ is_sha3_512(component) if {
     component.name == "SHA3-512"
 }
 
+is_sha1(component) if {
+    component.name == "SHA1"
+}
+
 is_legacy_hash_component(component) if {
     is_sha224(component)
 } else if {
     is_sha512_224(component)
+} else if {
+    is_sha1(component)
 }
 
 is_agreed_hash_component(component) if {

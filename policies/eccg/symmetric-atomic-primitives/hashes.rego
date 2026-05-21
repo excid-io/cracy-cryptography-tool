@@ -7,6 +7,7 @@ import data.cbom.eccg.helpers.get_parameter_set_identifier_to_number_or_unknown
 import data.cbom.eccg.helpers.get_note
 import data.cbom.eccg.helpers.build_finding
 
+import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_sha1
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_sha224
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_sha512_224
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_legacy_hash_component
@@ -118,6 +119,35 @@ findings contains finding if {
             "notes": note,
             "minimumRecommendedHashBits": 384,
             "actualHashBits": get_parameter_set_identifier_to_number_or_unknown(component)
+        }
+    )
+}
+
+#
+# Rule ECCG-HASH-005
+# SHA-1 is obsolete.
+#
+# SHA-1 is not an agreed hash function and should not be used for new
+# cryptographic designs. This rule detects SHA-1 hash primitives emitted
+# by CBOMkit, including standalone SHA1 components and SHA1 components
+# emitted as the underlying hash for constructions such as HMAC-SHA1.
+#
+findings contains finding if {
+    some component_index
+    component := input.components[component_index]
+
+    is_hash_primitive(component)
+    is_sha1(component)
+
+    finding := build_finding(
+        "ECCG-HASH-005",
+        "critical",
+        sprintf("Hash function '%s' is obsolete and is not an agreed hash function", [component.name]),
+        component,
+        {
+            "status": "obsolete",
+            "hashBits": get_parameter_set_identifier_to_number_or_unknown(component),
+            "reason": "SHA-1 is obsolete and should not be used as an agreed hash function"
         }
     )
 }
