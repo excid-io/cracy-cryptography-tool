@@ -1,7 +1,18 @@
 
+# Severities 
+
+- `critical`: Serious issue that should be prioritized immediately; usually indicates obsolete, non-agreed, or strongly non-compliant cryptographic usage.
+- `high`: Important issue that should be fixed or reviewed soon; often indicates legacy or risky cryptographic usage in the near future.
+- `medium`: Moderate issue that may be acceptable in some contexts but requires review, especially for sensitive or quantum-sensitive use cases.
+- `low`: Minor issue or weak signal that should be reviewed but is not usually urgent.
+- `warning`: Informational policy warning where the usage may be context-dependent or requires manual review.
+- `info`: Non-violating or explanatory finding, often used to report detected recommended mechanisms or limitations of the evaluation.
+
 # Symmetric Atomic Primitives 
 
 ## ECCG-BLOCK-001: Non-Agreed Block Cipher
+
+**Severity: Critical**
 
 ECCG-BLOCK-001 detects block cipher primitives that are not in the agreed ECCG block cipher list. The agreed list currently includes AES and 3DES. Any detected block cipher outside that list is reported as non-compliant.
 
@@ -20,6 +31,8 @@ cipher = Cipher(
 ```
 
 ## ECCG-BLOCK-003: Non-Agreed 3DES Key Size
+
+**Severity: high**
 
 ECCG-BLOCK-003 detects 3DES components whose detected key size does not match the expected ECCG value:
 
@@ -46,6 +59,8 @@ cipher = Cipher(
 In practice, this rule is sensitive to how CBOMkit populates parameterSetIdentifier. For block ciphers, the value may reflect the block size, mode parameter, or another algorithm identifier rather than the actual key size. In the example finding, 3DES is reported with 64 bits, which likely reflects the 64-bit block size rather than the effective 3DES keying material. Because of that, key-size findings for block ciphers should be treated as useful signals but not always definitive. Manual review may be required to confirm the actual key length used in source code.
 
 ## ECCG-BLOCK-004: 3DES Legacy and Small Block Size Warning
+
+**Severity: high**
 
 ECCG-BLOCK-004 detects any use of 3DES. Even if the detected 3DES component appears to use the expected key size, the rule still reports it because 3DES is legacy-bound and has structural limitations that make it unsuitable for new use.
 
@@ -81,6 +96,8 @@ The small-block-size note is important because 3DES has a 64-bit block size. Thi
 The quantum-threat note is included because 3DES does not meet the preferred security margin for quantum-sensitive contexts. As a result, the rule reports 3DES as a high-severity finding even when other 3DES-specific checks, such as key-size checks, may also fire.
 
 ## ECCG-BLOCK-005: Block Cipher Below 192 Bits in Quantum-Sensitive Contexts
+
+**Severity: medium** 
 
 ECCG-BLOCK-005 detects agreed block cipher components whose detected key size is below the ECCG recommendation for quantum-sensitive contexts:
 
@@ -121,6 +138,8 @@ However, detecting key sizes through the CBOM is not guaranteed to be reliable. 
 
 ## ECCG-HASH-001: SHA-224 Legacy Hash Function
 
+**Severity: critical**
+
 ECCG-HASH-001 detects use of SHA-224 as a hash primitive. Under this rule set, SHA-224 is treated as legacy-only and is not included in the agreed hash function list.
 
 The rule is triggered when a CBOM component is identified as both:
@@ -147,6 +166,8 @@ tag = mac.finalize()
 This rule is marked as critical because SHA-224 is classified as legacy-only in the policy and should not be used as an agreed hash function.
 
 ## ECCG-HASH-002: SHA-512/224 Legacy Hash Function
+
+**Severity: critical**
 
 ECCG-HASH-002 detects use of SHA-512/224 as a hash primitive. Under this rule set, SHA-512/224 is also treated as legacy-only and is not included in the agreed hash function list.
 
@@ -175,6 +196,8 @@ This rule is marked as critical because SHA-512/224 is classified as legacy-only
 
 ## ECCG-HASH-005: Obsolete SHA-1 Hash Function
 
+**Severity: critical**
+
 ECCG-HASH-005 detects use of SHA-1 as a hash primitive. Under this policy set, SHA-1 is treated as obsolete and is not included in the agreed hash function list.
 
 The rule is triggered when a CBOM component is identified as both:
@@ -201,6 +224,8 @@ If SHA-1 appears as the underlying hash for HMAC-SHA1, the HMAC construction may
 # Symmetric Constructions 
 
 ## ECCG-SYM-ENC-001: Non-Agreed Symmetric Encryption Scheme
+
+**Severity: Critical**
 
 ECCG-SYM-ENC-001 detects symmetric encryption schemes that are not in the agreed ECCG symmetric encryption scheme list. The agreed list currently includes:
 
@@ -229,6 +254,8 @@ cipher = Cipher(
 
 ## ECCG-HMAC-002: Legacy HMAC-SHA1
 
+**Severity: high and critical after 2030**
+
 ECCG-HMAC-002 detects HMAC-SHA1. Under this policy set, HMAC-SHA1 is considered acceptable only as a legacy mechanism and should be phased out.
 
 The rule is triggered when a CBOM component is identified as a MAC primitive using HMAC with SHA-1.
@@ -250,6 +277,8 @@ tag = mac.finalize()
 The rule reports this as a high-severity finding because SHA-1-based HMAC is legacy-bound in the implemented policy. Although HMAC-SHA1 is not the same as plain SHA-1 hashing, new designs should use stronger HMAC variants such as HMAC-SHA256, HMAC-SHA384, or HMAC-SHA512 where appropriate.
 
 ## ECCG-AE-005: Ambiguous Encryption and MAC Composition
+
+**Severity: medium**
 
 ECCG-AE-005 detects cases where a symmetric encryption component and a MAC component appear in a common source context. This may indicate a manually composed authenticated-encryption construction.
 
@@ -300,6 +329,8 @@ This rule is deliberately heuristic. It can detect that encryption and MAC opera
 # Asymmetric Atomic Primitives 
 
 ## ECCG-RSA-002: Legacy RSA Modulus Size
+
+**Severity: critical**
 
 ECCG-RSA-002 detects RSA primitives whose modulus size is in the ECCG legacy range:
 
