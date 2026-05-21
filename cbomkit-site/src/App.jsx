@@ -210,6 +210,27 @@ function getRegoFindingTitle(finding, path) {
   );
 }
 
+function getRegoSection(finding, path) {
+  const policyPath = getStringValue(finding, ["policyPath", "policy_path"]);
+
+  if (policyPath) {
+    return policyPath;
+  }
+
+  const section = getStringValue(finding, ["section"]);
+  const subsection = getStringValue(finding, ["subsection"]);
+
+  if (section && subsection) {
+    return `${section} / ${subsection}`;
+  }
+
+  if (section) {
+    return section;
+  }
+
+  return makePathLabel(path) || "REGO Findings";
+}
+
 function getRegoFindingInfo(finding) {
   return (
     getStringValue(finding, [
@@ -226,44 +247,41 @@ function getRegoFindingInfo(finding) {
 
 function extractImportantFindings(policyResult) {
   const root = extractOpaResult(policyResult);
+
+  if (!root) {
+    return [];
+  }
+
+  const sourceFindings = Array.isArray(root.findings) ? root.findings : [];
   const findings = [];
 
-  function visit(value, path = []) {
-    if (Array.isArray(value)) {
-      value.forEach((item, index) => visit(item, [...path, String(index)]));
-      return;
-    }
-
-    if (!value || typeof value !== "object") {
-      return;
+  for (const finding of sourceFindings) {
+    if (!finding || typeof finding !== "object") {
+      continue;
     }
 
     const severity = normalizeSeverity(
-      value.severity ||
-        value.level ||
-        value.risk ||
-        value.impact ||
-        value.priority
+      finding.severity ||
+        finding.level ||
+        finding.risk ||
+        finding.impact ||
+        finding.priority
     );
 
-    if (IMPORTANT_SEVERITIES.has(severity)) {
-      findings.push({
-        title: getRegoFindingTitle(value, path),
-        message: getRegoFindingInfo(value),
-        severity,
-        ruleId: getStringValue(value, ["ruleId", "rule_id", "id"]),
-        section: makePathLabel(path),
-        references: Array.isArray(value.references) ? value.references : [],
-        raw: value,
-      });
+    if (!IMPORTANT_SEVERITIES.has(severity)) {
+      continue;
     }
 
-    for (const [key, child] of Object.entries(value)) {
-      visit(child, [...path, key]);
-    }
+    findings.push({
+      title: getRegoFindingTitle(finding, []),
+      message: getRegoFindingInfo(finding),
+      severity,
+      ruleId: getStringValue(finding, ["ruleId", "rule_id", "id"]),
+      section: getRegoSection(finding, []),
+      references: Array.isArray(finding.references) ? finding.references : [],
+      raw: finding,
+    });
   }
-
-  visit(root);
 
   const seen = new Set();
 

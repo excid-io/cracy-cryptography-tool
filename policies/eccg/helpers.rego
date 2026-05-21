@@ -235,7 +235,9 @@ get_source_references(component) := source_references if {
     source_references := [
         {
             "location": object.get(occurrence, "location", "unknown"),
-            "line": object.get(occurrence, "line", -1)
+            "line": object.get(occurrence, "line", -1),
+            "offset": object.get(occurrence, "offset", -1),
+            "additionalContext": object.get(occurrence, "additionalContext", "unknown")
         }
         | some i
           occurrence := occurrences[i]
@@ -827,4 +829,307 @@ legacy_status_message(name, marker, status) := message if {
 } else := message if {
     status == "expired-legacy"
     message := sprintf("%s was acceptable only as a legacy mechanism %s, but that legacy period has expired.", [name, marker])
+}
+
+#
+# Return the full cryptoProperties object for a component.
+#
+# This wrapper avoids unsafe direct access to component.cryptoProperties.
+# If the field is missing, it returns an empty object so downstream helpers
+# can safely continue using object.get.
+#
+get_crypto_properties(component) := object.get(component, "cryptoProperties", {})
+
+#
+# Return relatedCryptoMaterialProperties for a component.
+#
+# This object is present when cryptoProperties.assetType is
+# "related-crypto-material". It contains metadata for cryptographic material
+# such as private keys, public keys, secret keys, ciphertext, signatures,
+# digests, or initialization vectors.
+#
+# If the component is not related crypto material, or if the field is missing,
+# this returns an empty object.
+#
+get_related_crypto_material_properties(component) := object.get(
+    get_crypto_properties(component),
+    "relatedCryptoMaterialProperties",
+    {}
+)
+
+#
+# Return the CycloneDX crypto asset type for a component.
+#
+# Expected values include:
+# - "algorithm"
+# - "certificate"
+# - "protocol"
+# - "related-crypto-material"
+#
+# If the assetType field is missing, this returns "unknown".
+#
+get_asset_type(component) := object.get(
+    get_crypto_properties(component),
+    "assetType",
+    "unknown"
+)
+
+#
+# Return the type of related cryptographic material.
+#
+# This reads:
+#
+#   component.cryptoProperties.relatedCryptoMaterialProperties.type
+#
+# Expected values include:
+# - "private-key"
+# - "public-key"
+# - "secret-key"
+# - "key"
+# - "ciphertext"
+# - "signature"
+# - "digest"
+# - "initialization-vector"
+#
+# If the component is not related crypto material, or if the type field is
+# missing, this returns "unknown".
+#
+get_related_crypto_material_type(component) := object.get(
+    get_related_crypto_material_properties(component),
+    "type",
+    "unknown"
+)
+
+#
+# Return the size of related cryptographic material.
+#
+# For RSA key material, CBOMkit may emit this as the key size in bits, for
+# example:
+#
+#   "size": 2048
+#
+# If the size field is missing, this returns "unknown".
+#
+get_related_crypto_material_size(component) := object.get(
+    get_related_crypto_material_properties(component),
+    "size",
+    "unknown"
+)
+
+#
+# True when the component represents related cryptographic material.
+#
+# This identifies CBOM components where:
+#
+#   cryptoProperties.assetType == "related-crypto-material"
+#
+# These components are not algorithms themselves. They represent material
+# associated with cryptographic algorithms, such as keys, signatures,
+# ciphertexts, digests, or IVs.
+#
+is_related_crypto_material(component) if {
+    get_asset_type(component) == "related-crypto-material"
+}
+
+#
+# True when the component represents private key material.
+#
+# This identifies components such as:
+#
+#   {
+#     "cryptoProperties": {
+#       "assetType": "related-crypto-material",
+#       "relatedCryptoMaterialProperties": {
+#         "type": "private-key"
+#       }
+#     }
+#   }
+#
+# This is useful for flagging generated, embedded, stored, or otherwise
+# exposed asymmetric private keys.
+#
+is_private_key_material(component) if {
+    is_related_crypto_material(component)
+    get_related_crypto_material_type(component) == "private-key"
+}
+
+#
+# True when the component represents public key material.
+#
+# This identifies components such as:
+#
+#   {
+#     "cryptoProperties": {
+#       "assetType": "related-crypto-material",
+#       "relatedCryptoMaterialProperties": {
+#         "type": "public-key"
+#       }
+#     }
+#   }
+#
+# Public keys are not confidential, but they may still need policy review for
+# trust, lifecycle, algorithm family, and key-size requirements.
+#
+is_public_key_material(component) if {
+    is_related_crypto_material(component)
+    get_related_crypto_material_type(component) == "public-key"
+}
+
+#
+# Return the first source file location recorded for a component.
+#
+# CBOM components can contain evidence occurrences that point back to
+# source-code locations. This helper returns the "location" value from the
+# first occurrence.
+#
+# If the component has no evidence occurrences, or if the location field is
+# missing, this returns "unknown".
+#
+get_first_source_location(component) := location if {
+    occurrences := get_evidence_occurrences(component)
+    count(occurrences) > 0
+    location := object.get(occurrences[0], "location", "unknown")
+} else := "unknown"
+
+#
+# Return the first source line recorded for a component.
+#
+# This helper reads the "line" value from the first evidence occurrence
+# attached to the component.
+#
+# If the component has no evidence occurrences, or if the line field is
+# missing, this returns -1.
+#
+get_first_source_line(component) := line if {
+    occurrences := get_evidence_occurrences(component)
+    count(occurrences) > 0
+    line := object.get(occurrences[0], "line", -1)
+} else := -1
+
+#
+# Return the algorithm component associated with a key-material component.
+#
+# CBOMkit may represent generated or related key material as a separate
+# component with assetType = "related-crypto-material". The relationship
+# between the key material and the algorithm is represented through the
+# CycloneDX dependencies array.
+#
+# Example:
+#
+#   private-key@... dependsOn RSA-2048
+#
+# This helper follows that dependency edge and returns the related algorithm
+# component.
+#
+related_algorithm_for_key_material(key_component) := algorithm_component if {
+    key_ref := key_component["bom-ref"]
+
+    dependency := input.dependencies[_]
+    dependency.ref == key_ref
+
+    algorithm_ref := dependency.dependsOn[_]
+
+    algorithm_component := input.components[_]
+    algorithm_component["bom-ref"] == algorithm_ref
+}
+
+#
+# Return the name of the algorithm associated with a key-material component.
+#
+# This uses related_algorithm_for_key_material(...) to follow the CBOM
+# dependency from the key-material component to its related algorithm.
+#
+# If no related algorithm can be found, this returns "unknown".
+#
+related_algorithm_name_or_unknown(key_component) := name if {
+    algorithm_component := related_algorithm_for_key_material(key_component)
+    name := object.get(algorithm_component, "name", "unknown")
+} else := "unknown"
+
+#
+# Return the bom-ref of the algorithm associated with a key-material component.
+#
+# This is useful for including a stable reference to the related algorithm in
+# finding metadata.
+#
+# If no related algorithm can be found, this returns "unknown".
+#
+related_algorithm_bom_ref_or_unknown(key_component) := ref if {
+    algorithm_component := related_algorithm_for_key_material(key_component)
+    ref := object.get(algorithm_component, "bom-ref", "unknown")
+} else := "unknown"
+
+#
+# Return the parameterSetIdentifier of the algorithm associated with
+# a key-material component.
+#
+# For RSA key material, this often represents the RSA modulus size, for example:
+#
+#   "parameterSetIdentifier": "2048"
+#
+# This helper follows the dependency from the key-material component to the
+# related algorithm component, then reads:
+#
+#   cryptoProperties.algorithmProperties.parameterSetIdentifier
+#
+# If no related algorithm or parameter set identifier can be found, this
+# returns "unknown".
+#
+related_algorithm_parameter_set_or_unknown(key_component) := parameter_set if {
+    algorithm_component := related_algorithm_for_key_material(key_component)
+
+    algorithm_properties := object.get(
+        object.get(algorithm_component, "cryptoProperties", {}),
+        "algorithmProperties",
+        {}
+    )
+
+    parameter_set := object.get(algorithm_properties, "parameterSetIdentifier", "unknown")
+} else := "unknown"
+
+#
+# Return standardized metadata for related cryptographic material.
+#
+# This is intended for components where:
+#
+#   cryptoProperties.assetType == "related-crypto-material"
+#
+# It captures the material type, size, related algorithm, bom-ref, and
+# source-code evidence in one reusable object so private-key, public-key,
+# secret-key, and other key-material rules can share the same finding shape.
+#
+get_related_crypto_material_finding_details(component) := details if {
+    details := {
+        "assetType": get_asset_type(component),
+        "materialType": get_related_crypto_material_type(component),
+        "size": get_related_crypto_material_size(component),
+        "relatedAlgorithm": related_algorithm_name_or_unknown(component),
+        "relatedAlgorithmBomRef": related_algorithm_bom_ref_or_unknown(component),
+        "relatedAlgorithmParameterSetIdentifier": related_algorithm_parameter_set_or_unknown(component),
+        "bomRef": get_bom_ref(component),
+        "sourceReferences": get_source_references(component),
+        "sourceLocation": get_first_source_location(component),
+        "sourceLine": get_first_source_line(component)
+    }
+}
+
+#
+# Return the bom-ref for a component.
+#
+# If the component does not contain a bom-ref field, this returns "unknown".
+#
+get_bom_ref(component) := bom_ref if {
+    bom_ref := object.get(component, "bom-ref", "unknown")
+}
+
+#
+# Return the display name for a CBOM component.
+#
+# This is a compatibility helper for rules that need a human-readable
+# component name in finding messages.
+#
+# If the component does not contain a name field, this returns "unknown".
+#
+get_component_name(component) := name if {
+    name := object.get(component, "name", "unknown")
 }
