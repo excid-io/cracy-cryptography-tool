@@ -19,6 +19,42 @@ The project then supports two evaluation paths:
 
 Together, these two approaches provide complementary views of cryptographic usage. The Rego evaluation works from the CBOM produced by CBOMkit, while the Semgrep evaluation works directly on the repository source code.
 
+## Motivation behind REGO evaluation 
+
+As mentioned before this project uses Rego and Open Policy Agent (OPA) to evaluate cryptographic usage from CBOM data.
+
+The decision to use Rego follows the compliance-evaluation model introduced in CBOMkit. In CBOMkit pull request [#332](https://github.com/cbomkit/cbomkit/pull/332), support was added for using OPA as an external compliance evaluation service. That PR describes OPA as a way to evaluate CBOM compliance using user-defined policies written in a declarative policy language, with the OPA instance and policy configuration made configurable by CBOMkit. This made Rego a natural choice for implementing our ECCG policy checks. :contentReference[oaicite:0]{index=0}
+
+The Rego policies in this repository were created by us. They encode checks derived from our interpretation of the ENISA-published ECCG Agreed Cryptographic Mechanisms guidance. They are not official ENISA rules and should not be treated as an official ENISA policy implementation.
+
+Rego provides several practical benefits for this project:
+
+- **Policy as code:** cryptographic requirements can be written as version-controlled policy rules instead of being embedded directly in application logic.
+- **CBOM-native evaluation:** Rego works well over structured JSON data, which makes it suitable for evaluating CycloneDX CBOM output.
+- **Separation of concerns:** CBOMkit generates the CBOM, while OPA evaluates the CBOM against our ECCG policy. This keeps detection, policy, and UI concerns separate.
+- **Easy CI/CD integration:** OPA and Rego can be run from command-line tooling, Docker containers, and CI environments such as GitHub Actions. This makes it straightforward to add CBOM policy checks to pull requests, release pipelines, or scheduled repository scans.
+- **Portable policy execution:** the same Rego rules can be evaluated locally, in Docker Compose, in CI, or as part of a future CBOMkit integration.
+- **Declarative rules:** Rego makes it easier to express compliance conditions such as “flag RSA modulus sizes below a threshold” or “detect non-agreed block ciphers” without writing custom imperative evaluation code for every check.
+- **Explainable findings:** each rule can produce structured findings with rule IDs, severities, messages, notes, source references, and supporting metadata.
+- **Extensibility:** new ECCG checks can be added incrementally as additional CBOM fields become available or as the policy coverage expands.
+
+This work was also informed by conversations with the CBOMkit maintainers and developers. Because CBOMkit already supports configurable external compliance evaluation through OPA, the ECCG Rego policy developed in this project could be integrated into CBOMkit more easily in the future. The current implementation therefore follows the direction already established by CBOMkit: generate a CBOM, submit it to an OPA-compatible policy service, and return structured compliance findings.
+
+The main limitation of the Rego-based evaluation is that it can only reason over the data that is present in the CBOM. If CBOMkit, or any other CBOM generator for that matter, does not detect a cryptographic operation, records it with incomplete metadata, or represents a field ambiguously, then the Rego policy cannot  always reliably evaluate it. For example, some rules that represent AES-128 depend on fields such as `parameterSetIdentifier`, but that value may not always represent the actual key size; it may instead reflect a block size, output size, or another algorithm parameter. Similarly, CBOM data may show that encryption and MAC operations exist in the same file, but it may not expose enough data-flow information to determine whether the code implements Encrypt-then-MAC, MAC-then-Encrypt, or Encrypt-and-MAC. Because of this, Rego evaluation is very useful for structured CBOM-level policy checks, but the quality of the results depends directly on the completeness and accuracy of the generated CBOM. Source-level tools such as Semgrep are still useful as a complementary evaluation method where CBOM metadata is incomplete or not expressive enough.
+
+## Motivation behind Semgrep evaluation 
+
+In addition to the CBOM-based Rego evaluation, this project also uses Semgrep to scan repository source code directly. The Semgrep rules were created standalone and then left to fill some of the gaps left by CBOM-level evaluation. While Rego is effective for evaluating structured CBOM data, it is limited by what CBOMkit detects and how much detail is represented in the generated CBOM. Semgrep provides a more source-aware evaluation path that can detect finer-grained implementation patterns, API usage, configuration choices, and insecure constructions that may not be fully captured in CBOM metadata.
+
+Semgrep is especially useful for cases where the surrounding source context matters. For example, it can inspect how a cryptographic API is called, whether a constant IV is used, whether a TLS context allows legacy protocol versions, whether a particular mode is selected, or whether encryption and MAC operations are composed in a specific way. These details may be difficult or impossible to infer reliably from the CBOM alone, especially when the CBOM does not expose data-flow, operation ordering, or precise parameter semantics.
+
+Another benefit of Semgrep is that it fits naturally into developer workflows. Rules can be run locally, in Docker, or in CI/CD systems such as GitHub Actions. Findings can point directly to source files and lines, making them easier for developers to inspect and fix. Semgrep rules are also version-controlled alongside the rest of the project, so the detection logic can evolve as new ECCG checks are implemented or as new cryptographic API patterns are identified.
+
+However, Semgrep also has important limitations. The biggest downside is maintenance cost. Unlike Rego rules that operate over a normalized CBOM structure, Semgrep rules must often be written for specific programming languages, libraries, and API shapes. A rule that detects a pattern in Python’s `pyca/cryptography` library will not automatically detect the same concept in Java, Go, JavaScript, or C. Even within the same language, different coding styles, wrappers, helper functions, or framework abstractions may require additional rule variants.
+
+Because of this, Semgrep evaluation can provide more detailed and fine-grained results, but it requires more ongoing work to keep the rule set accurate and useful. It is best used as a complementary source-level analysis layer alongside the Rego evaluation, rather than as a replacement for CBOM-based policy checks.
+
+
 # Run the CBOM kit website 
 
 Create a .env file that contains the following. Below are example values: 
