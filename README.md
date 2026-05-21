@@ -1,4 +1,24 @@
 
+# Overview 
+
+This project is a web application for analyzing cryptographic usage in GitHub repositories using CBOMkit, OPA/Rego, and Semgrep.
+
+The application accepts a GitHub repository URL and optional scan parameters, including a scan path, branch, commit SHA, and personal access token. The repository is scanned with CBOMkit to produce a Cryptography Bill of Materials (CBOM), which describes the cryptographic assets detected in the codebase.
+
+The project then supports two evaluation paths:
+
+1. **CBOM-based Rego evaluation**
+
+   CBOMkit supports external compliance evaluation through Open Policy Agent (OPA), using user-defined policies written in Rego. This project follows that CBOMkit integration model and provides a custom Rego policy set for evaluating the generated CBOM.
+
+   The Rego rules in this repository were written by us. They are based on our interpretation of the ENISA-published **ECCG Agreed Cryptographic Mechanisms, version 2** guidance, but they are not provided by ENISA and should not be treated as an official ENISA policy implementation.
+
+2. **Source-level Semgrep evaluation**
+
+   The project also includes custom Semgrep rules written by us. These rules scan the source code directly and are used to detect cryptographic API usage patterns that may or may not be fully represented in the CBOM.
+
+Together, these two approaches provide complementary views of cryptographic usage. The Rego evaluation works from the CBOM produced by CBOMkit, while the Semgrep evaluation works directly on the repository source code.
+
 # Run the CBOM kit website 
 
 Create a .env file that contains the following. Below are example values: 
