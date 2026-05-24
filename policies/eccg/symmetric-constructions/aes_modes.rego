@@ -37,7 +37,7 @@ findings contains finding if {
         "ECCG-SYM-ENC-001",
         "critical",
         sprintf(
-            "Symmetric encryption scheme '%s' is not in the agreed scheme list (CTR, OFB, CBC, CBC-CS, CFB). This does not necessarily mean that your code is unsafe, but should be flagged for a warning.",
+            "Symmetric encryption scheme '%s' is not in the agreed scheme list (CTR, OFB, CBC, CBC-CS, CFB).",
             [component.name]
         ),
         component,

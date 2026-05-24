@@ -11,7 +11,7 @@ const POLICY_API_BASE = import.meta.env.VITE_POLICY_API_BASE || "/opa";
 const OPA_DECISION_PATH =
   import.meta.env.VITE_OPA_DECISION_PATH || "/v1/data/cbom/eccg";
 
-//const IMPORTANT_SEVERITIES = new Set(["high", "critical", "warning"]);
+// const IMPORTANT_SEVERITIES = new Set(["high", "critical", "warning"]);
 const IMPORTANT_SEVERITIES = new Set(["high", "critical", "medium"]);
 
 function normalizeScanUrl(value) {
@@ -297,6 +297,27 @@ function extractImportantFindings(policyResult) {
   });
 }
 
+function getRuleOrder(ruleId) {
+  const match = String(ruleId || "").match(/-(\d+)$/);
+
+  if (!match) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  return Number(match[1]);
+}
+
+function compareByRuleOrder(a, b) {
+  const aOrder = getRuleOrder(a.ruleId);
+  const bOrder = getRuleOrder(b.ruleId);
+
+  if (aOrder !== bOrder) {
+    return aOrder - bOrder;
+  }
+
+  return String(a.ruleId || "").localeCompare(String(b.ruleId || ""));
+}
+
 function groupRegoFindings(findings) {
   const groups = new Map();
 
@@ -325,9 +346,20 @@ function groupRegoFindings(findings) {
     });
   }
 
-  return Array.from(groups.values()).sort((a, b) =>
-    a.title.localeCompare(b.title)
-  );
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      findings: group.findings.sort((a, b) => {
+        const ruleOrder = compareByRuleOrder(a, b);
+
+        if (ruleOrder !== 0) {
+          return ruleOrder;
+        }
+
+        return String(a.title || "").localeCompare(String(b.title || ""));
+      }),
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title));
 }
 
 function getSemgrepFindings(semgrepResult) {
@@ -682,32 +714,6 @@ function groupSemgrepFindingsBySection(findings) {
     .sort((a, b) => a.title.localeCompare(b.title));
 }
 
-function getSeverityTheme(severity, theme) {
-  const normalized = normalizeSeverity(severity);
-
-  if (normalized === "critical" || normalized === "error") {
-    return {
-      background: theme.criticalBg,
-      color: theme.criticalText,
-      borderColor: theme.criticalBorder,
-    };
-  }
-
-  if (normalized === "high" || normalized === "warning") {
-    return {
-      background: theme.highBg,
-      color: theme.highText,
-      borderColor: theme.highBorder,
-    };
-  }
-
-  return {
-    background: theme.infoBg,
-    color: theme.infoText,
-    borderColor: theme.infoBorder,
-  };
-}
-
 function getConfidenceTheme(confidence, theme) {
   const normalized = normalizeConfidence(confidence);
 
@@ -825,8 +831,6 @@ function FindingGroups({
   resultText,
   groups,
   theme,
-  showGroupSeverity = true,
-  showFindingSeverity = false,
   showFindingConfidence = false,
 }) {
   return (
@@ -846,8 +850,6 @@ function FindingGroups({
       {groups.length > 0 && (
         <div style={styles.findingsList}>
           {groups.map((group, groupIndex) => {
-            const groupSeverityStyle = getSeverityTheme(group.severity, theme);
-
             return (
               <article
                 key={`${group.title}-${group.ruleId}-${groupIndex}`}
@@ -882,17 +884,6 @@ function FindingGroups({
                   </div>
 
                   <div style={styles.badgeStack}>
-                    {showGroupSeverity && (
-                      <span
-                        style={{
-                          ...styles.severityBadge,
-                          ...groupSeverityStyle,
-                        }}
-                      >
-                        Severity: {group.severity || "unknown"}
-                      </span>
-                    )}
-
                     <span
                       style={{
                         ...styles.countBadge,
@@ -937,11 +928,6 @@ function FindingGroups({
                         group
                       );
 
-                      const findingSeverityStyle = getSeverityTheme(
-                        finding.severity,
-                        theme
-                      );
-
                       const findingConfidenceStyle = getConfidenceTheme(
                         finding.confidence,
                         theme
@@ -967,17 +953,6 @@ function FindingGroups({
                             </strong>
 
                             <div style={styles.findingRowBadges}>
-                              {showFindingSeverity && (
-                                <span
-                                  style={{
-                                    ...styles.severityBadge,
-                                    ...findingSeverityStyle,
-                                  }}
-                                >
-                                  Severity: {finding.severity || "unknown"}
-                                </span>
-                              )}
-
                               {showFindingConfidence && finding.confidence && (
                                 <span
                                   style={{
@@ -1667,7 +1642,7 @@ export default function CbomkitSimpleScanner() {
 
         {semgrepResult && (
           <FindingGroups
-            title="Semgrep high and critical findings"
+            title="Semgrep findings"
             emptyText="No Semgrep findings were returned."
             resultText={`${semgrepFindings.length} finding${
               semgrepFindings.length === 1 ? "" : "s"
@@ -1676,25 +1651,21 @@ export default function CbomkitSimpleScanner() {
             }.`}
             groups={groupedSemgrepFindings}
             theme={theme}
-            showGroupSeverity={false}
-            showFindingSeverity={true}
             showFindingConfidence={true}
           />
         )}
 
         {policyResult && (
           <FindingGroups
-            title="REGO high and critical findings"
-            emptyText="No high or critical REGO findings were returned."
-            resultText={`${importantFindings.length} high/critical finding${
+            title="REGO findings"
+            emptyText="No REGO findings were returned."
+            resultText={`${importantFindings.length} finding${
               importantFindings.length === 1 ? "" : "s"
             } across ${groupedRegoFindings.length} group${
               groupedRegoFindings.length === 1 ? "" : "s"
             }.`}
             groups={groupedRegoFindings}
             theme={theme}
-            showGroupSeverity={false}
-            showFindingSeverity={true}
             showFindingConfidence={false}
           />
         )}
@@ -1994,15 +1965,6 @@ const styles = {
     lineHeight: 1.35,
     overflowWrap: "anywhere",
   },
-  severityBadge: {
-    border: "1px solid",
-    borderRadius: 999,
-    padding: "3px 8px",
-    fontSize: 12,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
-  },
   confidenceBadge: {
     border: "1px solid",
     borderRadius: 999,
@@ -2026,12 +1988,14 @@ const styles = {
     lineHeight: 1.5,
     overflowWrap: "anywhere",
     textAlign: "left",
+    width: "100%",
   },
   findingMeta: {
     margin: "8px 0 0",
     fontSize: 12,
     lineHeight: 1.4,
     overflowWrap: "anywhere",
+    textAlign: "left",
     fontFamily:
       "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   },
@@ -2059,6 +2023,7 @@ const styles = {
     fontSize: 12,
     lineHeight: 1.4,
     overflowWrap: "anywhere",
+    textAlign: "left",
     fontFamily:
       "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   },
@@ -2080,6 +2045,7 @@ const styles = {
     fontSize: 13,
     lineHeight: 1.35,
     overflowWrap: "anywhere",
+    textAlign: "left",
     fontFamily:
       "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
   },
@@ -2088,11 +2054,14 @@ const styles = {
     fontSize: 12,
     lineHeight: 1.4,
     overflowWrap: "anywhere",
+    textAlign: "left",
   },
   locationMessage: {
     margin: "6px 0 0",
     fontSize: 12,
     lineHeight: 1.4,
+    textAlign: "left",
+    width: "100%",
     fontFamily:
       "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
   },
@@ -2107,6 +2076,7 @@ const styles = {
     fontSize: 12,
     fontWeight: 800,
     userSelect: "none",
+    textAlign: "left",
   },
   referenceList: {
     margin: "8px 0 0",
@@ -2117,5 +2087,6 @@ const styles = {
     fontSize: 12,
     lineHeight: 1.4,
     overflowWrap: "anywhere",
+    textAlign: "left",
   },
 };

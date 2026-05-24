@@ -32,7 +32,7 @@ policy_sources := [
     },
     {
         "section": "Symmetric Constructions",
-        "subsection": "Aes Modes",
+        "subsection": "AES Modes",
         "findings": data.cbom.eccg.symmetric_constructions.aes_modes.findings
     },
     {
@@ -85,11 +85,11 @@ policy_sources := [
         "subsection": "FF DLOG",
         "findings": data.cbom.eccg.asymmetric_atomic_primitives.ff_dlog.findings
     },
-    {
-        "section": "General",
-        "subsection": "Key Material",
-        "findings": data.cbom.eccg.general.key_detection.findings
-    }
+    #{
+    #    "section": "General",
+    #    "subsection": "Key Material",
+    #    "findings": data.cbom.eccg.general.key_detection.findings
+    #}
 ]
 
 #

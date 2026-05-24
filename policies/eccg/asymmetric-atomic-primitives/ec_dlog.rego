@@ -173,7 +173,7 @@ findings contains finding if {
         "ECCG-ECDLOG-003",
         "warning",
         sprintf(
-            "EC-DLOG primitive detected with elliptic curve %s, which is not listed as an agreed ECCG curve. This does not necessarily mean the code is unsafe, but it should be reviewed for ECCG compliance.",
+            "EC-DLOG primitive detected with elliptic curve %s, which is not listed as an agreed ECCG curve.",
             [curve]
         ),
         component,

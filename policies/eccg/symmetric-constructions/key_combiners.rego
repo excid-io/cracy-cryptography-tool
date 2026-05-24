@@ -159,7 +159,7 @@ findings contains finding if {
         "ECCG-KC-004",
         "critical",
         sprintf(
-            "Key combiner scheme '%s' is not listed in the ECCG agreed key combiner table. This does not mean that your code is unsafe, but it should probably be flagged as non-compliant.",
+            "Key combiner scheme '%s' is not listed in the ECCG agreed key combiner table.",
             [component.name]
         ),
         component,
