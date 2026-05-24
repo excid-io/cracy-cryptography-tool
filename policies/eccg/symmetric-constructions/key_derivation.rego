@@ -254,7 +254,7 @@ findings contains finding if {
     finding := build_finding(
         "ECCG-KDF-006",
         "critical",
-        "A key derivation function component was detected but is not currently classified as an agreed ECCG KDF by this policy. This doesn't mean that your code is unsafe, but should be flagged as non compliant.",
+        "A key derivation function component was detected but is not currently classified as an agreed ECCG KDF by this policy.",
         component,
         {
             "status": "unclassified-kdf",

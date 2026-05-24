@@ -11,7 +11,7 @@
         }
       ]
     },
-    "timestamp": "2026-05-20T21:27:58Z",
+    "timestamp": "2026-05-22T08:28:18Z",
     "properties": [
       {
         "name": "gitUrl",
@@ -23,7 +23,7 @@
       },
       {
         "name": "commit",
-        "value": "97747c0"
+        "value": "d090abe"
       },
       {
         "name": "subfolder",
@@ -34,9 +34,31 @@
   "bomFormat": "CycloneDX",
   "components": [
     {
+      "name": "MGF1",
+      "type": "cryptographic-asset",
+      "bom-ref": "f5f6afa3-d1b9-42a3-831a-dd4c7f056ddb",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 145,
+            "offset": 16,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "MGF1"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "other"
+        }
+      }
+    },
+    {
       "name": "SHA1",
       "type": "cryptographic-asset",
-      "bom-ref": "2b6070a5-033e-4c39-a1d5-6e24f3ac0ae3",
+      "bom-ref": "65ec2bdd-dd11-4a32-bce0-036197a27bb5",
       "evidence": {
         "occurrences": [
           {
@@ -60,35 +82,9 @@
       }
     },
     {
-      "name": "SHA512/224",
-      "type": "cryptographic-asset",
-      "bom-ref": "353945f2-771e-4766-a0b2-1e4bf1edbd37",
-      "evidence": {
-        "occurrences": [
-          {
-            "line": 29,
-            "offset": 10,
-            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
-            "additionalContext": "HMAC"
-          }
-        ]
-      },
-      "cryptoProperties": {
-        "oid": "2.16.840.1.101.3.4.2.5",
-        "assetType": "algorithm",
-        "algorithmProperties": {
-          "primitive": "hash",
-          "cryptoFunctions": [
-            "digest"
-          ],
-          "parameterSetIdentifier": "224"
-        }
-      }
-    },
-    {
       "name": "3DES",
       "type": "cryptographic-asset",
-      "bom-ref": "c5b3adc1-3f4d-4571-9ec4-42683386d189",
+      "bom-ref": "e84030ec-b8e6-43bd-a2d3-6d1370549981",
       "evidence": {
         "occurrences": [
           {
@@ -112,9 +108,31 @@
       }
     },
     {
+      "name": "private-key@a18051e8-bc15-4f6a-a8e7-4a7704d7de8f",
+      "type": "cryptographic-asset",
+      "bom-ref": "a18051e8-bc15-4f6a-a8e7-4a7704d7de8f",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 15,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 2048,
+          "type": "private-key"
+        }
+      }
+    },
+    {
       "name": "HMAC-SHA224",
       "type": "cryptographic-asset",
-      "bom-ref": "903cca74-c310-4b47-8de5-1ef08e191886",
+      "bom-ref": "af5b0690-037f-44a2-81b8-1c24586c5951",
       "evidence": {
         "occurrences": [
           {
@@ -137,9 +155,298 @@
       }
     },
     {
+      "name": "HMAC-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "f05b3dcd-df45-4a70-adfa-e6db88343090",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 16,
+            "offset": 10,
+            "location": "demo/code/symmetric_constructions_authenticated_encryption.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.9",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RSA-2048",
+      "type": "cryptographic-asset",
+      "bom-ref": "5a42b5b3-a49f-484e-8904-3f6448c3a4e8",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 15,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "keygen"
+          ],
+          "parameterSetIdentifier": "2048"
+        }
+      }
+    },
+    {
+      "name": "private-key@8d8cd365-0005-4779-b5ff-609eb92287d7",
+      "type": "cryptographic-asset",
+      "bom-ref": "8d8cd365-0005-4779-b5ff-609eb92287d7",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 126,
+            "offset": 18,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 2048,
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "name": "private-key@38d7b5d0-088e-4b39-9348-a21bd33e33bc",
+      "type": "cryptographic-asset",
+      "bom-ref": "38d7b5d0-088e-4b39-9348-a21bd33e33bc",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 35,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 1024,
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "24a0629a-2e71-44d8-be00-b0df3af78809",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 29,
+            "offset": 10,
+            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RSA-1024",
+      "type": "cryptographic-asset",
+      "bom-ref": "c8182406-f2ac-4436-849f-60460ceeaedc",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 35,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "keygen"
+          ],
+          "parameterSetIdentifier": "1024"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA1",
+      "type": "cryptographic-asset",
+      "bom-ref": "33b2b082-b49d-462c-b70b-4132fa482157",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 19,
+            "offset": 10,
+            "location": "demo/code/symmetric_constructions_mac_block_ciphers.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.7",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 148,
+            "offset": 8,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "SHA256"
+          },
+          {
+            "line": 145,
+            "offset": 29,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "SHA256"
+          },
+          {
+            "line": 16,
+            "offset": 10,
+            "location": "demo/code/symmetric_constructions_authenticated_encryption.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "57860879-0500-4fb3-894e-b722fe4014b7",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 29,
+            "offset": 10,
+            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.5",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "224"
+        }
+      }
+    },
+    {
+      "name": "RSASSA-PSS",
+      "type": "cryptographic-asset",
+      "bom-ref": "98b1e741-5f83-4549-801c-8db6875c3566",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 144,
+            "offset": 8,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "PSS"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.10",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "cryptoFunctions": [
+            "keygen",
+            "sign"
+          ],
+          "parameterSetIdentifier": "2048"
+        }
+      }
+    },
+    {
+      "name": "AES-CBC",
+      "type": "cryptographic-asset",
+      "bom-ref": "fe0728b9-1a9e-43e3-a582-5792df024ca0",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 22,
+            "offset": 13,
+            "location": "demo/code/symmetric_constructions_authenticated_encryption.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "cbc",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
       "name": "AES-ECB",
       "type": "cryptographic-asset",
-      "bom-ref": "dc9603d5-f4ab-4737-ab14-5ab3f9ba153f",
+      "bom-ref": "8128bab3-d4d1-4b5c-b7d8-ab975260dfc3",
       "evidence": {
         "occurrences": [
           {
@@ -166,7 +473,7 @@
     {
       "name": "SHA512",
       "type": "cryptographic-asset",
-      "bom-ref": "3fbe4620-b520-40ce-a2b4-885def97e2a0",
+      "bom-ref": "d3ca8bf2-892d-4160-ad34-ab9681e967c3",
       "evidence": {
         "occurrences": [
           {
@@ -190,34 +497,9 @@
       }
     },
     {
-      "name": "HMAC-SHA512/224",
-      "type": "cryptographic-asset",
-      "bom-ref": "e51d9786-b3fa-4871-9925-f638e1fd53ee",
-      "evidence": {
-        "occurrences": [
-          {
-            "line": 29,
-            "offset": 10,
-            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
-            "additionalContext": "HMAC"
-          }
-        ]
-      },
-      "cryptoProperties": {
-        "oid": "1.2.840.113549.2.8",
-        "assetType": "algorithm",
-        "algorithmProperties": {
-          "primitive": "mac",
-          "cryptoFunctions": [
-            "tag"
-          ]
-        }
-      }
-    },
-    {
       "name": "Blowfish",
       "type": "cryptographic-asset",
-      "bom-ref": "41036623-603c-4bc8-83a9-c2ed799052e8",
+      "bom-ref": "949bf388-261c-4b3f-bd4b-5dcab77c792e",
       "evidence": {
         "occurrences": [
           {
@@ -240,34 +522,9 @@
       }
     },
     {
-      "name": "HMAC-SHA1",
-      "type": "cryptographic-asset",
-      "bom-ref": "e9eb2935-a8d5-46aa-afd0-82c5732d97fa",
-      "evidence": {
-        "occurrences": [
-          {
-            "line": 19,
-            "offset": 10,
-            "location": "demo/code/symmetric_constructions_mac_block_ciphers.py",
-            "additionalContext": "HMAC"
-          }
-        ]
-      },
-      "cryptoProperties": {
-        "oid": "1.2.840.113549.2.7",
-        "assetType": "algorithm",
-        "algorithmProperties": {
-          "primitive": "mac",
-          "cryptoFunctions": [
-            "tag"
-          ]
-        }
-      }
-    },
-    {
       "name": "SHA224",
       "type": "cryptographic-asset",
-      "bom-ref": "77202688-4d97-4bcc-a702-fb89153b61f3",
+      "bom-ref": "0ff8fd46-dbac-4943-a9eb-e988c62fd41f",
       "evidence": {
         "occurrences": [
           {
@@ -291,9 +548,31 @@
       }
     },
     {
+      "name": "MGF1",
+      "type": "cryptographic-asset",
+      "bom-ref": "f5f6afa3-d1b9-42a3-831a-dd4c7f056ddb",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 145,
+            "offset": 16,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "MGF1"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "other"
+        }
+      }
+    },
+    {
       "name": "SHA1",
       "type": "cryptographic-asset",
-      "bom-ref": "2b6070a5-033e-4c39-a1d5-6e24f3ac0ae3",
+      "bom-ref": "65ec2bdd-dd11-4a32-bce0-036197a27bb5",
       "evidence": {
         "occurrences": [
           {
@@ -317,35 +596,9 @@
       }
     },
     {
-      "name": "SHA512/224",
-      "type": "cryptographic-asset",
-      "bom-ref": "353945f2-771e-4766-a0b2-1e4bf1edbd37",
-      "evidence": {
-        "occurrences": [
-          {
-            "line": 29,
-            "offset": 10,
-            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
-            "additionalContext": "HMAC"
-          }
-        ]
-      },
-      "cryptoProperties": {
-        "oid": "2.16.840.1.101.3.4.2.5",
-        "assetType": "algorithm",
-        "algorithmProperties": {
-          "primitive": "hash",
-          "cryptoFunctions": [
-            "digest"
-          ],
-          "parameterSetIdentifier": "224"
-        }
-      }
-    },
-    {
       "name": "3DES",
       "type": "cryptographic-asset",
-      "bom-ref": "c5b3adc1-3f4d-4571-9ec4-42683386d189",
+      "bom-ref": "e84030ec-b8e6-43bd-a2d3-6d1370549981",
       "evidence": {
         "occurrences": [
           {
@@ -369,9 +622,31 @@
       }
     },
     {
+      "name": "private-key@a18051e8-bc15-4f6a-a8e7-4a7704d7de8f",
+      "type": "cryptographic-asset",
+      "bom-ref": "a18051e8-bc15-4f6a-a8e7-4a7704d7de8f",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 15,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 2048,
+          "type": "private-key"
+        }
+      }
+    },
+    {
       "name": "HMAC-SHA224",
       "type": "cryptographic-asset",
-      "bom-ref": "903cca74-c310-4b47-8de5-1ef08e191886",
+      "bom-ref": "af5b0690-037f-44a2-81b8-1c24586c5951",
       "evidence": {
         "occurrences": [
           {
@@ -394,9 +669,298 @@
       }
     },
     {
+      "name": "HMAC-SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "f05b3dcd-df45-4a70-adfa-e6db88343090",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 16,
+            "offset": 10,
+            "location": "demo/code/symmetric_constructions_authenticated_encryption.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.9",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RSA-2048",
+      "type": "cryptographic-asset",
+      "bom-ref": "5a42b5b3-a49f-484e-8904-3f6448c3a4e8",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 15,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "keygen"
+          ],
+          "parameterSetIdentifier": "2048"
+        }
+      }
+    },
+    {
+      "name": "private-key@8d8cd365-0005-4779-b5ff-609eb92287d7",
+      "type": "cryptographic-asset",
+      "bom-ref": "8d8cd365-0005-4779-b5ff-609eb92287d7",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 126,
+            "offset": 18,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 2048,
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "name": "private-key@38d7b5d0-088e-4b39-9348-a21bd33e33bc",
+      "type": "cryptographic-asset",
+      "bom-ref": "38d7b5d0-088e-4b39-9348-a21bd33e33bc",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 35,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "relatedCryptoMaterialProperties": {
+          "size": 1024,
+          "type": "private-key"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "24a0629a-2e71-44d8-be00-b0df3af78809",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 29,
+            "offset": 10,
+            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.8",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "RSA-1024",
+      "type": "cryptographic-asset",
+      "bom-ref": "c8182406-f2ac-4436-849f-60460ceeaedc",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 35,
+            "offset": 18,
+            "location": "demo/code/assymetric_atomic_primitives_rsa.py",
+            "additionalContext": "generate_private_key"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "pke",
+          "cryptoFunctions": [
+            "keygen"
+          ],
+          "parameterSetIdentifier": "1024"
+        }
+      }
+    },
+    {
+      "name": "HMAC-SHA1",
+      "type": "cryptographic-asset",
+      "bom-ref": "33b2b082-b49d-462c-b70b-4132fa482157",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 19,
+            "offset": 10,
+            "location": "demo/code/symmetric_constructions_mac_block_ciphers.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.2.7",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "mac",
+          "cryptoFunctions": [
+            "tag"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SHA256",
+      "type": "cryptographic-asset",
+      "bom-ref": "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 148,
+            "offset": 8,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "SHA256"
+          },
+          {
+            "line": 145,
+            "offset": 29,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "SHA256"
+          },
+          {
+            "line": 16,
+            "offset": 10,
+            "location": "demo/code/symmetric_constructions_authenticated_encryption.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "256"
+        }
+      }
+    },
+    {
+      "name": "SHA512/224",
+      "type": "cryptographic-asset",
+      "bom-ref": "57860879-0500-4fb3-894e-b722fe4014b7",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 29,
+            "offset": 10,
+            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
+            "additionalContext": "HMAC"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.2.5",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "hash",
+          "cryptoFunctions": [
+            "digest"
+          ],
+          "parameterSetIdentifier": "224"
+        }
+      }
+    },
+    {
+      "name": "RSASSA-PSS",
+      "type": "cryptographic-asset",
+      "bom-ref": "98b1e741-5f83-4549-801c-8db6875c3566",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 144,
+            "offset": 8,
+            "location": "demo/code/hardcoded_keys.py",
+            "additionalContext": "PSS"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "1.2.840.113549.1.1.10",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "cryptoFunctions": [
+            "keygen",
+            "sign"
+          ],
+          "parameterSetIdentifier": "2048"
+        }
+      }
+    },
+    {
+      "name": "AES-CBC",
+      "type": "cryptographic-asset",
+      "bom-ref": "fe0728b9-1a9e-43e3-a582-5792df024ca0",
+      "evidence": {
+        "occurrences": [
+          {
+            "line": 22,
+            "offset": 13,
+            "location": "demo/code/symmetric_constructions_authenticated_encryption.py",
+            "additionalContext": "Cipher"
+          }
+        ]
+      },
+      "cryptoProperties": {
+        "oid": "2.16.840.1.101.3.4.1",
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "mode": "cbc",
+          "primitive": "block-cipher",
+          "cryptoFunctions": [
+            "encrypt"
+          ],
+          "parameterSetIdentifier": "128"
+        }
+      }
+    },
+    {
       "name": "AES-ECB",
       "type": "cryptographic-asset",
-      "bom-ref": "dc9603d5-f4ab-4737-ab14-5ab3f9ba153f",
+      "bom-ref": "8128bab3-d4d1-4b5c-b7d8-ab975260dfc3",
       "evidence": {
         "occurrences": [
           {
@@ -423,7 +987,7 @@
     {
       "name": "SHA512",
       "type": "cryptographic-asset",
-      "bom-ref": "3fbe4620-b520-40ce-a2b4-885def97e2a0",
+      "bom-ref": "d3ca8bf2-892d-4160-ad34-ab9681e967c3",
       "evidence": {
         "occurrences": [
           {
@@ -447,34 +1011,9 @@
       }
     },
     {
-      "name": "HMAC-SHA512/224",
-      "type": "cryptographic-asset",
-      "bom-ref": "e51d9786-b3fa-4871-9925-f638e1fd53ee",
-      "evidence": {
-        "occurrences": [
-          {
-            "line": 29,
-            "offset": 10,
-            "location": "demo/code/symmetric_atomic_primitives_hashes.py",
-            "additionalContext": "HMAC"
-          }
-        ]
-      },
-      "cryptoProperties": {
-        "oid": "1.2.840.113549.2.8",
-        "assetType": "algorithm",
-        "algorithmProperties": {
-          "primitive": "mac",
-          "cryptoFunctions": [
-            "tag"
-          ]
-        }
-      }
-    },
-    {
       "name": "Blowfish",
       "type": "cryptographic-asset",
-      "bom-ref": "41036623-603c-4bc8-83a9-c2ed799052e8",
+      "bom-ref": "949bf388-261c-4b3f-bd4b-5dcab77c792e",
       "evidence": {
         "occurrences": [
           {
@@ -497,34 +1036,9 @@
       }
     },
     {
-      "name": "HMAC-SHA1",
-      "type": "cryptographic-asset",
-      "bom-ref": "e9eb2935-a8d5-46aa-afd0-82c5732d97fa",
-      "evidence": {
-        "occurrences": [
-          {
-            "line": 19,
-            "offset": 10,
-            "location": "demo/code/symmetric_constructions_mac_block_ciphers.py",
-            "additionalContext": "HMAC"
-          }
-        ]
-      },
-      "cryptoProperties": {
-        "oid": "1.2.840.113549.2.7",
-        "assetType": "algorithm",
-        "algorithmProperties": {
-          "primitive": "mac",
-          "cryptoFunctions": [
-            "tag"
-          ]
-        }
-      }
-    },
-    {
       "name": "SHA224",
       "type": "cryptographic-asset",
-      "bom-ref": "77202688-4d97-4bcc-a702-fb89153b61f3",
+      "bom-ref": "0ff8fd46-dbac-4943-a9eb-e988c62fd41f",
       "evidence": {
         "occurrences": [
           {
@@ -551,53 +1065,127 @@
   "specVersion": "1.6",
   "dependencies": [
     {
-      "ref": "e9eb2935-a8d5-46aa-afd0-82c5732d97fa",
+      "ref": "98b1e741-5f83-4549-801c-8db6875c3566",
       "dependsOn": [
-        "2b6070a5-033e-4c39-a1d5-6e24f3ac0ae3"
+        "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe",
+        "f5f6afa3-d1b9-42a3-831a-dd4c7f056ddb"
       ]
     },
     {
-      "ref": "e51d9786-b3fa-4871-9925-f638e1fd53ee",
+      "ref": "24a0629a-2e71-44d8-be00-b0df3af78809",
       "dependsOn": [
-        "353945f2-771e-4766-a0b2-1e4bf1edbd37"
+        "57860879-0500-4fb3-894e-b722fe4014b7"
       ]
     },
     {
-      "ref": "353945f2-771e-4766-a0b2-1e4bf1edbd37",
+      "ref": "f05b3dcd-df45-4a70-adfa-e6db88343090",
       "dependsOn": [
-        "3fbe4620-b520-40ce-a2b4-885def97e2a0"
+        "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe"
       ]
     },
     {
-      "ref": "903cca74-c310-4b47-8de5-1ef08e191886",
+      "ref": "a18051e8-bc15-4f6a-a8e7-4a7704d7de8f",
       "dependsOn": [
-        "77202688-4d97-4bcc-a702-fb89153b61f3"
+        "5a42b5b3-a49f-484e-8904-3f6448c3a4e8"
       ]
     },
     {
-      "ref": "e9eb2935-a8d5-46aa-afd0-82c5732d97fa",
+      "ref": "57860879-0500-4fb3-894e-b722fe4014b7",
       "dependsOn": [
-        "2b6070a5-033e-4c39-a1d5-6e24f3ac0ae3"
+        "d3ca8bf2-892d-4160-ad34-ab9681e967c3"
       ]
     },
     {
-      "ref": "e51d9786-b3fa-4871-9925-f638e1fd53ee",
+      "ref": "38d7b5d0-088e-4b39-9348-a21bd33e33bc",
       "dependsOn": [
-        "353945f2-771e-4766-a0b2-1e4bf1edbd37"
+        "c8182406-f2ac-4436-849f-60460ceeaedc"
       ]
     },
     {
-      "ref": "353945f2-771e-4766-a0b2-1e4bf1edbd37",
+      "ref": "33b2b082-b49d-462c-b70b-4132fa482157",
       "dependsOn": [
-        "3fbe4620-b520-40ce-a2b4-885def97e2a0"
+        "65ec2bdd-dd11-4a32-bce0-036197a27bb5"
       ]
     },
     {
-      "ref": "903cca74-c310-4b47-8de5-1ef08e191886",
+      "ref": "af5b0690-037f-44a2-81b8-1c24586c5951",
       "dependsOn": [
-        "77202688-4d97-4bcc-a702-fb89153b61f3"
+        "0ff8fd46-dbac-4943-a9eb-e988c62fd41f"
+      ]
+    },
+    {
+      "ref": "f5f6afa3-d1b9-42a3-831a-dd4c7f056ddb",
+      "dependsOn": [
+        "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe"
+      ]
+    },
+    {
+      "ref": "8d8cd365-0005-4779-b5ff-609eb92287d7",
+      "dependsOn": [
+        "98b1e741-5f83-4549-801c-8db6875c3566"
+      ]
+    },
+    {
+      "ref": "98b1e741-5f83-4549-801c-8db6875c3566",
+      "dependsOn": [
+        "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe",
+        "f5f6afa3-d1b9-42a3-831a-dd4c7f056ddb"
+      ]
+    },
+    {
+      "ref": "24a0629a-2e71-44d8-be00-b0df3af78809",
+      "dependsOn": [
+        "57860879-0500-4fb3-894e-b722fe4014b7"
+      ]
+    },
+    {
+      "ref": "f05b3dcd-df45-4a70-adfa-e6db88343090",
+      "dependsOn": [
+        "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe"
+      ]
+    },
+    {
+      "ref": "a18051e8-bc15-4f6a-a8e7-4a7704d7de8f",
+      "dependsOn": [
+        "5a42b5b3-a49f-484e-8904-3f6448c3a4e8"
+      ]
+    },
+    {
+      "ref": "57860879-0500-4fb3-894e-b722fe4014b7",
+      "dependsOn": [
+        "d3ca8bf2-892d-4160-ad34-ab9681e967c3"
+      ]
+    },
+    {
+      "ref": "38d7b5d0-088e-4b39-9348-a21bd33e33bc",
+      "dependsOn": [
+        "c8182406-f2ac-4436-849f-60460ceeaedc"
+      ]
+    },
+    {
+      "ref": "33b2b082-b49d-462c-b70b-4132fa482157",
+      "dependsOn": [
+        "65ec2bdd-dd11-4a32-bce0-036197a27bb5"
+      ]
+    },
+    {
+      "ref": "af5b0690-037f-44a2-81b8-1c24586c5951",
+      "dependsOn": [
+        "0ff8fd46-dbac-4943-a9eb-e988c62fd41f"
+      ]
+    },
+    {
+      "ref": "f5f6afa3-d1b9-42a3-831a-dd4c7f056ddb",
+      "dependsOn": [
+        "7f6d8793-8dbf-48df-b1ce-9980bc2b3ffe"
+      ]
+    },
+    {
+      "ref": "8d8cd365-0005-4779-b5ff-609eb92287d7",
+      "dependsOn": [
+        "98b1e741-5f83-4549-801c-8db6875c3566"
       ]
     }
   ],
-  "serialNumber": "urn:uuid:b070f4bc-46fc-48d2-bb4e-e7feacd4f578"
+  "serialNumber": "urn:uuid:e3f6c371-28b7-44b7-bd95-db944660610c"
 }

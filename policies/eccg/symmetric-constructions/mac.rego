@@ -40,7 +40,7 @@ findings contains finding if {
     finding := build_finding(
         "ECCG-MAC-000",
         "high",
-        sprintf("MAC scheme '%s' is not listed in the ECCG agreed or legacy MAC tables. This doesn't mean that your code is unsafe, but should probably be flagged as non compliant.", [component.name]),
+        sprintf("MAC scheme '%s' is not listed in the ECCG agreed or legacy MAC tables.", [component.name]),
         component,
         {
             "status": "not-listed"

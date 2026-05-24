@@ -43,7 +43,7 @@ findings contains finding if {
     finding := build_finding(
         "ECCG-BLOCK-001",
         "critical",
-        sprintf("Block cipher '%s' is not in the agreed block cipher list. That does mean that your code is unsafe, but should probably be marked as non compliant.", [component.name]),
+        sprintf("Block cipher '%s' is not in the agreed block cipher list.", [component.name]),
         component,
         {
             "primitive": get_primitive_or_unknown(component),
@@ -146,6 +146,9 @@ findings contains finding if {
 # TODO: this won't ever fire correctly due to parameterSetIdentifier
 #
 findings contains finding if {
+
+    false 
+    
     some component_index
     component := input.components[component_index]
 
