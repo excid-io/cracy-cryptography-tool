@@ -21,6 +21,68 @@ function formatReference(reference) {
 }
 
 /**
+ * Converts a normalized severity value into a compact UI label.
+ */
+function formatSeverity(severity) {
+  if (typeof severity !== "string") return "";
+
+  return severity.trim().toLowerCase();
+}
+
+/**
+ * Returns the badge theme used for finding severity values.
+ */
+function getSeverityTheme(severity, theme) {
+  const normalized = formatSeverity(severity);
+  
+  if (normalized === "error") {
+    return {
+      background: theme.dangerBg || theme.badgeBg,
+      color: theme.dangerText || theme.badgeText,
+      borderColor: theme.dangerBorder || theme.badgeBorder,
+    };
+  }
+
+  if (normalized === "critical") {
+    return {
+      background: theme.dangerBg || theme.badgeBg,
+      color: theme.dangerText || theme.badgeText,
+      borderColor: theme.dangerBorder || theme.badgeBorder,
+    };
+  }
+
+  if (normalized === "high") {
+    return {
+      background: theme.confidenceHighBg || theme.badgeBg,
+      color: theme.confidenceHighText || theme.badgeText,
+      borderColor: theme.confidenceHighBorder || theme.badgeBorder,
+    };
+  }
+
+  if (normalized === "medium") {
+    return {
+      background: theme.confidenceMediumBg || theme.badgeBg,
+      color: theme.confidenceMediumText || theme.badgeText,
+      borderColor: theme.confidenceMediumBorder || theme.badgeBorder,
+    };
+  }
+
+  if (normalized === "low") {
+    return {
+      background: theme.confidenceLowBg || theme.badgeBg,
+      color: theme.confidenceLowText || theme.badgeText,
+      borderColor: theme.confidenceLowBorder || theme.badgeBorder,
+    };
+  }
+
+  return {
+    background: theme.badgeBg,
+    color: theme.badgeText,
+    borderColor: theme.badgeBorder,
+  };
+}
+
+/**
  * Returns the badge theme used for Semgrep confidence values.
  */
 function getConfidenceTheme(confidence, theme) {
@@ -104,6 +166,7 @@ export function FindingGroups({
   resultText,
   groups,
   theme,
+  showFindingSeverity = true,
   showFindingConfidence = false,
 }) {
   return (
@@ -196,6 +259,8 @@ export function FindingGroups({
                 <ol style={styles.locationList}>
                   {group.findings.map((finding, findingIndex) => {
                     const showMessage = shouldShowFindingMessage(finding, group);
+                    const severity = formatSeverity(finding.severity);
+                    const findingSeverityStyle = getSeverityTheme(severity, theme);
                     const findingConfidenceStyle = getConfidenceTheme(
                       finding.confidence,
                       theme
@@ -221,6 +286,17 @@ export function FindingGroups({
                           </strong>
 
                           <div style={styles.findingRowBadges}>
+                            {showFindingSeverity && severity && (
+                              <span
+                                style={{
+                                  ...styles.confidenceBadge,
+                                  ...findingSeverityStyle,
+                                }}
+                              >
+                                Severity: {severity}
+                              </span>
+                            )}
+
                             {showFindingConfidence && finding.confidence && (
                               <span
                                 style={{

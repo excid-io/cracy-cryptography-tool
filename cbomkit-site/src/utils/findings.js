@@ -4,7 +4,7 @@
  * The REGO response can contain findings of many severities, but the UI only
  * displays findings whose normalized severity is included in this set.
  */
-export const IMPORTANT_SEVERITIES = new Set(["high", "critical", "medium"]);
+export const IMPORTANT_SEVERITIES = new Set(["high", "critical", "medium", "error"]);
 
 /**
  * Returns the first non-empty string value found for a list of possible keys.
