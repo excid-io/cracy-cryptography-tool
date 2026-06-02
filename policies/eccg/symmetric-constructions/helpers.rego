@@ -15,6 +15,7 @@ import data.cbom.eccg.helpers.get_related_component_by_primitive
 import data.cbom.eccg.helpers.get_parameter_set_identifier_to_number_or_unknown
 import data.cbom.eccg.helpers.normalize_crypto_name
 import data.cbom.eccg.helpers.is_gcm_primitive
+import data.cbom.eccg.helpers.is_ccm_primitive
 
 
 #
@@ -110,7 +111,7 @@ is_cfb_scheme(component) if {
 
 #
 # ---------------------------------------------------------
-# Helper: is_agreed_or_legacy_mac_scheme
+# Helper: is_agreed_mac_scheme
 #
 # Purpose:
 # Identify MAC schemes that are explicitly mentioned in the
@@ -120,7 +121,6 @@ is_cfb_scheme(component) if {
 # - CMAC
 # - CBC-MAC
 # - HMAC
-# - HMAC-SHA1
 # - KMAC128
 # - KMAC256
 # - GMAC
@@ -131,14 +131,13 @@ is_cfb_scheme(component) if {
 #   or other note-based conditions.
 # ---------------------------------------------------------
 #
-is_agreed_or_legacy_mac_scheme(component) if {
+is_agreed_mac_scheme(component) if {
     is_cmac_scheme(component)
 } else if {
+    #TODO not possible to detect CBC-MAC accurately 
     is_cbc_scheme(component)
 } else if {
     is_hmac_scheme(component)
-} else if {
-    is_hmac_sha1_scheme(component)
 } else if {
     is_kmac128_scheme(component)
 } else if {
@@ -146,6 +145,21 @@ is_agreed_or_legacy_mac_scheme(component) if {
 } else if {
     is_gmac_scheme(component)
 }
+
+is_legacy_mac_scheme(component) if {
+    is_hmac_sha1_scheme(component)
+}
+
+recommended_mac_scheme_names := [
+    "CMAC",
+    "GMAC",
+    "CBC-MAC",
+    "HMAC",
+    "KMAC128",
+    "KMAC256",
+]
+
+recommended_mac_schemes := concat(", ", recommended_mac_scheme_names)
 
 #
 # ---------------------------------------------------------
@@ -158,7 +172,41 @@ is_agreed_or_legacy_mac_scheme(component) if {
 #
 is_unlisted_mac_scheme(component) if {
     is_mac_primitive(component)
-    not is_agreed_or_legacy_mac_scheme(component)
+    not is_agreed_mac_scheme(component)
+}
+
+#
+# MAC schemes where the general MAC truncation rule applies.
+#
+# ECCG-MAC-003 states that the output MAC of CMAC, CBC-MAC, HMAC,
+# KMAC128, and KMAC256 must not be truncated to less than 96 bits.
+#
+# GMAC is intentionally excluded from this helper because the general notes say
+# that, for some MAC mechanisms, it may be necessary to be more restrictive in
+# the matter of MAC truncation. GMAC is explicitly called out as such a case.
+#
+is_mac_scheme_with_96_bit_minimum_output(component) if {
+    is_cmac_scheme(component)
+} else if {
+    #TODO not possible to detect CBC-MAC accurately 
+    is_cbc_scheme(component)
+} else if {
+    is_hmac_scheme(component)
+} else if {
+    is_kmac128_scheme(component)
+} else if {
+    is_kmac256_scheme(component)
+}
+
+#
+# MAC schemes requiring GMAC-specific truncation analysis.
+#
+# GMAC is a recommended MAC scheme, but it is treated separately from the
+# general 96-bit truncation rule because GMAC truncation may require stricter
+# bounds-based validation.
+#
+is_mac_scheme_requiring_gmac_bounds_check(component) if {
+    is_gmac_scheme(component)
 }
 
 #
@@ -211,7 +259,25 @@ is_agreed_symmetric_encryption_scheme(component) if {
     is_cbc_cs_scheme(component)
 } else if {
     is_cfb_scheme(component)
-} 
+} else if {
+    is_gcm_primitive(component)
+} else if {
+    is_ccm_primitive(component)
+}
+
+
+
+agreed_symmetric_encryption_scheme_names := [
+    "CTR",
+    "OFB",
+    "CBC",
+    "CBC-CS",
+    "CFB",
+    "GCM",
+    "CCM"
+]
+
+agreed_symmetric_encryption_scheme_names_string := concat(", ", agreed_symmetric_encryption_scheme_names)
 
 #else if {
 #    is_xts_scheme(component)
@@ -273,6 +339,70 @@ is_conditionally_agreed_symmetric_encryption_scheme(component) if {
     is_cbc_cs_scheme(component)
 } else if {
     is_cfb_scheme(component)
+}
+
+#
+# ---------------------------------------------------------
+# Helper: is_symmetric_encryption_scheme_requiring_iv
+#
+# Purpose:
+# Identify symmetric encryption schemes covered by ECCG-SYM-ENC-003.
+#
+# ECCG-SYM-ENC-003:
+# CBC, CFB, OFB, and GCM modes require an Initialization Vector (IV).
+#
+# Requirements:
+# - The IV must be unique for each execution of the encryption operation.
+# - For CBC and CFB, the IV must also be unpredictable.
+#
+# Covered schemes:
+# - CBC
+# - CFB
+# - OFB
+# - GCM
+#
+# Notes:
+# - This helper only identifies whether the scheme falls under the IV rule.
+# - It does not validate whether the IV exists, is unique, or is unpredictable.
+# - CBC and CFB need the stronger unpredictability requirement.
+# ---------------------------------------------------------
+#
+is_symmetric_encryption_scheme_requiring_iv(component) if {
+    is_cbc_scheme(component)
+} else if {
+    is_cfb_scheme(component)
+} else if {
+    is_ofb_scheme(component)
+} else if {
+    is_gcm_primitive(component)
+}
+
+#
+# ---------------------------------------------------------
+# Helper: is_symmetric_encryption_scheme_requiring_unpredictable_iv
+#
+# Purpose:
+# Identify schemes where ECCG-SYM-ENC-003 requires the IV to be unpredictable.
+#
+# Covered schemes:
+# - CBC
+# - CFB
+# ---------------------------------------------------------
+#
+is_symmetric_encryption_scheme_requiring_unpredictable_iv(component) if {
+    is_cbc_scheme(component)
+} else if {
+    is_cfb_scheme(component)
+}
+
+iv_requirement_message(component) := message if {
+    is_symmetric_encryption_scheme_requiring_unpredictable_iv(component)
+
+    message := "CBC and CFB modes require an IV that is unique and unpredictable for each encryption operation under a given key."
+} else := message if {
+    is_symmetric_encryption_scheme_requiring_iv(component)
+
+    message := "CBC, CFB, OFB, and GCM modes require an IV or nonce that is unique for each encryption operation under a given key."
 }
 
 #
