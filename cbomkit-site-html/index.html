@@ -24,8 +24,7 @@
       <section class="intro-card">
         <h2>Check repository compliance</h2>
         <p>
-          Enter a Git repository URL and run the CBOM, REGO, and Semgrep checks
-          from this static frontend. No Node.js frontend server is required.
+          Enter a Git repository URL and run the CBOM, REGO, and Semgrep checks.
         </p>
       </section>
 
@@ -119,14 +118,38 @@
     </main>
 
     <footer class="footer">
-      <div class="logos" aria-label="Project logos">
-        <span class="logo-mark">Excid</span>
-        <span class="logo-mark">EU</span>
-        <span class="logo-mark">ECCC</span>
-        <span class="logo-mark">cracy</span>
-      </div>
+      <div class="footer__inner">
+        <div class="footer__logos" aria-label="Project logos">
+          <a
+            href="https://excid.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="footer__logo-link"
+            aria-label="Excid"
+          >
+            <img src="img/excid-logo.svg" alt="Excid logo" />
+          </a>
 
-      <p>© 2026 CRACY — Co-funded by the European Union.</p>
+          <img src="img/eu-cofunded-logo.png" alt="Co-funded by the European Union" />
+
+          <img src="img/eccc-logo.svg" alt="ECCC logo" />
+
+          <a
+            href="https://cra-cy.eu/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="footer__logo-link"
+            aria-label="CRACY"
+          >
+            <img src="img/cracy.png" alt="CRACY logo" />
+          </a>
+        </div>
+
+        <p>
+          © 2026 CRACY — This project has received funding from the European
+          Union’s Digital Europe Programme under grant agreement No 101190492.
+        </p>
+      </div>
     </footer>
   </body>
 </html>
