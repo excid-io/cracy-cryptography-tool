@@ -131,7 +131,7 @@ You need:
 * Docker and Docker Compose.
 * Python 3, or any other static file server.
 * Running CBOMkit backend.
-* Running OPA policy service or OPA proxy.
+* Running OPA policy service and OPA proxy.
 * Running Semgrep local service.
 
 ### Start the backend services
@@ -144,6 +144,36 @@ For CBOMkit backend and database:
 docker compose --profile dev-frontend up -d backend db
 ```
 
+The static frontend is served from:
+
+```text
+http://localhost:8000
+```
+
+Because the CBOMkit backend runs on a different origin:
+
+```text
+http://localhost:8081
+```
+
+the backend must allow CORS from the static frontend. Make sure the backend service contains:
+
+```yml
+backend:
+  environment:
+    CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8000"
+```
+
+Also make sure the backend points to the correct OPA service name. If your Compose service is named `opa-local`, use:
+
+```yml
+backend:
+  environment:
+    CBOMKIT_OPA_API_BASE: "http://opa-local:8181"
+```
+
+Do not use `http://opa:8181` unless your OPA service is actually named `opa`.
+
 For OPA policy evaluation, start both OPA and the local OPA proxy:
 
 ```bash
@@ -152,19 +182,19 @@ docker compose --profile policy up -d opa-local opa-proxy
 
 The frontend calls the proxy by default:
 
-```
+```text
 http://localhost:8182/v1/data/cbom/eccg
 ```
 
 The proxy forwards requests to OPA inside Docker:
 
-```
+```text
 http://opa-local:8181/v1/data/cbom/eccg
 ```
 
 This avoids browser CORS issues when the static frontend is served from:
 
-```
+```text
 http://localhost:8000
 ```
 
@@ -227,12 +257,23 @@ export const OPA_DECISION_PATH =
 
 The expected local services are:
 
-| Service               | Default URL             |
-| --------------------- | ----------------------- |
-| Static frontend       | `http://localhost:8000` |
-| CBOMkit backend       | `http://localhost:8081` |
-| OPA or OPA proxy      | `http://localhost:8182` |
-| Semgrep local service | `http://localhost:9091` |
+| Service                   | Default URL             |
+| ------------------------- | ----------------------- |
+| Static frontend           | `http://localhost:8000` |
+| CBOMkit backend           | `http://localhost:8081` |
+| OPA proxy                 | `http://localhost:8182` |
+| OPA service inside Docker | `http://opa-local:8181` |
+| Semgrep local service     | `http://localhost:9091` |
+
+Important Docker Compose settings:
+
+| Setting                     | Purpose                                                                 | Local value             |
+| --------------------------- | ----------------------------------------------------------------------- | ----------------------- |
+| `CBOMKIT_FRONTEND_URL_CORS` | Allows the static frontend to call the CBOMkit backend from the browser | `http://localhost:8000` |
+| `CBOMKIT_OPA_API_BASE`      | Allows the CBOMkit backend to call OPA inside Docker                    | `http://opa-local:8181` |
+| `HTTP_API_BASE`             | Frontend URL for CBOMkit backend                                        | `http://localhost:8081` |
+| `POLICY_API_BASE`           | Frontend URL for OPA proxy                                              | `http://localhost:8182` |
+| `SEMGREP_API_BASE`          | Frontend URL for Semgrep service                                        | `http://localhost:9091` |
 
 If the browser calls services on different origins, those services must allow CORS from:
 
@@ -240,7 +281,7 @@ If the browser calls services on different origins, those services must allow CO
 http://localhost:8000
 ```
 
-For local development, an OPA proxy can be used to add CORS headers before forwarding requests to OPA.
+For local development, the OPA proxy is used to add CORS headers before forwarding requests to OPA.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -351,20 +392,16 @@ If the browser blocks:
 http://localhost:8081/api/v1/scan
 ```
 
-make sure the CBOMkit backend allows the frontend origin:
+make sure the CBOMkit backend allows the static frontend origin:
 
-```text
-http://localhost:8000
+```yml
+CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8000"
 ```
 
-The static frontend should call the local OPA proxy, not OPA directly.
+Then recreate the backend container:
 
-Make sure `config/endpoints.js` uses:
-
-```js
-export const POLICY_API_BASE =
-  window.CRA_COMPLIANCE_CONFIG?.POLICY_API_BASE ||
-  "http://localhost:8182";
+```bash
+docker compose --profile dev-frontend up -d --force-recreate backend
 ```
 
 ### OPA request is refused
@@ -377,20 +414,42 @@ POST http://localhost:8181/v1/data/cbom/eccg net::ERR_CONNECTION_REFUSED
 
 OPA is not exposed on the host or is not running.
 
-Start OPA and expose its port, or configure the frontend to use an OPA proxy.
+For this frontend, the browser should call the OPA proxy, not OPA directly. Make sure `config/endpoints.js` uses:
+
+```js
+export const POLICY_API_BASE =
+  window.CRA_COMPLIANCE_CONFIG?.POLICY_API_BASE ||
+  "http://localhost:8182";
+```
+
+Then start both OPA and the proxy:
+
+```bash
+docker compose --profile policy up -d opa-local opa-proxy
+```
 
 ### OPA request is blocked by CORS
 
-OPA does not always provide browser-friendly CORS headers for this use case. A simple local proxy can be used in front of OPA and exposed as:
+The static frontend should call the local OPA proxy, not OPA directly.
 
-```text
-http://localhost:8182
-```
-
-Then configure:
+Make sure `config/endpoints.js` uses:
 
 ```js
-POLICY_API_BASE = "http://localhost:8182";
+export const POLICY_API_BASE =
+  window.CRA_COMPLIANCE_CONFIG?.POLICY_API_BASE ||
+  "http://localhost:8182";
+```
+
+Then start both OPA and the proxy:
+
+```bash
+docker compose --profile policy up -d opa-local opa-proxy
+```
+
+The proxy should forward to:
+
+```text
+http://opa-local:8181
 ```
 
 ### Semgrep request is refused
