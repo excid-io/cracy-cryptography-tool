@@ -17,9 +17,15 @@
 
   --ok-bg: #ecfdf3;
   --ok-text: #166534;
+  --ok-border: #bbf7d0;
 
   --warning-bg: #fffbeb;
   --warning-text: #854d0e;
+  --warning-border: #fde68a;
+
+  --notice-bg: #eff6ff;
+  --notice-text: #1d4ed8;
+  --notice-border: #bfdbfe;
 
   --footer-bg: #e9ecef;
   --footer-text: #4b5563;
@@ -46,9 +52,15 @@ html[data-theme="dark"] {
 
   --ok-bg: #0f3320;
   --ok-text: #bbf7d0;
+  --ok-border: #166534;
 
   --warning-bg: #422006;
   --warning-text: #fde68a;
+  --warning-border: #a16207;
+
+  --notice-bg: #10243f;
+  --notice-text: #bfdbfe;
+  --notice-border: #1d4ed8;
 
   --footer-bg: #111827;
   --footer-text: #cbd5e1;
@@ -227,12 +239,13 @@ button:disabled {
 
 .secondary-button {
   border: 1px solid var(--border);
-  background: transparent;
+  background: var(--card-bg);
   color: var(--text);
+  margin-top: 14px;
 }
 
 .secondary-button:hover:not(:disabled) {
-  background: var(--card-bg);
+  border-color: var(--blue-2);
 }
 
 .status {
@@ -256,11 +269,41 @@ button:disabled {
   margin-top: 24px;
 }
 
+.compliance-banner {
+  display: grid;
+  gap: 4px;
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.compliance-banner strong {
+  font-size: 22px;
+}
+
+.compliance-banner span {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.compliance-banner--pass {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-border);
+}
+
+.compliance-banner--fail {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
 .summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 4px;
 }
 
 .summary-card {
@@ -280,142 +323,8 @@ button:disabled {
   color: var(--muted);
 }
 
-.finding-group {
-  margin-top: 14px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 16px;
-}
-
-.finding-group h3 {
-  margin: 0 0 10px;
-  color: var(--title);
-  font-size: 18px;
-}
-
-.finding-list {
-  margin: 0;
-  padding-left: 22px;
-}
-
-.finding-item {
-  margin: 10px 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.finding-item:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
-.badges {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-left: 8px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.badge--danger {
-  background: var(--danger-bg);
-  color: var(--danger-text);
-}
-
-.badge--warning {
-  background: var(--warning-bg);
-  color: var(--warning-text);
-}
-
-.badge--ok {
-  background: var(--ok-bg);
-  color: var(--ok-text);
-}
-
-.finding-meta {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
-.finding-message {
-  margin: 6px 0 0;
-  color: var(--text);
-  line-height: 1.5;
-}
-
-.references {
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.references summary {
-  cursor: pointer;
-  color: var(--title);
-  font-weight: 700;
-}
-
-.footer {
-  border-top: 1px solid var(--border);
-  background: var(--footer-bg);
-  color: var(--footer-text);
-  padding: 24px 16px;
-  text-align: center;
-}
-
-.logos {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.logo-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 72px;
-  min-height: 32px;
-  border-radius: 4px;
-  background: #ffffff;
-  color: var(--blue);
-  font-weight: 800;
-  border: 1px solid #d4d8df;
-}
-
-.footer p {
-  margin: 0;
-  font-size: 13px;
-}
-
-@media (max-width: 720px) {
-  .field-grid,
-  .summary {
-    grid-template-columns: 1fr;
-  }
-
-  .action-row {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  button {
-    width: 100%;
-  }
+.findings-container {
+  margin-top: 18px;
 }
 
 .finding-panel {
@@ -514,6 +423,7 @@ button:disabled {
 }
 
 .severity-pill--critical,
+.severity-pill--error,
 .severity-pill--high {
   background: var(--danger-bg);
   color: var(--danger-text);
@@ -525,8 +435,8 @@ button:disabled {
 }
 
 .severity-pill--warning {
-  background: var(--warning-bg);
-  color: var(--warning-text);
+  background: var(--notice-bg);
+  color: var(--notice-text);
 }
 
 .severity-pill--low,
@@ -557,6 +467,37 @@ button:disabled {
   color: var(--title);
   font-size: 15px;
   line-height: 1.35;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge--danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.badge--warning {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.badge--notice {
+  background: var(--notice-bg);
+  color: var(--notice-text);
+}
+
+.badge--ok {
+  background: var(--ok-bg);
+  color: var(--ok-text);
 }
 
 .finding-card__meta {
@@ -595,7 +536,61 @@ button:disabled {
   color: var(--muted);
 }
 
+.footer {
+  border-top: 1px solid var(--border);
+  background: var(--footer-bg);
+  color: var(--footer-text);
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 32px;
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--blue);
+  font-weight: 800;
+  border: 1px solid #d4d8df;
+}
+
+.footer p {
+  margin: 0;
+  font-size: 13px;
+}
+
 @media (max-width: 720px) {
+  .field-grid,
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .action-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .finding-panel__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .finding-accordion__summary {
     grid-template-columns: 1fr;
   }

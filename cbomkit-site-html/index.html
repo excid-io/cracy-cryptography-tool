@@ -94,10 +94,6 @@
             <button id="checkButton" class="primary-button" type="submit">
               Check compliance
             </button>
-
-            <button id="resetButton" class="secondary-button" type="button">
-              Reset
-            </button>
           </div>
         </form>
 
@@ -107,9 +103,18 @@
 
       <section id="results" class="results" hidden>
         <h2>Compliance result</h2>
+
+        <div id="complianceBanner"></div>
         <div id="summary" class="summary"></div>
-        <div id="regoResults"></div>
-        <div id="semgrepResults"></div>
+
+        <button id="toggleFindingsButton" class="secondary-button" type="button">
+          Show findings
+        </button>
+
+        <div id="findingsContainer" class="findings-container" hidden>
+          <div id="regoResults"></div>
+          <div id="semgrepResults"></div>
+        </div>
       </section>
     </main>
 
@@ -121,9 +126,7 @@
         <span class="logo-mark">cracy</span>
       </div>
 
-      <p>
-        © 2026 CRACY — Co-funded by the European Union.
-      </p>
+      <p>© 2026 CRACY — Co-funded by the European Union.</p>
     </footer>
   </body>
 </html>

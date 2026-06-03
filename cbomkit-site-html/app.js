@@ -31,11 +31,13 @@ const elements = {
   commit: document.getElementById("commit"),
   pat: document.getElementById("pat"),
   checkButton: document.getElementById("checkButton"),
-  resetButton: document.getElementById("resetButton"),
   status: document.getElementById("status"),
   errorBox: document.getElementById("errorBox"),
   results: document.getElementById("results"),
+  complianceBanner: document.getElementById("complianceBanner"),
   summary: document.getElementById("summary"),
+  toggleFindingsButton: document.getElementById("toggleFindingsButton"),
+  findingsContainer: document.getElementById("findingsContainer"),
   regoResults: document.getElementById("regoResults"),
   semgrepResults: document.getElementById("semgrepResults"),
 };
@@ -77,14 +79,16 @@ function clearError() {
 
 function clearResults() {
   elements.results.hidden = true;
+  elements.complianceBanner.innerHTML = "";
   elements.summary.innerHTML = "";
   elements.regoResults.innerHTML = "";
   elements.semgrepResults.innerHTML = "";
+  elements.findingsContainer.hidden = true;
+  elements.toggleFindingsButton.textContent = "Show findings";
 }
 
 function setBusy(isBusy) {
   elements.checkButton.disabled = isBusy;
-  elements.resetButton.disabled = isBusy;
   elements.checkButton.textContent = isBusy ? "Checking..." : "Check compliance";
 }
 
@@ -272,31 +276,37 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeSeverity(severity) {
+  return String(severity || "").trim().toLowerCase();
+}
+
+function isBlockingSeverity(severity) {
+  const normalized = normalizeSeverity(severity);
+  return ["critical", "error", "high"].includes(normalized);
+}
+
 function getSeverityClass(severity) {
-  const normalized = String(severity || "").trim().toLowerCase();
+  const normalized = normalizeSeverity(severity);
 
   if (["critical", "error", "high"].includes(normalized)) {
     return "badge badge--danger";
   }
 
-  if (["medium", "warning"].includes(normalized)) {
+  if (normalized === "medium") {
     return "badge badge--warning";
+  }
+
+  if (normalized === "warning") {
+    return "badge badge--notice";
   }
 
   return "badge badge--ok";
 }
 
-function formatReference(reference) {
-  const location = reference.location || reference.path || "Unknown file";
-  const line = reference.line ? `:${reference.line}` : "";
-  const column = reference.column ? `:${reference.column}` : "";
-
-  return `${location}${line}${column}`;
-}
-
 function countSeverities(findings) {
   const counts = {
     critical: 0,
+    error: 0,
     high: 0,
     medium: 0,
     warning: 0,
@@ -305,10 +315,12 @@ function countSeverities(findings) {
   };
 
   for (const finding of findings) {
-    const severity = String(finding.severity || "").trim().toLowerCase();
+    const severity = normalizeSeverity(finding.severity);
 
-    if (severity === "critical" || severity === "error") {
+    if (severity === "critical") {
       counts.critical += 1;
+    } else if (severity === "error") {
+      counts.error += 1;
     } else if (severity === "high") {
       counts.high += 1;
     } else if (severity === "medium") {
@@ -331,6 +343,7 @@ function renderSeverityPills(counts) {
 
   const pills = [
     ["critical", counts.critical],
+    ["error", counts.error],
     ["high", counts.high],
     ["medium", counts.medium],
     ["warning", counts.warning],
@@ -348,6 +361,64 @@ function renderSeverityPills(counts) {
   }
 
   return wrapper;
+}
+
+function formatReference(reference) {
+  const location = reference.location || reference.path || "Unknown file";
+  const line = reference.line ? `:${reference.line}` : "";
+  const column = reference.column ? `:${reference.column}` : "";
+
+  return `${location}${line}${column}`;
+}
+
+function renderComplianceBanner({ allFindings }) {
+  const counts = countSeverities(allFindings);
+  const blockingCount = counts.critical + counts.error + counts.high;
+  const compliant = blockingCount === 0;
+
+  const className = compliant
+    ? "compliance-banner compliance-banner--pass"
+    : "compliance-banner compliance-banner--fail";
+
+  const title = compliant ? "Compliant" : "Not compliant";
+
+  const message = compliant
+    ? "No critical, error, or high findings were detected."
+    : `${blockingCount} blocking finding${
+        blockingCount === 1 ? "" : "s"
+      } detected. Critical, error, and high findings make the code non-compliant.`;
+
+  elements.complianceBanner.innerHTML = `
+    <div class="${className}">
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(message)}</span>
+    </div>
+  `;
+}
+
+function renderSummary({ regoFindings, semgrepFindings }) {
+  const allFindings = [...regoFindings, ...semgrepFindings];
+  const counts = countSeverities(allFindings);
+  const blockingCount = counts.critical + counts.error + counts.high;
+
+  elements.summary.innerHTML = `
+    <div class="summary-card">
+      <strong>${escapeHtml(allFindings.length)}</strong>
+      <span>Total findings</span>
+    </div>
+    <div class="summary-card">
+      <strong>${escapeHtml(blockingCount)}</strong>
+      <span>Blocking findings</span>
+    </div>
+    <div class="summary-card">
+      <strong>${escapeHtml(regoFindings.length)}</strong>
+      <span>REGO findings</span>
+    </div>
+    <div class="summary-card">
+      <strong>${escapeHtml(semgrepFindings.length)}</strong>
+      <span>Semgrep findings</span>
+    </div>
+  `;
 }
 
 function renderGroupedFindings(container, title, groups) {
@@ -434,7 +505,7 @@ function renderGroupedFindings(container, title, groups) {
       if (finding.severity) {
         const badge = document.createElement("span");
         badge.className = getSeverityClass(finding.severity);
-        badge.textContent = String(finding.severity).toUpperCase();
+        badge.textContent = normalizeSeverity(finding.severity).toUpperCase();
         cardHeader.appendChild(badge);
       }
 
@@ -497,25 +568,6 @@ function renderGroupedFindings(container, title, groups) {
   container.appendChild(section);
 }
 
-function renderSummary({ regoFindings, semgrepFindings }) {
-  const totalFindings = regoFindings.length + semgrepFindings.length;
-
-  elements.summary.innerHTML = `
-    <div class="summary-card">
-      <strong>${escapeHtml(totalFindings)}</strong>
-      <span>Total findings</span>
-    </div>
-    <div class="summary-card">
-      <strong>${escapeHtml(regoFindings.length)}</strong>
-      <span>REGO findings</span>
-    </div>
-    <div class="summary-card">
-      <strong>${escapeHtml(semgrepFindings.length)}</strong>
-      <span>Semgrep findings</span>
-    </div>
-  `;
-}
-
 function renderResults({ policyResult, semgrepResult }) {
   const regoFindings = extractImportantFindings(policyResult);
   const groupedRegoFindings = groupRegoFindings(regoFindings);
@@ -524,7 +576,13 @@ function renderResults({ policyResult, semgrepResult }) {
   const groupedSemgrepFindings =
     groupSemgrepFindingsBySection(semgrepFindings);
 
+  const allFindings = [...regoFindings, ...semgrepFindings];
+
   elements.results.hidden = false;
+  elements.findingsContainer.hidden = true;
+  elements.toggleFindingsButton.textContent = "Show findings";
+
+  renderComplianceBanner({ allFindings });
 
   renderSummary({
     regoFindings,
@@ -593,7 +651,18 @@ async function handleComplianceCheck(event) {
       semgrepResult,
     });
 
-    setStatus("Compliance check finished");
+    const regoFindings = extractImportantFindings(policyResult);
+    const semgrepFindings = getSemgrepFindings(semgrepResult);
+    const allFindings = [...regoFindings, ...semgrepFindings];
+    const blockingCount = allFindings.filter((finding) =>
+      isBlockingSeverity(finding.severity)
+    ).length;
+
+    setStatus(
+      blockingCount > 0
+        ? "Compliance check finished: not compliant"
+        : "Compliance check finished: compliant"
+    );
   } catch (error) {
     setStatus("Compliance check failed");
     showError(makeErrorMessage(error));
@@ -603,15 +672,13 @@ async function handleComplianceCheck(event) {
   }
 }
 
-function resetForm() {
-  abortController?.abort();
-  abortController = null;
+function toggleFindings() {
+  const shouldShow = elements.findingsContainer.hidden;
 
-  elements.form.reset();
-  clearError();
-  clearResults();
-  setStatus("Ready");
-  setBusy(false);
+  elements.findingsContainer.hidden = !shouldShow;
+  elements.toggleFindingsButton.textContent = shouldShow
+    ? "Hide findings"
+    : "Show findings";
 }
 
 elements.darkModeToggle.addEventListener("change", (event) => {
@@ -619,6 +686,6 @@ elements.darkModeToggle.addEventListener("change", (event) => {
 });
 
 elements.form.addEventListener("submit", handleComplianceCheck);
-elements.resetButton.addEventListener("click", resetForm);
+elements.toggleFindingsButton.addEventListener("click", toggleFindings);
 
 applyTheme(getInitialTheme());
