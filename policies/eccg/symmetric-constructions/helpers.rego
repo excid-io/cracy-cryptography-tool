@@ -61,8 +61,15 @@ is_cmac_scheme(component) if {
 
 #
 # GMAC detection.
-# Depending on extraction, this may appear directly as GMAC,
-# AES-GMAC, or indirectly as AES-GCM used for authentication only.
+#
+# GMAC may not be accurately represented by the current CBOM output.
+# Depending on extraction, it may appear as:
+# - GMAC
+# - AES-GMAC
+# - a name containing GMAC
+# - AES-GCM / GCM, when the implementation is using GCM authentication only
+#
+# The final GCM fallback is intentionally broad. 
 #
 is_gmac_scheme(component) if {
     name := lower(object.get(component, "name", ""))
@@ -73,6 +80,8 @@ is_gmac_scheme(component) if {
 } else if {
     name := lower(object.get(component, "name", ""))
     contains(name, "gmac")
+} else if {
+    is_gcm_primitive(component)
 }
 
 #
@@ -263,7 +272,10 @@ is_agreed_symmetric_encryption_scheme(component) if {
     is_gcm_primitive(component)
 } else if {
     is_ccm_primitive(component)
+} else if {
+    is_xts_scheme(component)
 }
+
 
 
 

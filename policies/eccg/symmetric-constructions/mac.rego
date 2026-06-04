@@ -9,6 +9,7 @@ import data.cbom.eccg.helpers.legacy_marker_status
 import data.cbom.eccg.helpers.evaluation_year
 import data.cbom.eccg.helpers.legacy_status_severity
 import data.cbom.eccg.helpers.legacy_status_message
+import data.cbom.eccg.helpers.is_gcm_primitive
 
 import data.cbom.eccg.symmetric_constructions.helpers.is_cmac_scheme
 import data.cbom.eccg.symmetric_constructions.helpers.is_cbc_scheme
@@ -34,6 +35,8 @@ SUBSECTION := "Message-Authentication-Codes"
 
 HMAC_RECOMMENDED_KEY_SIZE_BITS := 125
 HMAC_LEGACY_KEY_SIZE_BITS := 100
+KMAC128_RECOMMENDED_KEY_SIZE_BITS := 125
+KMAC256_RECOMMENDED_KEY_SIZE_BITS := 250
 
 #
 # Rule ECCG-MAC-001
@@ -106,7 +109,7 @@ findings contains finding if {
 findings contains finding if {
     component := input.components[_]
 
-    is_mac_scheme(component)
+    is_mac_primitive(component)
     is_mac_scheme_with_96_bit_minimum_output(component)
 
     note := get_note(SECTION, SUBSECTION, "15-MACTruncation96")
@@ -149,17 +152,15 @@ findings contains finding if {
 
     condition_for_recommended := key_bits >= HMAC_RECOMMENDED_KEY_SIZE_BITS
 
-    status := "recommended" if {
-        condition_for_recommended
-    } else := "error" if {
-        not condition_for_recommended
-    }
-
-    severity := "warning" if {
-        status == "recommended"
-    } else := "error" if {
-        status == "error"
-    }
+    status := {
+        true: "recommended",
+        false: "error",
+    }[condition_for_recommended]
+    
+    severity := {
+        true: "warning",
+        false: "error",
+    }[condition_for_recommended]
 
     message := sprintf(
         "HMAC key size is %v bits. Recommended key size is at least %v bits.",
@@ -219,7 +220,18 @@ findings contains finding if {
 
 #
 # Rule ECCG-KMAC-001
-# KMAC128 detected, but real key size is not available in current CBOM.
+# KMAC128 key-size assessment.
+#
+# KMAC128 key size must be >= 125 bits.
+#
+# If the detected key size is at least 125 bits, the finding is emitted with
+# status "recommended" and severity "warning".
+#
+# If the detected key size is smaller than 125 bits, the finding is emitted with
+# status "error" and severity "error".
+#
+# TODO: improve detection through Semgrep when the current CBOM does not expose
+# the real runtime MAC key size.
 #
 findings contains finding if {
     component := input.components[_]
@@ -227,17 +239,37 @@ findings contains finding if {
     is_mac_primitive(component)
     is_kmac128_scheme(component)
 
+    key_bits := get_parameter_set_identifier_to_number_or_unknown(component)
+
+
+    condition_for_recommended := key_bits >= KMAC128_RECOMMENDED_KEY_SIZE_BITS
+
+    status := {
+        true: "recommended",
+        false: "error",
+    }[condition_for_recommended]
+
+    severity := {
+        true: "warning",
+        false: "error",
+    }[condition_for_recommended]
+
+    message := sprintf(
+        "KMAC128 key size is %v bits. Required key size is at least %d bits.",
+        [key_bits, KMAC128_RECOMMENDED_KEY_SIZE_BITS]
+    )
+
     note := get_note(SECTION, SUBSECTION, "19-QuantumThreat")
 
     finding := build_finding(
         "ECCG-KMAC-001",
-        "warning",
-        "KMAC128 is listed by ECCG, but the runtime MAC key size is not available in the current CBOM; agreement threshold cannot be fully assessed.",
+        severity,
+        message,
         component,
         {
-            "status": "undetermined",
-            "requiredAgreedKeySizeBits": 125,
-            "detectedParameterSetIdentifier": get_parameter_set_identifier_to_number_or_unknown(component),
+            "status": status,
+            "requiredAgreedKeySizeBits": KMAC128_RECOMMENDED_KEY_SIZE_BITS,
+            "detectedParameterSetIdentifier": key_bits,
             "notes": note
         }
     )
@@ -245,7 +277,18 @@ findings contains finding if {
 
 #
 # Rule ECCG-KMAC-002
-# KMAC256 detected, but real key size is not available in current CBOM.
+# KMAC256 key-size assessment.
+#
+# KMAC256 key size must be >= 250 bits.
+#
+# If the detected key size is at least 250 bits, the finding is emitted with
+# status "recommended" and severity "warning".
+#
+# If the detected key size is smaller than 250 bits, the finding is emitted with
+# status "error" and severity "error".
+#
+# TODO: improve detection through Semgrep when the current CBOM does not expose
+# the real runtime MAC key size.
 #
 findings contains finding if {
     component := input.components[_]
@@ -253,18 +296,34 @@ findings contains finding if {
     is_mac_primitive(component)
     is_kmac256_scheme(component)
 
-    note := get_note(SECTION, SUBSECTION, "19-QuantumThreat")
+    key_bits := get_parameter_set_identifier_to_number_or_unknown(component)
+
+    condition_for_recommended := key_bits >= KMAC256_RECOMMENDED_KEY_SIZE_BITS
+
+    status := {
+        true: "recommended",
+        false: "error",
+    }[condition_for_recommended]
+
+    severity := {
+        true: "warning",
+        false: "error",
+    }[condition_for_recommended]
+
+    message := sprintf(
+        "KMAC256 key size is %v bits. Required key size is at least %d bits.",
+        [key_bits, KMAC256_RECOMMENDED_KEY_SIZE_BITS]
+    )
 
     finding := build_finding(
         "ECCG-KMAC-002",
-        "warning",
-        "KMAC256 is listed by ECCG, but the runtime MAC key size is not available in the current CBOM; agreement threshold cannot be fully assessed.",
+        severity,
+        message,
         component,
         {
-            "status": "undetermined",
-            "requiredAgreedKeySizeBits": 250,
-            "detectedParameterSetIdentifier": get_parameter_set_identifier_to_number_or_unknown(component),
-            "notes": note
+            "status": status,
+            "requiredAgreedKeySizeBits": KMAC256_RECOMMENDED_KEY_SIZE_BITS,
+            "detectedParameterSetIdentifier": key_bits,
         }
     )
 }
@@ -284,7 +343,7 @@ findings contains finding if {
     finding := build_finding(
         "ECCG-KMAC-003",
         "warning",
-        "KMAC was detected, but the variant could not be determined as KMAC128 or KMAC256.",
+        "KMAC was detected, but the variant could not be determined as KMAC128 or KMAC256. Follow the rules described in ECCG-KMAC-001 and ECCG-KMAC-002.",
         component,
         {
             "status": "undetermined"
@@ -294,104 +353,123 @@ findings contains finding if {
 
 #
 # Rule ECCG-GMAC-001
-# GMAC is agreed, subject to GCM/GMAC constraints.
-# TODO: GMAC is not detected by CBOM kit
+# GMAC IV uniqueness / non-reuse requirement.
+#
+# GMAC requires an Initialization Vector (IV) input.
+#
+# The IV must not be reused with:
+# - the same key; and
+# - different plaintext / input data.
+#
+# Reusing a GMAC IV with the same key breaks the security bounds of the
+# authentication mechanism. This rule is classification-based: it flags that
+# the GMAC IV non-reuse requirement must be checked.
+#
+# Current CBOM limitation:
+# GMAC may be detected as GCM by CBOM extraction. The is_gmac_scheme helper
+# therefore also treats GCM as GMAC-like for this policy until Semgrep or richer
+# CBOM metadata can distinguish authentication-only GMAC from normal GCM.
+# TODO detect through semgrep rules
 #
 findings contains finding if {
     component := input.components[_]
 
-    is_mac_primitive(component)
     is_gmac_scheme(component)
 
-    note_ids := [
-        "22-GMAC-GCMNonce",
-        "23-GMAC-GCMOptions",
-        "25-GMAC-GCM-Bounds"
-    ]
 
-    notes := [
-        {"noteId": id, "noteTitle": note.title, "noteText": note.text} |
-        id := note_ids[_]
-        note := get_note(SECTION, SUBSECTION, id)
-    ]
+    note := get_note(SECTION, SUBSECTION, "22-GMAC-GCMNonce")
 
     finding := build_finding(
         "ECCG-GMAC-001",
-        "info",
-        "GMAC is an agreed universal-hash-function-based MAC scheme, subject to GCM/GMAC operational constraints.",
+        "warning",
+        "GMAC requires an Initialization Vector (IV) that must not be reused with the same key and different plaintext/input data. Note that this might not be a GMAC scheme, due to CBOM limitations.",
         component,
         {
-            "status": "agreed",
-            "notes": notes
+            "notes": note, 
+            "mode": get_mode_or_unknown(component),
+            "detectedAsGcmFallback": is_gcm_primitive(component)
         }
     )
 }
 
 #
 # Rule ECCG-GMAC-002
-# GCM may correspond to GMAC-style authentication-only usage.
+# GMAC IV construction requirement.
+#
+# GMAC requires an Initialization Vector (IV). The IV must be either:
+# - a random 96-bit value; or
+# - generated using the construction described in NIST SP 800-38D section 8.2.1.
+#
+# This mirrors the GCM/GMAC IV construction requirement because GMAC is based on
+# GCM authentication. This rule is classification-based unless the CBOM exposes
+# IV length and IV construction metadata.
+#
+# Current CBOM limitation:
+# GMAC may be detected as GCM by CBOM extraction, so the is_gmac_scheme helper
+# may intentionally match GCM components.
+# Detect through Semgrep rules
 #
 findings contains finding if {
     component := input.components[_]
 
-    is_possible_gmac_scheme(component)
+    is_gmac_scheme(component)
 
-    note_ids := [
-        "22-GMAC-GCMNonce",
-        "23-GMAC-GCMOptions",
-        "25-GMAC-GCM-Bounds"
-    ]
-
-    notes := [
-        {"noteId": id, "noteTitle": note.title, "noteText": note.text} |
-        id := note_ids[_]
-        note := get_note(SECTION, SUBSECTION, id)
-    ]
+    note := get_note(SECTION, SUBSECTION, "23-GMAC-GCMOptions")
 
     finding := build_finding(
         "ECCG-GMAC-002",
         "warning",
-        sprintf(
-            "GCM-based construction '%s' may correspond to GMAC-style authentication-only usage. This cannot be fully determined from CBOM alone.",
-            [component.name]
-        ),
+        "GMAC requires an Initialization Vector (IV). This IV must be either a random 96-bit value, or generated using the construction described in NIST SP 800-38D section 8.2.1. Note that this might not be a GMAC scheme, due to CBOM limitations.",
         component,
         {
-            "status": "possible-gmac",
+            "notes": note,
             "mode": get_mode_or_unknown(component),
-            "notes": notes
+            "requiredIvBits": 96,
+            "acceptedIvConstructions": [
+                "random-96-bit",
+                "nist-sp-800-38d-section-8.2.1"
+            ],
+            "detectedAsGcmFallback": is_gcm_primitive(component)
         }
     )
 }
 
 #
-# Rule ECCG-MAC-003
-# General MAC truncation notes.
+# Rule ECCG-GMAC-003
+# GMAC MAC truncation requirement.
+#
+# When GMAC is used, the output MAC / authentication tag must not be truncated
+# without validating the GMAC-specific bounds.
+#
+# The general MAC truncation notes state that some MAC mechanisms may require a
+# more restrictive truncation treatment, and GMAC is explicitly called out as
+# such a case.
+#
+# This rule is classification-based unless the CBOM exposes the actual GMAC tag
+# length, the number of verification attempts, and key-lifetime bounds.
+#
+# Current CBOM limitation:
+# GMAC may be detected as GCM by CBOM extraction, so the is_gmac_scheme helper
+# may intentionally match GCM components.
 #
 findings contains finding if {
     component := input.components[_]
 
-    is_mac_primitive(component)
+    is_gmac_scheme(component)
 
-    note_ids := [
-        "15-MACTruncation96",
-        "16-MACTruncation64"
-    ]
-
-    notes := [
-        {"noteId": id, "noteTitle": note.title, "noteText": note.text} |
-        id := note_ids[_]
-        note := get_note(SECTION, SUBSECTION, id)
-    ]
+    note := get_note(SECTION, SUBSECTION, "25-GMAC-GCM-Bounds")
 
     finding := build_finding(
-        "ECCG-MAC-003",
+        "ECCG-GMAC-003",
         "warning",
-        "MAC truncation requirements may apply. The current CBOM does not expose final MAC/tag length, so truncation compliance cannot be fully assessed.",
+        "When GMAC is used, the output MAC/authentication tag must not be truncated without validating the GMAC-specific security bounds. Note that this might not be a GMAC scheme, due to CBOM limitations.",
         component,
         {
-            "status": "undetermined",
-            "notes": notes
+            "notes": note,
+            "mode": get_mode_or_unknown(component),
+            "requiresMechanismSpecificBoundsCheck": true,
+            "mechanism": "GMAC",
+            "detectedAsGcmFallback": is_gcm_primitive(component)
         }
     )
 }
