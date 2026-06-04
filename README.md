@@ -1,204 +1,547 @@
+<!-- Improved compatibility of back to top link -->
+<a id="readme-top"></a>
 
-# Overview 
+<!-- PROJECT SHIELDS -->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![project_license][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
-This project is a web application for analyzing cryptographic usage in GitHub repositories using CBOMkit, OPA/Rego, and Semgrep.
+<br />
+<div align="center">
 
-The application accepts a GitHub repository URL and optional scan parameters, including a scan path, branch, commit SHA, and personal access token. The repository is scanned with CBOMkit to produce a Cryptography Bill of Materials (CBOM), which describes the cryptographic assets detected in the codebase.
+<h3 align="center">CRA Compliance Checker</h3>
 
-The project then supports two evaluation paths:
+  <p align="center">
+    A static frontend for checking repository compliance for the ECCG policy utilizing CBOMkit, REGO policies, and Semgrep rules.
+    <br />
+    <a href="https://github.com/excid-io/cracy-cryptography-tool"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/excid-io/cracy-cryptography-tool">View Project</a>
+    &middot;
+    <a href="https://github.com/excid-io/cracy-cryptography-tool/issues/new?labels=bug">Report Bug</a>
+    &middot;
+    <a href="https://github.com/excid-io/cracy-cryptography-tool/issues/new?labels=enhancement">Request Feature</a>
+  </p>
+</div>
 
-1. **CBOM-based Rego evaluation**
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li><a href="#about-the-project">About The Project</a></li>
+    <li><a href="#what-it-checks">What It Checks</a></li>
+    <li><a href="#project-structure">Project Structure</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#configuration">Configuration</a></li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#compliance-decision">Compliance Decision</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-   CBOMkit supports external compliance evaluation through Open Policy Agent (OPA), using user-defined policies written in Rego. This project follows that CBOMkit integration model and provides a custom Rego policy set for evaluating the generated CBOM.
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
-   The Rego rules in this repository were written by us. They are based on our interpretation of the ENISA-published **ECCG Agreed Cryptographic Mechanisms, version 2** guidance, but they are not provided by ENISA and should not be treated as an official ENISA policy implementation.
+This project implements a lightweight static web frontend for checking cryptographic compliance of a Git repository.
 
-2. **Source-level Semgrep evaluation**
+The project can be served with any static HTTP server, such as Python’s built-in `http.server`.
 
-   The project also includes custom Semgrep rules written by us. These rules scan the source code directly and are used to detect cryptographic API usage patterns that may or may not be fully represented in the CBOM.
+The tool coordinates three checks:
 
-Together, these two approaches provide complementary views of cryptographic usage. The Rego evaluation works from the CBOM produced by CBOMkit, while the Semgrep evaluation works directly on the repository source code.
+1. CBOM generation through CBOMkit.
+2. REGO policy evaluation through OPA on the previously generated CBOM.
+3. Semgrep rule evaluation through the local Semgrep service.
 
-## Motivation behind REGO evaluation 
+The interface is intentionally simple: the user enters repository details and presses a single **Check compliance** button. The compliance result is shown first, while detailed findings remain hidden until the user chooses to display them.
 
-As mentioned before this project uses Rego and Open Policy Agent (OPA) to evaluate cryptographic usage from CBOM data.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-The decision to use Rego follows the compliance-evaluation model introduced in CBOMkit. In CBOMkit pull request [#332](https://github.com/cbomkit/cbomkit/pull/332), support was added for using OPA as an external compliance evaluation service. That PR describes OPA as a way to evaluate CBOM compliance using user-defined policies written in a declarative policy language, with the OPA instance and policy configuration made configurable by CBOMkit. This made Rego a natural choice for implementing our ECCG policy checks. :contentReference[oaicite:0]{index=0}
+<!-- WHAT IT CHECKS -->
+## What It Checks
 
-The Rego policies in this repository were created by us. They encode checks derived from our interpretation of the ENISA-published ECCG Agreed Cryptographic Mechanisms guidance. They are not official ENISA rules and should not be treated as an official ENISA policy implementation.
+The CRA Compliance Checker evaluates repository cryptography usage using:
 
-Rego provides several practical benefits for this project:
+- **CBOMkit** to generate a CycloneDX CBOM for the selected repository or subfolder.
+- **OPA / REGO** to evaluate CBOM components against ECCG policy rules.
+- **Semgrep** to detect source-code patterns that may not be visible from the CBOM alone.
 
-- **Policy as code:** cryptographic requirements can be written as version-controlled policy rules instead of being embedded directly in application logic.
-- **CBOM-native evaluation:** Rego works well over structured JSON data, which makes it suitable for evaluating CycloneDX CBOM output.
-- **Separation of concerns:** CBOMkit generates the CBOM, while OPA evaluates the CBOM against our ECCG policy. This keeps detection, policy, and UI concerns separate.
-- **Easy CI/CD integration:** OPA and Rego can be run from command-line tooling, Docker containers, and CI environments such as GitHub Actions. This makes it straightforward to add CBOM policy checks to pull requests, release pipelines, or scheduled repository scans.
-- **Portable policy execution:** the same Rego rules can be evaluated locally, in Docker Compose, in CI, or as part of a future CBOMkit integration.
-- **Declarative rules:** Rego makes it easier to express compliance conditions such as “flag RSA modulus sizes below a threshold” or “detect non-agreed block ciphers” without writing custom imperative evaluation code for every check.
-- **Explainable findings:** each rule can produce structured findings with rule IDs, severities, messages, notes, source references, and supporting metadata.
-- **Extensibility:** new ECCG checks can be added incrementally as additional CBOM fields become available or as the policy coverage expands.
+The code is considered **not compliant** with the ECCG policy when at least one finding has one of the following severities:
 
-This work was also informed by conversations with the CBOMkit maintainers and developers. Because CBOMkit already supports configurable external compliance evaluation through OPA, the ECCG Rego policy developed in this project could be integrated into CBOMkit more easily in the future. The current implementation therefore follows the direction already established by CBOMkit: generate a CBOM, submit it to an OPA-compatible policy service, and return structured compliance findings.
+- `critical`
+- `error`
+- `high`
 
-The main limitation of the Rego-based evaluation is that it can only reason over the data that is present in the CBOM. If CBOMkit, or any other CBOM generator for that matter, does not detect a cryptographic operation, records it with incomplete metadata, or represents a field ambiguously, then the Rego policy cannot  always reliably evaluate it. For example, some rules that represent AES-128 depend on fields such as `parameterSetIdentifier`, but that value may not always represent the actual key size; it may instead reflect a block size, output size, or another algorithm parameter. Similarly, CBOM data may show that encryption and MAC operations exist in the same file, but it may not expose enough data-flow information to determine whether the code implements Encrypt-then-MAC, MAC-then-Encrypt, or Encrypt-and-MAC. Because of this, Rego evaluation is very useful for structured CBOM-level policy checks, but the quality of the results depends directly on the completeness and accuracy of the generated CBOM. Source-level tools such as Semgrep are still useful as a complementary evaluation method where CBOM metadata is incomplete or not expressive enough.
+Medium, warning, low, and informational findings are still displayed, but they do not make the code non-compliant by themselves.
 
-## Motivation behind Semgrep evaluation 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-In addition to the CBOM-based Rego evaluation, this project also uses Semgrep to scan repository source code directly. The Semgrep rules were created standalone and then left to fill some of the gaps left by CBOM-level evaluation. While Rego is effective for evaluating structured CBOM data, it is limited by what CBOMkit detects and how much detail is represented in the generated CBOM. Semgrep provides a more source-aware evaluation path that can detect finer-grained implementation patterns, API usage, configuration choices, and insecure constructions that may not be fully captured in CBOM metadata.
+<!-- PROJECT STRUCTURE -->
+## Project Structure
 
-Semgrep is especially useful for cases where the surrounding source context matters. For example, it can inspect how a cryptographic API is called, whether a constant IV is used, whether a TLS context allows legacy protocol versions, whether a particular mode is selected, or whether encryption and MAC operations are composed in a specific way. These details may be difficult or impossible to infer reliably from the CBOM alone, especially when the CBOM does not expose data-flow, operation ordering, or precise parameter semantics.
+```text
+cbomkit-site-html/
+├── app.js
+├── config
+│   └── endpoints.js
+├── img
+│   ├── cracy.png
+│   ├── eccc-logo.svg
+│   ├── eu-cofunded-logo.png
+│   └── excid-logo.svg
+├── index.html
+├── README.md
+├── styles.css
+└── utils
+    ├── regoFindings.js
+    ├── semgrepFindings.js
+    ├── sleep.js
+    └── urls.js
+````
 
-Another benefit of Semgrep is that it fits naturally into developer workflows. Rules can be run locally, in Docker, or in CI/CD systems such as GitHub Actions. Findings can point directly to source files and lines, making them easier for developers to inspect and fix. Semgrep rules are also version-controlled alongside the rest of the project, so the detection logic can evolve as new ECCG checks are implemented or as new cryptographic API patterns are identified.
+Important files:
 
-However, Semgrep also has important limitations. The biggest downside is maintenance cost. Unlike Rego rules that operate over a normalized CBOM structure, Semgrep rules must often be written for specific programming languages, libraries, and API shapes. A rule that detects a pattern in Python’s `pyca/cryptography` library will not automatically detect the same concept in Java, Go, JavaScript, or C. Even within the same language, different coding styles, wrappers, helper functions, or framework abstractions may require additional rule variants.
+* `index.html` contains the static page structure.
+* `styles.css` contains the UI styling, including the footer logos and dark mode styling.
+* `app.js` owns the frontend flow for CBOM generation, REGO evaluation, Semgrep evaluation, and rendering results.
+* `config/endpoints.js` defines the backend service URLs.
+* `utils/regoFindings.js` normalizes and groups REGO findings.
+* `utils/semgrepFindings.js` normalizes and groups Semgrep findings.
+* `utils/urls.js` builds CBOMkit and Semgrep request payloads.
+* `utils/sleep.js` provides cancellable polling delay support.
 
-Because of this, Semgrep evaluation can provide more detailed and fine-grained results, but it requires more ongoing work to keep the rule set accurate and useful. It is best used as a complementary source-level analysis layer alongside the Rego evaluation, rather than as a replacement for CBOM-based policy checks.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<!-- GETTING STARTED -->
 
-# Run the CBOM kit website 
+## Getting Started
 
-Create a .env file that contains the following. Below are example values: 
+### Prerequisites
 
-```env
-CBOMKIT_VERSION=latest
-POSTGRESQL_AUTH_USERNAME=postgres
-POSTGRESQL_AUTH_PASSWORD=postgres
-CBOMKIT_VIEWER=false
-VITE_CBOMKIT_HTTP_API_BASE=http://localhost:8081
-VITE_POLICY_API_BASE=/opa
-VITE_OPA_DECISION_PATH=/v1/data/cbom/eccg
-VITE_SEMGREP_API_BASE=http://localhost:9091
-```
+You need:
 
-## Start the frontend development stack
+* Docker and Docker Compose.
+* Python 3, or any other static file server.
+* Running CBOMkit backend.
+* Running OPA policy service and OPA proxy.
+* Running Semgrep local service.
 
-This starts the backend, database, frontend, and local OPA policy server.
+### Start the backend services
+
+From the root of the main project repository, start the services needed by the frontend.
+
+For CBOMkit backend and database:
 
 ```bash
-docker compose --profile dev-frontend up -d
+docker compose --profile dev-frontend up -d backend db
 ```
 
-## Start the OPA policy server 
+The static frontend is served from:
 
-```bash
-docker compose --profile policy up -d opa-local
+```text
+http://localhost:8000
 ```
 
-## Recreate only the OPA policy server
+Because the CBOMkit backend runs on a different origin:
 
-Use this after changing Rego policy files under policies/eccg.
-
-```bash
-docker compose --profile policy up -d --force-recreate --no-deps opa-local
+```text
+http://localhost:8081
 ```
 
-## Start only the Semgrep server
-```bash
-docker compose --profile semgrep up -d semgrep-local
-```
-
-## Recreate only the Semgrep server
-
-Use this after changing the Semgrep server image or config.
-
-```bash
-docker compose --profile semgrep up -d --force-recreate --no-deps semgrep-local
-```
-
-## Query OPA directly with a CBOM file
-
-OPA expects the CBOM to be wrapped under an input key.
-
-```bash
-jq '{input: .}' cbom.json | curl -s \
-  -X POST http://localhost:8181/v1/data/cbom/eccg \
-  -H 'Content-Type: application/json' \
-  -d @- | jq
-```
-
-## Query a specific OPA policy package
-
-Example for the RSA integer factorization policy:
-
-```bash
-jq '{input: .}' cbom.json | curl -s \
-  -X POST http://localhost:8181/v1/data/cbom/eccg/asymmetric_atomic_primitives/rsa_integer_factorization \
-  -H 'Content-Type: application/json' \
-  -d @- | jq
-```
-
-Example for the AES modes policy:
-
-```bash
-jq '{input: .}' cbom.json | curl -s \
-  -X POST http://localhost:8181/v1/data/cbom/eccg/symmetric_constructions/aes_modes \
-  -H 'Content-Type: application/json' \
-  -d @- | jq
-```
-
-## Check which services are currently running
-
-```
-docker compose ps
-```
-
-## Run the UI 
-
-To run the vite site: 
-
-```
-npm install 
-cd cbomkit-site
-npm run dev
-```
-
-It should open the website at:
-
-```
-http://localhost:5173
-```
-
-Docker compose should have the following values: 
+the backend must allow CORS from the static frontend. Make sure the backend service contains:
 
 ```yml
-  backend:
-    image: ghcr.io/cbomkit/cbomkit:${CBOMKIT_VERSION}
-    depends_on:
-      - db
-    environment:
-      CBOMKIT_DB_TYPE: postgresql
-      CBOMKIT_DB_JDBC_URL: jdbc:postgresql://db:5432/postgres
-      CBOMKIT_PORT: 8081
-      CBOMKIT_DB_USERNAME: ${POSTGRESQL_AUTH_USERNAME}
-      CBOMKIT_DB_PASSWORD: ${POSTGRESQL_AUTH_PASSWORD}
-      #CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8001"
-      CBOMKIT_FRONTEND_URL_CORS: "http://localhost:5173"
-      CBOMKIT_OPA_API_BASE: "http://opa:8181"
-    ports:
-      - "8081:8081"
-    volumes:
-      - cbomkit-volume:/home/user/.cbomkit
-    restart: always
-    deploy:
-      resources:
-        reservations:
-          memory: 16g
-    profiles:
-      - prod
-      - ext-compliance
-      - dev-frontend
+backend:
+  environment:
+    CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8000"
 ```
 
-Ensure that `CBOMKIT_FRONTEND_URL_CORS` matches the local development URL used by `npm run dev`.
+Also make sure the backend points to the correct OPA service name. If your Compose service is named `opa-local`, use:
 
-For example, if the frontend runs at:
-
+```yml
+backend:
+  environment:
+    CBOMKIT_OPA_API_BASE: "http://opa-local:8181"
 ```
-http://localhost:5173
+
+Do not use `http://opa:8181` unless your OPA service is actually named `opa`.
+
+For OPA policy evaluation, start both OPA and the local OPA proxy:
+
+```bash
+docker compose --profile policy up -d opa-local opa-proxy
 ```
 
-then the Docker Compose environment variable should be:
+The frontend calls the proxy by default:
 
+```text
+http://localhost:8182/v1/data/cbom/eccg
 ```
-CBOMKIT_FRONTEND_URL_CORS: "http://localhost:5173"
+
+The proxy forwards requests to OPA inside Docker:
+
+```text
+http://opa-local:8181/v1/data/cbom/eccg
+```
+
+This avoids browser CORS issues when the static frontend is served from:
+
+```text
+http://localhost:8000
+```
+
+For Semgrep evaluation:
+
+```bash
+docker compose --profile semgrep up -d --build semgrep-local
+```
+
+Depending on your Compose profiles, you can also start the full local development stack with:
+
+```bash
+docker compose --profile dev-frontend --profile policy --profile semgrep up -d --build
+```
+
+### Serve the static frontend
+
+From this directory:
+
+```bash
+cd cbomkit-site-html
+python3 -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+Do not open `index.html` directly with `file://`, because browser JavaScript modules require an HTTP origin.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- CONFIGURATION -->
+
+## Configuration
+
+The frontend reads backend endpoints from `config/endpoints.js`.
+
+Default local development values:
+
+```js
+export const HTTP_API_BASE =
+  window.CRA_COMPLIANCE_CONFIG?.CBOMKIT_HTTP_API_BASE ||
+  "http://localhost:8081";
+
+export const SEMGREP_API_BASE =
+  window.CRA_COMPLIANCE_CONFIG?.SEMGREP_API_BASE ||
+  "http://localhost:9091";
+
+export const POLICY_API_BASE =
+  window.CRA_COMPLIANCE_CONFIG?.POLICY_API_BASE ||
+  "http://localhost:8182";
+
+export const OPA_DECISION_PATH =
+  window.CRA_COMPLIANCE_CONFIG?.OPA_DECISION_PATH ||
+  "/v1/data/cbom/eccg";
+```
+
+The expected local services are:
+
+| Service                   | Default URL             |
+| ------------------------- | ----------------------- |
+| Static frontend           | `http://localhost:8000` |
+| CBOMkit backend           | `http://localhost:8081` |
+| OPA proxy                 | `http://localhost:8182` |
+| OPA service inside Docker | `http://opa-local:8181` |
+| Semgrep local service     | `http://localhost:9091` |
+
+Important Docker Compose settings:
+
+| Setting                     | Purpose                                                                 | Local value             |
+| --------------------------- | ----------------------------------------------------------------------- | ----------------------- |
+| `CBOMKIT_FRONTEND_URL_CORS` | Allows the static frontend to call the CBOMkit backend from the browser | `http://localhost:8000` |
+| `CBOMKIT_OPA_API_BASE`      | Allows the CBOMkit backend to call OPA inside Docker                    | `http://opa-local:8181` |
+| `HTTP_API_BASE`             | Frontend URL for CBOMkit backend                                        | `http://localhost:8081` |
+| `POLICY_API_BASE`           | Frontend URL for OPA proxy                                              | `http://localhost:8182` |
+| `SEMGREP_API_BASE`          | Frontend URL for Semgrep service                                        | `http://localhost:9091` |
+
+If the browser calls services on different origins, those services must allow CORS from:
+
+```text
+http://localhost:8000
+```
+
+For local development, the OPA proxy is used to add CORS headers before forwarding requests to OPA.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- USAGE -->
+
+## Usage
+
+1. Open the frontend at:
+
+   ```text
+   http://localhost:8000
+   ```
+
+2. Enter the Git repository URL.
+
+   Example:
+
+   ```text
+   https://github.com/excid-io/cracy-cryptography-tool.git
+   ```
+
+3. Optionally enter:
+
+   * Scan path, for example `demo/code`.
+   * Branch, for example `main`.
+   * Commit SHA.
+   * PAT for private repositories or rate-limit avoidance.
+
+4. Press **Check compliance**.
+
+5. Review the compliance result.
+
+6. Press **Show findings** only when you want to inspect detailed REGO and Semgrep findings.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- COMPLIANCE DECISION -->
+
+## Compliance Decision
+
+The frontend computes the compliance decision from the combined REGO and Semgrep findings.
+
+The result is:
+
+```text
+Compliant
+```
+
+when there are no findings with severity:
+
+* `critical`
+* `error`
+* `high`
+
+The result is:
+
+```text
+Not compliant
+```
+
+when at least one finding has severity:
+
+* `critical`
+* `error`
+* `high`
+
+The detailed findings section groups results by policy area and shows severity counts per group. Individual findings can be expanded to view references such as file paths and line numbers.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- ROADMAP -->
+
+## Roadmap
+
+See the [open issues](https://github.com/excid-io/cracy-cryptography-tool/issues) for proposed features and known issues.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- TROUBLESHOOTING -->
+
+## Troubleshooting
+
+### Browser blocks `app.js`
+
+If you see an error such as:
+
+```text
+Access to script at file:///.../app.js has been blocked by CORS policy
+```
+
+you opened the file directly. Serve the directory over HTTP instead:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+### CBOMkit request is blocked by CORS
+
+If the browser blocks:
+
+```text
+http://localhost:8081/api/v1/scan
+```
+
+make sure the CBOMkit backend allows the static frontend origin:
+
+```yml
+CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8000"
+```
+
+Then recreate the backend container:
+
+```bash
+docker compose --profile dev-frontend up -d --force-recreate backend
+```
+
+### OPA request is refused
+
+If you see:
+
+```text
+POST http://localhost:8181/v1/data/cbom/eccg net::ERR_CONNECTION_REFUSED
+```
+
+OPA is not exposed on the host or is not running.
+
+For this frontend, the browser should call the OPA proxy, not OPA directly. Make sure `config/endpoints.js` uses:
+
+```js
+export const POLICY_API_BASE =
+  window.CRA_COMPLIANCE_CONFIG?.POLICY_API_BASE ||
+  "http://localhost:8182";
+```
+
+Then start both OPA and the proxy:
+
+```bash
+docker compose --profile policy up -d opa-local opa-proxy
+```
+
+### OPA request is blocked by CORS
+
+The static frontend should call the local OPA proxy, not OPA directly.
+
+Make sure `config/endpoints.js` uses:
+
+```js
+export const POLICY_API_BASE =
+  window.CRA_COMPLIANCE_CONFIG?.POLICY_API_BASE ||
+  "http://localhost:8182";
+```
+
+Then start both OPA and the proxy:
+
+```bash
+docker compose --profile policy up -d opa-local opa-proxy
+```
+
+The proxy should forward to:
+
+```text
+http://opa-local:8181
+```
+
+### Semgrep request is refused
+
+If you see:
+
+```text
+POST http://localhost:9091/scan net::ERR_CONNECTION_REFUSED
+```
+
+start the Semgrep service:
+
+```bash
+docker compose --profile semgrep up -d --build semgrep-local
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- CONTRIBUTING -->
+
+## Contributing
+
+Contributions are welcome and greatly appreciated.
+
+If you have a suggestion that would improve this frontend, please fork the repository and create a pull request. You can also open an issue with the tag `enhancement`.
+
+1. Fork the project.
+
+2. Create your feature branch.
+
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+
+3. Commit your changes.
+
+   ```bash
+   git commit -m "Add some AmazingFeature"
+   ```
+
+4. Push to the branch.
+
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+
+5. Open a pull request.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- LICENSE -->
+
+## License
+
+Distributed under the project license. See `LICENSE.txt` or the repository license file for more information.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- CONTACT -->
+
+## Contact
+
+The CRACY project: [info@cra-cy.eu](mailto:info@cra-cy.eu)
+
+Project Link: https://github.com/excid-io/cracy-cryptography-tool
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- ACKNOWLEDGMENTS -->
+
+## Acknowledgments
+
+* [Initial contribution by ExcID](https://excid.io)
+* [CRACY](https://cra-cy.eu/)
+* European Cybersecurity Competence Centre
+* Co-funded by the European Union
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+
+[contributors-shield]: https://img.shields.io/github/contributors/excid-io/cracy-cryptography-tool.svg?style=for-the-badge
+[contributors-url]: https://github.com/excid-io/cracy-cryptography-tool/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/excid-io/cracy-cryptography-tool.svg?style=for-the-badge
+[forks-url]: https://github.com/excid-io/cracy-cryptography-tool/network/members
+[stars-shield]: https://img.shields.io/github/stars/excid-io/cracy-cryptography-tool.svg?style=for-the-badge
+[stars-url]: https://github.com/excid-io/cracy-cryptography-tool/stargazers
+[issues-shield]: https://img.shields.io/github/issues/excid-io/cracy-cryptography-tool.svg?style=for-the-badge
+[issues-url]: https://github.com/excid-io/cracy-cryptography-tool/issues
+[license-shield]: https://img.shields.io/github/license/excid-io/cracy-cryptography-tool.svg?style=for-the-badge
+[license-url]: https://github.com/excid-io/cracy-cryptography-tool/blob/main/LICENSE.txt
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-url]: https://www.linkedin.com/company/cracy/
+
 ```
