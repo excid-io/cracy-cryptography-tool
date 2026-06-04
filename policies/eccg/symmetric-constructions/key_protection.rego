@@ -1,10 +1,10 @@
 package cbom.eccg.symmetric_constructions.key_protection
 
 import data.cbom.eccg.helpers.build_finding
-import data.cbom.eccg.helpers.is_ae_primitive
+import data.cbom.eccg.helpers.get_mode_or_unknown
+import data.cbom.eccg.helpers.get_primitive_or_unknown
 
-import data.cbom.eccg.symmetric_constructions.helpers.is_siv_scheme
-import data.cbom.eccg.symmetric_constructions.helpers.is_aes_key_wrap_scheme
+import data.cbom.eccg.symmetric_constructions.helpers.is_agreed_key_wrap_scheme
 
 default compliant := true
 
@@ -14,77 +14,46 @@ SECTION = "Symmetric-Constructions"
 SUBSECTION = "Key-Protection"
 
 #
-# ---------------------------------------------------------
-# ECCG-KP-001
-# AES Key Wrap is an agreed key-protection scheme.
+# Rule ECCG-KP-001
+# Non-agreed key-protection / key-wrap scheme detected.
 #
-# ECCG classification: R (Recommended)
+# Key protection schemes are detected through is_key_wrap_scheme(component).
 #
-# Covered schemes:
-# - AES-KW
-# - AES-KWP
-# - AES-Wrap-PKCS7
+# Agreed key protection schemes:
+# - AES Key Wrap / AES-KW
+# - AES Key Wrap with Padding / AES-KWP
+# - AES-SIV / SIV
 #
-# CBOM limitation:
-# - CBOMkit currently does not reliably detect AES Key Wrap
-#   as a first-class "key-wrap" primitive.
-# - Detection may depend on name-based heuristics.
+# Any detected key-wrap / key-protection scheme that is not accepted by
+# is_agreed_key_wrap_scheme(component) is reported as non-critical.
 #
-# This rule records the ECCG classification when such a
-# scheme is detected.
-# ---------------------------------------------------------
+# This rule is intentionally non-critical because CBOM extraction may not always
+# distinguish key wrapping, authenticated encryption, and generic algorithm names
+# precisely. Review the finding before treating it as a confirmed violation.
 #
 findings contains finding if {
     component := input.components[_]
 
-    is_aes_key_wrap_scheme(component)
+    not is_agreed_key_wrap_scheme(component)
 
     finding := build_finding(
         "ECCG-KP-001",
-        "info",
-        "AES Key Wrap (KW/KWP) is an agreed key-protection scheme.",
+        "medium",
+        sprintf(
+            "Key protection scheme '%s' is not in the agreed key-protection list. Agreed schemes are AES Key Wrap, AES Key Wrap with Padding, and SIV. This might be a false positive since there is no way to distinguish key protection schemes from the CBOM.",
+            [component.name]
+        ),
         component,
         {
-            "status": "agreed",
-            "scheme": "AES-KeyWrap"
-        }
-    )
-}
-
-#
-# ---------------------------------------------------------
-# ECCG-KP-002
-# SIV is an agreed key-protection scheme.
-#
-# ECCG classification: R (Recommended)
-#
-# Reference:
-# - RFC 5297 (AES-SIV)
-#
-# CBOM limitation:
-# - CBOMkit does not reliably model SIV as a key-protection
-#   mechanism.
-# - SIV is typically represented as an AEAD ("ae") primitive,
-#   not as "key-wrap".
-# - Detection therefore relies on name-based heuristics.
-#
-# This rule records the ECCG classification when SIV is used
-# in a key-protection context.
-# ---------------------------------------------------------
-#
-findings contains finding if {
-    component := input.components[_]
-
-    is_siv_scheme(component)
-
-    finding := build_finding(
-        "ECCG-KP-002",
-        "info",
-        "SIV (RFC5297) is an agreed key-protection scheme.",
-        component,
-        {
-            "status": "agreed",
-            "scheme": "SIV"
+            "status": "not-agreed",
+            "scheme": component.name,
+            "mode": get_mode_or_unknown(component),
+            "primitive": get_primitive_or_unknown(component),
+            "agreedKeyProtectionSchemes": [
+                "AES Key Wrap",
+                "AES Key Wrap with Padding",
+                "SIV"
+            ]
         }
     )
 }

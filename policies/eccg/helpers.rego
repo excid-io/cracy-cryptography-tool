@@ -274,6 +274,10 @@ is_ae_primitive(component) if {
     object.get(component.cryptoProperties.algorithmProperties, "primitive", "") == "ae"
 }
 
+is_ae_primitive(component) if {
+    is_block_cipher_primitive(component)
+}
+
 is_kdf_primitive(component) if {
     component.cryptoProperties.assetType == "algorithm"
     lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "kdf"

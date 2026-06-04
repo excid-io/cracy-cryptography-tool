@@ -1,5 +1,6 @@
 package cbom.eccg.symmetric_constructions.helpers
 
+import data.cbom.eccg.helpers.get_primitive_or_unknown
 import data.cbom.eccg.helpers.is_mac_primitive
 import data.cbom.eccg.helpers.is_ae_primitive
 import data.cbom.eccg.helpers.is_block_cipher_primitive
@@ -564,11 +565,8 @@ is_disk_encryption_component(component) if {
 is_siv_scheme(component) if {
     is_ae_primitive(component)
     name := normalize_crypto_name(object.get(component, "name", ""))
-    contains(name, "aessiv")
-} else if {
-    is_ae_primitive(component)
-    lower(get_mode_or_unknown(component)) == "siv"
-}
+    contains(name, "siv")
+} 
 
 #
 # ---------------------------------------------------------
@@ -590,22 +588,50 @@ is_siv_scheme(component) if {
 # ---------------------------------------------------------
 #
 is_aes_key_wrap_scheme(component) if {
-    component.cryptoProperties.assetType == "algorithm"
-
-    lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "key-wrap"
-
+    get_primitive_or_unknown(component) == "key-wrap"
     name := normalize_crypto_name(object.get(component, "name", ""))
-
-    contains(name, "aes") 
     contains(name, "kw")
 } else if {
-    component.cryptoProperties.assetType == "algorithm"
-
-    lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "key-wrap"
-
+    get_primitive_or_unknown(component) == "key-wrap"
     name := normalize_crypto_name(object.get(component, "name", ""))
-
     contains(name, "wrap")
+} else if {
+    get_primitive_or_unknown(component) == "key-wrap"
+    name := normalize_crypto_name(object.get(component, "name", ""))
+    contains(name, "kwp")
+}
+
+
+#
+# ---------------------------------------------------------
+# Helper: is_agreed_key_wrap_scheme
+#
+# Purpose:
+# Identify key-wrap schemes accepted by the ECCG key-wrap rule.
+#
+# Agreed key-wrap schemes:
+# - AES Key Wrap:
+#   - AES-KW
+#   - AES-KWP
+#   - AES Wrap PKCS7 variants, if represented by CBOM as AES key wrap
+# - SIV:
+#   - AES-SIV
+#   - AES-128-SIV
+#   - AES-192-SIV
+#   - AES-256-SIV
+#
+# Notes:
+# - This helper currently accepts the same schemes detected by
+#   is_key_wrap_scheme because the only supported key-wrap detections are
+#   AES key wrap and SIV.
+# - If non-agreed key-wrap schemes are added later, keep them in
+#   is_key_wrap_scheme but do not add them here.
+# ---------------------------------------------------------
+#
+is_agreed_key_wrap_scheme(component) if {
+    is_aes_key_wrap_scheme(component)
+} else if {
+    is_siv_scheme(component)
 }
 
 #
