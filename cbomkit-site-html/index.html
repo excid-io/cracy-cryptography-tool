@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CRA Compliance Checker</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <h1>CRA Compliance Checker</h1>
+
+        <label class="theme-toggle" title="Toggle dark mode">
+          <input id="darkModeToggle" type="checkbox" />
+          <span>Dark</span>
+        </label>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="intro-card">
+        <h2>Check repository compliance</h2>
+        <p>
+          Enter a Git repository URL and run the CBOM, REGO, and Semgrep checks.
+        </p>
+      </section>
+
+      <section class="checker-card" aria-labelledby="checker-title">
+        <h2 id="checker-title">Repository details</h2>
+
+        <form id="complianceForm" class="form">
+          <label class="field">
+            <span>Git URL</span>
+            <input
+              id="repoUrl"
+              name="repoUrl"
+              type="url"
+              placeholder="https://github.com/org/repo"
+              autocomplete="url"
+              required
+            />
+          </label>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Scan path</span>
+              <input
+                id="scanPath"
+                name="scanPath"
+                type="text"
+                placeholder="Optional, e.g. src"
+              />
+            </label>
+
+            <label class="field">
+              <span>Branch</span>
+              <input
+                id="branch"
+                name="branch"
+                type="text"
+                placeholder="Optional, e.g. main"
+              />
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Commit</span>
+              <input
+                id="commit"
+                name="commit"
+                type="text"
+                placeholder="Optional exact commit SHA"
+              />
+            </label>
+
+            <label class="field">
+              <span>PAT</span>
+              <input
+                id="pat"
+                name="pat"
+                type="password"
+                placeholder="Optional token"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+
+          <div class="action-row">
+            <button id="checkButton" class="primary-button" type="submit">
+              Check compliance
+            </button>
+          </div>
+        </form>
+
+        <div id="status" class="status" role="status">Status: Ready</div>
+        <div id="errorBox" class="error-box" hidden></div>
+      </section>
+
+      <section id="results" class="results" hidden>
+        <h2>Compliance result</h2>
+
+        <div id="complianceBanner"></div>
+        <div id="summary" class="summary"></div>
+
+        <button id="toggleFindingsButton" class="secondary-button" type="button">
+          Show findings
+        </button>
+
+        <div id="findingsContainer" class="findings-container" hidden>
+          <div id="regoResults"></div>
+          <div id="semgrepResults"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__inner">
+        <div class="footer__logos" aria-label="Project logos">
+          <a
+            href="https://excid.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="footer__logo-link"
+            aria-label="Excid"
+          >
+            <img src="img/excid-logo.svg" alt="Excid logo" />
+          </a>
+
+          <img src="img/eu-cofunded-logo.png" alt="Co-funded by the European Union" />
+
+          <img src="img/eccc-logo.svg" alt="ECCC logo" />
+
+          <a
+            href="https://cra-cy.eu/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="footer__logo-link"
+            aria-label="CRACY"
+          >
+            <img src="img/cracy.png" alt="CRACY logo" />
+          </a>
+        </div>
+
+        <p>
+          © 2026 CRACY — This project has received funding from the European
+          Union’s Digital Europe Programme under grant agreement No 101190492.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

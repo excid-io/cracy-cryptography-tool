@@ -19,7 +19,7 @@ get_note(section, subsection, note_string_id) := note if {
     "text": "Note not found"
 }
 
-allowed_severities := {"warning", "info", "low", "medium", "high", "critical"}
+allowed_severities := {"warning", "info", "low", "medium", "high", "critical", "error"}
 
 is_valid_severity(sev) if {
     allowed_severities[sev]
@@ -817,9 +817,9 @@ legacy_marker_status(marker) := "legacy" if {
     is_legacy_marker_expired(marker)
 }
 
-legacy_status_severity(status) := "high" if {
+legacy_status_severity(status) := "critical" if {
     status == "legacy"
-} else := "critical" if {
+} else := "error" if {
     status == "expired-legacy"
 }
 

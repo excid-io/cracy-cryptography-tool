@@ -27,7 +27,8 @@ services:
       CBOMKIT_DB_USERNAME: ${POSTGRESQL_AUTH_USERNAME}
       CBOMKIT_DB_PASSWORD: ${POSTGRESQL_AUTH_PASSWORD}
       #CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8001"
-      CBOMKIT_FRONTEND_URL_CORS: "http://localhost:5173"
+      #CBOMKIT_FRONTEND_URL_CORS: "http://localhost:5173"
+      CBOMKIT_FRONTEND_URL_CORS: "http://localhost:8000"
       CBOMKIT_OPA_API_BASE: "http://opa:8181"
     ports:
       - "8081:8081"
@@ -80,6 +81,17 @@ services:
       - dev
       - dev-backend
       - dev-frontend
+  opa-proxy:
+    image: nginx:1.27-alpine
+    depends_on:
+      - opa-local
+    ports:
+      - "8182:80"
+    volumes:
+      - ./nginx/opa-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    profiles:
+      - dev-frontend
+      - policy
   opa-local:
     image: docker.io/openpolicyagent/opa:1.15.1
     command:

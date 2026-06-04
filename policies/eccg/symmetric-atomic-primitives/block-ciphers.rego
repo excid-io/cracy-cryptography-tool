@@ -6,6 +6,10 @@ import data.cbom.eccg.helpers.get_primitive_or_unknown
 import data.cbom.eccg.helpers.get_parameter_set_identifier_to_number_or_unknown
 import data.cbom.eccg.helpers.get_note
 import data.cbom.eccg.helpers.build_finding
+import data.cbom.eccg.helpers.legacy_marker_status
+import data.cbom.eccg.helpers.legacy_status_severity
+import data.cbom.eccg.helpers.legacy_status_message
+import data.cbom.eccg.helpers.evaluation_year
 
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_aes_component
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_3des_component
@@ -23,6 +27,7 @@ compliant if count(findings) == 0
 
 NOTE_SECTION := "Symmetric-Atomic-Primitives"
 NOTE_SUBSECTION := "Block-Ciphers"
+_3DES_LEGACY_MARKER := "L[2027]"
 
 #
 # findings is a computed collection of policy violations / warnings.
@@ -31,7 +36,7 @@ NOTE_SUBSECTION := "Block-Ciphers"
 
 #
 # Rule ECCG-BLOCK-001
-# Flag any block cipher that is not AES or 3DES.
+# AES is the only recommended block cipher 
 #
 findings contains finding if {
     some component_index
@@ -43,7 +48,7 @@ findings contains finding if {
     finding := build_finding(
         "ECCG-BLOCK-001",
         "critical",
-        sprintf("Block cipher '%s' is not in the agreed block cipher list.", [component.name]),
+        sprintf("Block cipher '%s' is not in the agreed block cipher list. AES is the only recommended block cipher.", [component.name]),
         component,
         {
             "primitive": get_primitive_or_unknown(component),
@@ -84,36 +89,6 @@ findings contains finding if {
 
 #
 # Rule ECCG-BLOCK-003
-# Triple-DES / 3DES must use a 168-bit key size according to the rule set.
-# TODO: this rule won't ever fire correctly because we can't correctly detect the keySize through the CBOM kit
-#
-findings contains finding if {
-    some component_index
-    component := input.components[component_index]
-
-    is_3des_component(component)
-    #TODO these are not the key bits
-    get_parameter_set_identifier_to_number_or_unknown(component) != 168
-
-    finding := build_finding(
-        "ECCG-BLOCK-003",
-        "high",
-        sprintf(
-            "3DES uses a non-agreed key size: %v bits. Required size is 168 bits",
-            #TODO these are not the key bits
-            [get_parameter_set_identifier_to_number_or_unknown(component)]
-        ),
-        component,
-        {
-            "requiredKeyBits": 168,
-            "actualKeyBits": get_parameter_set_identifier_to_number_or_unknown(component),
-            "mode": object.get(component.cryptoProperties.algorithmProperties, "mode", "")
-        }
-    )
-}
-
-#
-# Rule ECCG-BLOCK-004
 # Even when 3DES has the expected size, it is still legacy-only.
 #
 findings contains finding if {
@@ -123,22 +98,66 @@ findings contains finding if {
     is_3des_component(component)
 
 
+    status := legacy_marker_status(_3DES_LEGACY_MARKER)
+    severity := legacy_status_severity(status)
+    message := legacy_status_message("3DES", _3DES_LEGACY_MARKER, status)
+
     note_ids := ["2-SmallBlockSize", "3-QuantumThreat"]
     notes := [ { "noteId": id, "noteTitle": note.title, "noteText": note.text } | 
         id := note_ids[_] 
         note := get_note(NOTE_SECTION, NOTE_SUBSECTION, id) ]
 
     finding := build_finding(
-        "ECCG-BLOCK-004",
-        "high",
-        "3DES will become legacy-only in 2027 and carries a small-block-size limitation (64-bit block) and a quantum-threat note",
+        "ECCG-BLOCK-003",
+        severity,
+        message,
         component,
         {
+            "status": status,
+            "legacyMarker": _3DES_LEGACY_MARKER,
+            "evaluationYear": evaluation_year,
             "notes": notes,
             "mode": get_mode_or_unknown(component)
         }
     )
 }
+
+#
+# Rule ECCG-BLOCK-004
+# Triple-DES / 3DES must use a 168-bit key size according to the rule set.
+# TODO: this rule won't ever fire correctly because we can't correctly detect the keySize through the CBOM kit
+#
+findings contains finding if {
+    component := input.components[component_index]
+
+    is_3des_component(component)
+
+    status := legacy_marker_status(_3DES_LEGACY_MARKER)
+    severity := legacy_status_severity(status)
+    message := legacy_status_message("3DES", _3DES_LEGACY_MARKER, status)
+    #TODO these are not the key bits
+    get_parameter_set_identifier_to_number_or_unknown(component) != 168
+
+    finding := build_finding(
+        "ECCG-BLOCK-004",
+        severity,
+        sprintf(
+            "3DES uses a non-agreed key size: %v bits. Required size is 168 bits. %s",
+            #TODO these are not the key bits
+            [get_parameter_set_identifier_to_number_or_unknown(component), message],
+        ),
+        component,
+        {
+            "status": status,
+            "legacyMarker": _3DES_LEGACY_MARKER,
+            "evaluationYear": evaluation_year,
+            "requiredKeyBits": 168,
+            "actualKeyBits": get_parameter_set_identifier_to_number_or_unknown(component),
+            "mode": object.get(component.cryptoProperties.algorithmProperties, "mode", "")
+        }
+    )
+}
+
 
 #
 # Rule ECCG-BLOCK-005
@@ -147,8 +166,6 @@ findings contains finding if {
 #
 findings contains finding if {
 
-    false 
-    
     some component_index
     component := input.components[component_index]
 

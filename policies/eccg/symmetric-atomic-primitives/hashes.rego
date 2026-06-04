@@ -6,12 +6,17 @@ import data.cbom.eccg.helpers.get_primitive_or_unknown
 import data.cbom.eccg.helpers.get_parameter_set_identifier_to_number_or_unknown
 import data.cbom.eccg.helpers.get_note
 import data.cbom.eccg.helpers.build_finding
+import data.cbom.eccg.helpers.legacy_marker_status
+import data.cbom.eccg.helpers.legacy_status_severity
+import data.cbom.eccg.helpers.legacy_status_message
+import data.cbom.eccg.helpers.evaluation_year
 
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_sha1
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_sha224
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_sha512_224
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_legacy_hash_component
 import data.cbom.eccg.symmetric_atomic_primitives.helpers.is_agreed_hash_component
+import data.cbom.eccg.symmetric_atomic_primitives.helpers.agreed_hash_algorithm_names
 
 default compliant := true
 
@@ -20,8 +25,11 @@ compliant if count(findings) == 0
 NOTE_SECTION := "Symmetric-Atomic-Primitives"
 NOTE_SUBSECTION := "Hash-Functions"
 
+SHA224_LEGACY_MARKER := "L[2025]"
+SHA512_224_LEGACY_MARKER := "L[2025]"
+
 #
-# Rule ECCG-HASH-001
+# Rule ECCG-HASH-003
 # SHA-224 is legacy-only (L[2025]).
 # TODO: hashBits won't ever be correct because get_parameter_set_identifier_to_number_or_unknown
 #
@@ -32,15 +40,20 @@ findings contains finding if {
     is_hash_primitive(component)
     is_sha224(component)
 
+    status := legacy_marker_status(SHA224_LEGACY_MARKER)
+    severity := legacy_status_severity(status)
+    message := legacy_status_message("SHA-224", SHA224_LEGACY_MARKER, status)
+
     finding := build_finding(
-        "ECCG-HASH-001",
-        "critical",
-        sprintf("Hash function '%s' is legacy-only (L[2025]) and is not an agreed hash function", [component.name]),
+        "ECCG-HASH-003",
+        severity,
+        message,
         component,
         {
-            "status": "legacy",
+            "status": status,
             "hashBits": get_parameter_set_identifier_to_number_or_unknown(component),
-            "legacyUntil": "2025"
+            "legacyMarker": SHA224_LEGACY_MARKER,
+            "evaluationYear": evaluation_year,
         }
     )
 }
@@ -57,21 +70,26 @@ findings contains finding if {
     is_hash_primitive(component)
     is_sha512_224(component)
 
+    status := legacy_marker_status(SHA512_224_LEGACY_MARKER)
+    severity := legacy_status_severity(status)
+    message := legacy_status_message("SHA-512/224", SHA512_224_LEGACY_MARKER, status)
+
     finding := build_finding(
         "ECCG-HASH-002",
-        "critical",
-        sprintf("Hash function '%s' is legacy-only (L[2025]) and is not an agreed hash function", [component.name]),
+        severity,
+        message,
         component,
         {
-            "status": "legacy",
+            "status": status,
             "hashBits": get_parameter_set_identifier_to_number_or_unknown(component),
-            "legacyUntil": "2025"
+            "legacyMarker": SHA512_224_LEGACY_MARKER,
+            "evaluationYear": evaluation_year,
         }
     )
 }
 
 #
-# Rule ECCG-HASH-003
+# Rule ECCG-HASH-001
 # Any hash not in the agreed list should be flagged.
 #
 findings contains finding if {
@@ -79,13 +97,13 @@ findings contains finding if {
     component := input.components[component_index]
 
     is_hash_primitive(component)
-    not is_legacy_hash_component(component)
     not is_agreed_hash_component(component)
+    
 
     finding := build_finding(
-        "ECCG-HASH-003",
-        "warning",
-        sprintf("Hash function '%s' is not in the agreed hash function list.", [component.name]),
+        "ECCG-HASH-001",
+        "critical",
+        sprintf("Hash function '%s' is not in the agreed hash function list. The agreed hash functions are the following %s.", [component.name, agreed_hash_algorithm_names]),
         component,
         {
             "hashBits": get_parameter_set_identifier_to_number_or_unknown(component)
@@ -141,7 +159,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-HASH-005",
-        "critical",
+        "error",
         sprintf("Hash function '%s' is obsolete and is not an agreed hash function", [component.name]),
         component,
         {

@@ -85,6 +85,18 @@ is_agreed_hash_component(component) if {
     is_sha3_512(component)
 }
 
+agreed_hash_algorithm_names := [
+    "SHA-256",
+    "SHA-384",
+    "SHA-512",
+    "SHA-512/256",
+    "SHA3-256",
+    "SHA3-384",
+    "SHA3-512",
+]
+
+agreed_hash_names := concat(", ", agreed_hash_algorithm_names)
+
 is_block_cipher_component(component) if {
    is_3des_component(component) 
 }
@@ -119,8 +131,8 @@ is_agreed_block_cipher_component(component) if {
     is_aes_component(component)
 }
 
-is_agreed_block_cipher_component(component) if {
-    is_3des_component(component)
-}
+#is_agreed_block_cipher_component(component) if {
+#    is_3des_component(component)
+#}
 
 
