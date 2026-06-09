@@ -40,9 +40,11 @@ const elements = {
   findingsContainer: document.getElementById("findingsContainer"),
   regoResults: document.getElementById("regoResults"),
   semgrepResults: document.getElementById("semgrepResults"),
+  downloadCbomButton: document.getElementById("downloadCbomButton"),
 };
 
 let abortController = null;
+let latestCbom = null;
 
 function getInitialTheme() {
   const savedTheme = window.localStorage.getItem("cra-compliance-theme");
@@ -77,7 +79,18 @@ function clearError() {
   elements.errorBox.textContent = "";
 }
 
+function setCbomDownloadAvailable(isAvailable) {
+  if (!elements.downloadCbomButton) return;
+
+  elements.downloadCbomButton.hidden = !isAvailable;
+  elements.downloadCbomButton.disabled = !isAvailable;
+  elements.downloadCbomButton.style.display = isAvailable ? "inline-flex" : "none";
+}
+
 function clearResults() {
+  latestCbom = null;
+  setCbomDownloadAvailable(false);
+
   elements.results.hidden = true;
   elements.complianceBanner.innerHTML = "";
   elements.summary.innerHTML = "";
@@ -600,6 +613,8 @@ function renderResults({ policyResult, semgrepResult }) {
     "Semgrep findings",
     groupedSemgrepFindings
   );
+
+  setCbomDownloadAvailable(Boolean(latestCbom));
 }
 
 function getFormValues() {
@@ -610,6 +625,46 @@ function getFormValues() {
     commit: elements.commit.value.trim(),
     pat: elements.pat.value.trim(),
   };
+}
+
+function getCbomDownloadFileName() {
+  const repositoryName =
+    elements.repoUrl.value
+      .trim()
+      .replace(/\.git$/, "")
+      .split("/")
+      .filter(Boolean)
+      .pop() || "repository";
+
+  const timestamp = new Date()
+    .toISOString()
+    .replaceAll(":", "-")
+    .replace(/\.\d{3}Z$/, "Z");
+
+  return `${repositoryName}-cbom-${timestamp}.json`;
+}
+
+function downloadLatestCbom() {
+  if (!latestCbom) {
+    showError("No generated CBOM is available to download.");
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(latestCbom, null, 2)], {
+    type: "application/json",
+  });
+
+  const downloadUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = downloadUrl;
+  link.download = getCbomDownloadFileName();
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(downloadUrl);
 }
 
 async function handleComplianceCheck(event) {
@@ -635,6 +690,8 @@ async function handleComplianceCheck(event) {
       form,
       signal: abortController.signal,
     });
+
+    latestCbom = cbom;
 
     const policyResult = await evaluateRegoPolicy({
       cbom,
@@ -687,5 +744,7 @@ elements.darkModeToggle.addEventListener("change", (event) => {
 
 elements.form.addEventListener("submit", handleComplianceCheck);
 elements.toggleFindingsButton.addEventListener("click", toggleFindings);
+
+elements.downloadCbomButton.addEventListener("click", downloadLatestCbom);
 
 applyTheme(getInitialTheme());
