@@ -589,10 +589,12 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .action-row {
+  .action-row,
+  .result-action-row {
     align-items: stretch;
     flex-direction: column;
   }
+
 
   button {
     width: 100%;
@@ -624,3 +626,12 @@ button:disabled {
     max-height: 40px;
   }
 }
+
+.result-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+

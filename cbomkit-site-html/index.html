@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CRA Compliance Checker</title>
     <link rel="stylesheet" href="./styles.css" />
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./app.js?v=2"></script>
   </head>
 
   <body>
@@ -106,9 +106,22 @@
         <div id="complianceBanner"></div>
         <div id="summary" class="summary"></div>
 
-        <button id="toggleFindingsButton" class="secondary-button" type="button">
-          Show findings
-        </button>
+        <div class="result-action-row">
+          <button
+            id="downloadCbomButton"
+            class="secondary-button"
+            type="button"
+            hidden
+            disabled
+            style="display: none"
+          >
+            Download generated CBOM
+          </button>
+        
+          <button id="toggleFindingsButton" class="secondary-button" type="button">
+            Show findings
+          </button>
+        </div>
 
         <div id="findingsContainer" class="findings-container" hidden>
           <div id="regoResults"></div>
