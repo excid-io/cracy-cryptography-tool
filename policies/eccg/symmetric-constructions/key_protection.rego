@@ -3,6 +3,7 @@ package cbom.eccg.symmetric_constructions.key_protection
 import data.cbom.eccg.helpers.build_finding
 import data.cbom.eccg.helpers.get_mode_or_unknown
 import data.cbom.eccg.helpers.get_primitive_or_unknown
+import data.cbom.eccg.helpers.is_key_wrap_primitive
 
 import data.cbom.eccg.symmetric_constructions.helpers.is_agreed_key_wrap_scheme
 
@@ -34,6 +35,7 @@ SUBSECTION = "Key-Protection"
 findings contains finding if {
     component := input.components[_]
 
+    is_key_wrap_primitive(component)
     not is_agreed_key_wrap_scheme(component)
 
     finding := build_finding(

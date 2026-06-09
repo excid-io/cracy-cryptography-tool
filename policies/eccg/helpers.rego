@@ -283,6 +283,11 @@ is_kdf_primitive(component) if {
     lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "kdf"
 }
 
+is_key_wrap_primitive(component) if {
+    component.cryptoProperties.assetType == "algorithm"
+    lower(object.get(component.cryptoProperties.algorithmProperties, "primitive", "")) == "key-wrap"
+}
+
 #
 # ---------------------------------------------------------
 # Helper: is_password_hashing_component

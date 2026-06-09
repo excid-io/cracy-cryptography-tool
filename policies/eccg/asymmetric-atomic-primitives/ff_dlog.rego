@@ -90,7 +90,7 @@ findings contains finding if {
 
     finding := build_finding(
         "ECCG-FFDLOG-002",
-        "critical",
+        "error",
         sprintf(
             "FF-DLOG primitive detected with legacy group size p=%d bits. Classified as Legacy[2025].",
             [p_bits]
