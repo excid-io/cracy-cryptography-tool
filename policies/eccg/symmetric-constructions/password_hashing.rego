@@ -17,7 +17,7 @@ SUBSECTION = "Password-Protection"
 #
 # --------------------------------------------------
 # Rule ECCG-PWH-001
-# PBKDF2 used for password hashing is an agreed mechanism.
+# PBKDF2 is the only agreed algorithm for password hashing.
 # --------------------------------------------------
 #
 findings contains finding if {
@@ -25,38 +25,102 @@ findings contains finding if {
     component := input.components[component_index]
 
     is_password_hashing_primitive(component)
-    is_pbkdf2_component(component)
-    not is_pbkdf2_sha1_component(component)
+    not is_pbkdf2_component(component)
+    #not is_pbkdf2_sha1_component(component)
 
-    note_ids := [
-        "27-NumberOfIterations",
-        "28-Salt"
-    ]
+    #note_ids := [
+    #    "27-NumberOfIterations",
+    #    "28-Salt"
+    #]
 
-    notes := [
-        get_note(SECTION, SUBSECTION, id)
-        | id := note_ids[_]
-    ]
+    #notes := [
+    #    get_note(SECTION, SUBSECTION, id)
+    #    | id := note_ids[_]
+    #]
 
     finding := build_finding(
         "ECCG-PWH-001",
-        "info",
+        "warning",
         sprintf(
-            "Password hashing mechanism '%s' is based on PBKDF2, which is the agreed password hashing mechanism",
+            "Password hashing mechanism '%s' is based on PBKDF2, which is the agreed password hashing mechanism. Note that there is no way to differentiate, whether this is a KDF or a password hash from the CBOM alone.",
             [component.name]
         ),
         component,
         {
             "scheme": "PBKDF2",
             "status": "agreed",
-            "notes": notes,
+            #"notes": notes,
+        }
+    )
+}
+
+#
+# ---------------------------------------------------------
+# ECCG-PWH-002
+# PBKDF2 must use a random salt with length >= 128 bits.
+#
+# ECCG classification: warning
+#
+# Detection:
+# - Simply detects PBKDF2 usage and emits the warning message.
+# ---------------------------------------------------------
+#
+findings contains finding if {
+    component := input.components[_]
+
+    is_password_hashing_primitive(component)
+    is_pbkdf2_component(component)
+
+    note := get_note(SECTION, SUBSECTION, "28-Salt")
+
+    finding := build_finding(
+        "ECCG-PWH-002",
+        "warning",
+        "When PBKDF2 is used, it must be supplied a random salt value with length >=128 bits",
+        component,
+        {
+            "status": "review-required",
+            "scheme": "PBKDF2",
+            "note": note,
+        }
+    )
+}
+
+#
+# ---------------------------------------------------------
+# ECCG-PWH-003
+# PBKDF2 must use a sufficiently large iteration count.
+#
+# ECCG classification: warning
+#
+# Detection:
+# - Simply detects PBKDF2 usage and emits the warning message.
+# ---------------------------------------------------------
+#
+findings contains finding if {
+    component := input.components[_]
+
+    is_password_hashing_primitive(component)
+    is_pbkdf2_component(component)
+
+    note := get_note(SECTION, SUBSECTION, "27-NumberOfIterations")
+
+    finding := build_finding(
+        "ECCG-PWH-003",
+        "warning",
+        "When PBKDF2 is used, a sufficient large number of iterations must be provided (e.g., > 600.000 when used with SHA256 and >220.000 when used with SHA512)",
+        component,
+        {
+            "status": "review-required",
+            "scheme": "PBKDF2",
+            "note": note
         }
     )
 }
 
 #
 # --------------------------------------------------
-# Rule ECCG-PWH-002
+# Rule ECCG-PWH-004
 # PBKDF2-SHA1 in password hashing context should be flagged.
 #
 # The ECCG password hashing section agrees PBKDF2 as a scheme,
@@ -72,7 +136,7 @@ findings contains finding if {
     is_pbkdf2_sha1_component(component)
 
     finding := build_finding(
-        "ECCG-PWH-002",
+        "ECCG-PWH-004",
         "high",
         "PBKDF2 is the agreed password hashing scheme, but PBKDF2-SHA1 relies on legacy SHA-1 and should not be used",
         component,
@@ -83,31 +147,3 @@ findings contains finding if {
         }
     )
 }
-
-#
-# --------------------------------------------------
-# Rule ECCG-PWH-003
-# Non-agreed password hashing schemes should be flagged.
-#
-# ECCG context:
-# - PBKDF2 is the agreed password hashing mechanism.
-# - Password hashing mechanisms not listed by ECCG should normally
-#   be flagged for review / non-compliance.
-#
-# Current CBOM limitation:
-# - CBOMkit currently represents password hashing mechanisms only
-#   as generic key-derivation components.
-# - The CBOM does not reliably expose whether a KDF is being used
-#   specifically for password hashing, password verification, or
-#   general-purpose key derivation.
-#
-# As a result:
-# - A strict "non-agreed password hashing" rule is not implemented
-#   here because it would incorrectly flag unrelated KDFs such as
-#   HKDF, ANSI X9.63 KDF, or SP800-56 KDF when they are not used
-#   for password hashing.
-#
-# This comment is retained intentionally to document the modeling
-# limitation and avoid overclaiming policy coverage.
-# --------------------------------------------------
-#

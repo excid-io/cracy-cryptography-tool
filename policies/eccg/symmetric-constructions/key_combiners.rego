@@ -30,77 +30,51 @@ SUBSECTION := "Key-Combiners"
 #
 # ---------------------------------------------------------
 # ECCG-KC-001
-# CatKDF is an agreed key combiner.
+# CatKDF and CasKDF are the only recommended key combiner schemes.
 #
-# ECCG classification: R
+# ECCG classification:
+# - info when CatKDF or CasKDF is detected
+# - warning when a KDF/combiner-like construction is detected but is not
+#   an agreed key combiner scheme
 #
 # Detection:
-# - Explicit combiner primitive named CatKDF, or
-# - KDF primitive named ConcatKDFHash / ConcatKDFHMAC /
-#   ConcatenationKDF.
+# - CatKDF:
+#   - explicit combiner primitive named CatKDF, or
+#   - KDF primitive named ConcatKDFHash / ConcatKDFHMAC /
+#     ConcatenationKDF.
 #
-# CBOMkit limitation:
-# - CBOMkit may detect only the underlying KDF, not the semantic
-#   CatKDF key-combiner construction.
+# - CasKDF:
+#   - explicit combiner primitive named CasKDF / CascadeKDF.
+#
+# - Non-agreed:
+#   - KDF primitive or combiner primitive that is not CatKDF or CasKDF.
 # ---------------------------------------------------------
 #
 findings contains finding if {
     component := input.components[_]
 
-    is_catkdf_scheme(component)
+    is_kdf_primitive(component) 
+    not is_agreed_key_combiner_scheme(component)
 
     finding := build_finding(
         "ECCG-KC-001",
-        "info",
-        "CatKDF / Concatenate-then-KDF is an agreed key combiner mechanism. Detection may be based on ConcatKDFHash or ConcatKDFHMAC because CBOMkit may not model CatKDF as a first-class combiner.",
+        "warning",
+        "CatKDF and CasKDF are the only recommended key combiner schemes. Note that this might be a false positive, due to the inability to differentiate between KDFs and Key Combiner in the CBOM.",
         component,
         {
-            "status": "agreed",
-            "scheme": "CatKDF",
-            "primitive": get_primitive_or_unknown(component),
-            "combiner": is_explicit_combiner(component)
+            "status": "notAgreed",
+            "scheme": object.get(component, "name", "unknown"),
+            "notes": [
+                "This KDF component is not detected as CatKDF or CasKDF. Review whether it is being used as a key combiner."
+            ]
         }
     )
 }
+
 
 #
 # ---------------------------------------------------------
 # ECCG-KC-002
-# CasKDF is an agreed key combiner.
-#
-# ECCG classification: R
-#
-# Detection:
-# - Explicit combiner primitive named CasKDF / CascadeKDF.
-#
-# CBOMkit limitation:
-# - CBOMkit is unlikely to detect CasKDF directly.
-# - Cascade behavior usually requires data-flow/order information
-#   that CBOM does not expose.
-# ---------------------------------------------------------
-#
-findings contains finding if {
-    component := input.components[_]
-
-    is_caskdf_scheme(component)
-
-    finding := build_finding(
-        "ECCG-KC-002",
-        "info",
-        "CasKDF / Cascade-KDF is an agreed key combiner mechanism. Direct detection is unlikely unless the CBOM explicitly names the construction.",
-        component,
-        {
-            "status": "agreed",
-            "scheme": "CasKDF",
-            "primitive": get_primitive_or_unknown(component),
-            "combiner": is_explicit_combiner(component)
-        }
-    )
-}
-
-#
-# ---------------------------------------------------------
-# ECCG-KC-003
 # Possible CasKDF-style cascade detected.
 #
 # A pair of KDF components appears in a common source context.
@@ -121,9 +95,9 @@ findings contains finding if {
     shared_location_line := get_shared_source_location_and_line_or_unknown(kdf_component_a, kdf_component_b)
 
     finding := build_finding(
-        "ECCG-KC-003",
+        "ECCG-KC-002",
         "info",
-        "Multiple KDF components were detected in a shared source context. This may correspond to a CasKDF / Cascade-KDF key combiner, but CBOM does not expose ordering or data-flow semantics. Manual review is required.",
+        "Multiple KDF components were detected in a shared source context. This could be a Key Combiner Scheme. Note that the only acceptable Key Combiner schemes are CatKDF and CasKDF. Manual review is required.",
         kdf_component_a,
         {
             "status": "possible-caskdf",
@@ -141,7 +115,7 @@ findings contains finding if {
 
 #
 # ---------------------------------------------------------
-# ECCG-KC-004
+# ECCG-KC-001*
 # Non-agreed key combiner scheme.
 #
 # ECCG only lists CatKDF and CasKDF as agreed key combiners.
@@ -156,10 +130,10 @@ findings contains finding if {
     not is_agreed_key_combiner_scheme(component)
 
     finding := build_finding(
-        "ECCG-KC-004",
+        "ECCG-KC-001*",
         "critical",
         sprintf(
-            "Key combiner scheme '%s' is not listed in the ECCG agreed key combiner table.",
+            "Key combiner scheme '%s' is not listed in the ECCG agreed key combiner table. The only agreed ones are CatKDF and CasKDF.",
             [component.name]
         ),
         component,
@@ -169,21 +143,3 @@ findings contains finding if {
         }
     )
 }
-
-#
-# ---------------------------------------------------------
-# ECCG-KC-005
-# Key combiner detection coverage limitation.
-#
-# CatKDF and CasKDF are high-level constructions over KDFs and
-# key-establishment outputs. CBOMkit may only emit lower-level KDF
-# components such as ConcatKDFHash or ConcatKDFHMAC, or may not emit
-# a combiner primitive at all.
-#
-# Therefore:
-# - absence of a key-combiner finding does not prove absence of
-#   CatKDF or CasKDF;
-# - possible cascade findings are heuristic only;
-# - precise validation may require source-code/data-flow analysis.
-# ---------------------------------------------------------
-#
